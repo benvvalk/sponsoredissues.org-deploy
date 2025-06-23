@@ -87,61 +87,6 @@
             box-shadow: 0 0 0 3px rgba(30, 58, 138, 0.1);
         }
         
-        .controls {
-            margin: 20px 0;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 16px 24px;
-            background: white;
-            border: 1px solid #e5e7eb;
-            border-radius: 8px;
-        }
-        
-        .sort-controls {
-            display: flex;
-            align-items: center;
-            gap: 16px;
-        }
-        
-        .sort-label {
-            font-weight: 500;
-            color: #374151;
-        }
-        
-        .sort-select {
-            padding: 8px 12px;
-            border: 1px solid #d1d5db;
-            border-radius: 4px;
-            background: white;
-            color: #374151;
-        }
-        
-        .view-toggle {
-            display: flex;
-            gap: 4px;
-        }
-        
-        .toggle-btn {
-            padding: 8px 12px;
-            border: 1px solid #d1d5db;
-            background: white;
-            color: #6b7280;
-            border-radius: 4px;
-            cursor: pointer;
-            transition: all 0.2s ease;
-            font-size: 0.875rem;
-        }
-        
-        .toggle-btn.active {
-            background: #1e3a8a;
-            color: white;
-            border-color: #1e3a8a;
-        }
-        
-        .toggle-btn:hover:not(.active) {
-            background: #f3f4f6;
-        }
         
         .issues-list {
             background: white;
@@ -153,10 +98,10 @@
         .issue-item {
             display: flex;
             align-items: center;
-            padding: 20px 24px;
+            padding: 12px 24px;
             border-bottom: 1px solid #f3f4f6;
             transition: background-color 0.2s ease;
-            gap: 20px;
+            gap: 16px;
         }
         
         .issue-item:last-child {
@@ -174,7 +119,7 @@
         }
         
         .rank {
-            font-size: 1.25rem;
+            font-size: 1.1rem;
             font-weight: 700;
             color: #1e3a8a;
         }
@@ -207,10 +152,10 @@
         }
         
         .issue-title {
-            font-size: 1.1rem;
+            font-size: 1rem;
             font-weight: 600;
             color: #111827;
-            margin-bottom: 6px;
+            margin-bottom: 4px;
             line-height: 1.4;
         }
         
@@ -276,7 +221,7 @@
         }
         
         .donation-amount {
-            font-size: 1.3rem;
+            font-size: 1.1rem;
             font-weight: 700;
             color: #059669;
             margin-bottom: 2px;
@@ -308,59 +253,6 @@
             transform: translateY(-1px);
         }
         
-        .list-compact .issue-item {
-            padding: 12px 24px;
-            gap: 16px;
-        }
-        
-        .list-compact .issue-title {
-            font-size: 1rem;
-            margin-bottom: 4px;
-        }
-        
-        .list-compact .donation-amount {
-            font-size: 1.1rem;
-        }
-        
-        .list-compact .rank {
-            font-size: 1.1rem;
-        }
-        
-        .table-layout .issues-list {
-            border: none;
-            background: none;
-        }
-        
-        .table-layout .table-header {
-            display: flex;
-            align-items: center;
-            padding: 12px 24px;
-            background: #f9fafb;
-            border: 1px solid #e5e7eb;
-            border-bottom: none;
-            border-radius: 8px 8px 0 0;
-            font-weight: 600;
-            color: #374151;
-            font-size: 0.875rem;
-            gap: 20px;
-        }
-        
-        .table-layout .issue-item {
-            border: 1px solid #e5e7eb;
-            border-top: none;
-            border-radius: 0;
-            background: white;
-        }
-        
-        .table-layout .issue-item:last-child {
-            border-radius: 0 0 8px 8px;
-        }
-        
-        .header-rank { width: 60px; text-align: center; }
-        .header-status { width: 24px; }
-        .header-issue { flex: 1; }
-        .header-funding { min-width: 120px; text-align: right; }
-        .header-action { width: 80px; }
         
         @media (max-width: 768px) {
             .issue-item {
@@ -388,15 +280,6 @@
                 align-items: center;
             }
             
-            .controls {
-                flex-direction: column;
-                gap: 16px;
-                align-items: stretch;
-            }
-            
-            .sort-controls {
-                justify-content: center;
-            }
         }
         
         .summary-bar {
@@ -455,25 +338,8 @@
             <div class="issue-count">Showing 127 issues</div>
         </div>
         
-        <div class="controls">
-            <div class="sort-controls">
-                <span class="sort-label">Sort by:</span>
-                <select class="sort-select">
-                    <option>Funding Amount (High to Low)</option>
-                    <option>Funding Amount (Low to High)</option>
-                    <option>Most Recent</option>
-                    <option>Oldest First</option>
-                    <option>Most Contributors</option>
-                </select>
-            </div>
-            <div class="view-toggle">
-                <button class="toggle-btn active" onclick="setLayout('default')">Default</button>
-                <button class="toggle-btn" onclick="setLayout('compact')">Compact</button>
-                <button class="toggle-btn" onclick="setLayout('table')">Table</button>
-            </div>
-        </div>
         
-        <div class="issues-container" id="issuesContainer">
+        <div class="issues-container">
             <div class="issues-list">
                 <div class="issue-item">
                     <div class="rank-section">
@@ -605,47 +471,5 @@
         </div>
     </div>
     
-    <script>
-        function setLayout(layout) {
-            const container = document.getElementById('issuesContainer');
-            const buttons = document.querySelectorAll('.toggle-btn');
-            
-            // Remove all layout classes
-            container.className = 'issues-container';
-            
-            // Add new layout class
-            if (layout === 'compact') {
-                container.classList.add('list-compact');
-            } else if (layout === 'table') {
-                container.classList.add('table-layout');
-                
-                // Add table header if it doesn't exist
-                const issuesList = container.querySelector('.issues-list');
-                let header = issuesList.querySelector('.table-header');
-                if (!header) {
-                    header = document.createElement('div');
-                    header.className = 'table-header';
-                    header.innerHTML = `
-                        <div class="header-rank">Rank</div>
-                        <div class="header-status">Status</div>
-                        <div class="header-issue">Issue</div>
-                        <div class="header-funding">Funding</div>
-                        <div class="header-action">Action</div>
-                    `;
-                    issuesList.insertBefore(header, issuesList.firstChild);
-                }
-            } else {
-                // Remove table header if it exists
-                const header = container.querySelector('.table-header');
-                if (header) {
-                    header.remove();
-                }
-            }
-            
-            // Update button states
-            buttons.forEach(btn => btn.classList.remove('active'));
-            event.target.classList.add('active');
-        }
-    </script>
 </body>
 </html>
