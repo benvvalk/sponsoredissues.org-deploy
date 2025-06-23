@@ -1,0 +1,651 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BugPile - Issue Listings</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: #f8f9fa;
+            color: #495057;
+            line-height: 1.6;
+        }
+        
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 0 20px;
+        }
+        
+        .header {
+            background: white;
+            border-bottom: 1px solid #e9ecef;
+            padding: 24px 0;
+            margin-bottom: 0;
+        }
+        
+        .header-content {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 0 20px;
+        }
+        
+        .header h1 {
+            font-size: 2rem;
+            color: #1e3a8a;
+            margin-bottom: 8px;
+            font-weight: 700;
+        }
+        
+        .repo-info {
+            color: #6b7280;
+            font-size: 1rem;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
+        
+        .repo-stats {
+            display: flex;
+            gap: 24px;
+            font-size: 0.9rem;
+        }
+        
+        .stat {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            color: #6b7280;
+        }
+        
+        .search-container {
+            position: relative;
+            max-width: 600px;
+        }
+        
+        .search-bar {
+            width: 100%;
+            padding: 12px 16px;
+            border: 1px solid #d1d5db;
+            border-radius: 6px;
+            font-size: 1rem;
+            background: white;
+            transition: all 0.2s ease;
+        }
+        
+        .search-bar:focus {
+            outline: none;
+            border-color: #1e3a8a;
+            box-shadow: 0 0 0 3px rgba(30, 58, 138, 0.1);
+        }
+        
+        .controls {
+            margin: 20px 0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 16px 24px;
+            background: white;
+            border: 1px solid #e5e7eb;
+            border-radius: 8px;
+        }
+        
+        .sort-controls {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
+        
+        .sort-label {
+            font-weight: 500;
+            color: #374151;
+        }
+        
+        .sort-select {
+            padding: 8px 12px;
+            border: 1px solid #d1d5db;
+            border-radius: 4px;
+            background: white;
+            color: #374151;
+        }
+        
+        .view-toggle {
+            display: flex;
+            gap: 4px;
+        }
+        
+        .toggle-btn {
+            padding: 8px 12px;
+            border: 1px solid #d1d5db;
+            background: white;
+            color: #6b7280;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            font-size: 0.875rem;
+        }
+        
+        .toggle-btn.active {
+            background: #1e3a8a;
+            color: white;
+            border-color: #1e3a8a;
+        }
+        
+        .toggle-btn:hover:not(.active) {
+            background: #f3f4f6;
+        }
+        
+        .issues-list {
+            background: white;
+            border: 1px solid #e5e7eb;
+            border-radius: 8px;
+            overflow: hidden;
+        }
+        
+        .issue-item {
+            display: flex;
+            align-items: center;
+            padding: 20px 24px;
+            border-bottom: 1px solid #f3f4f6;
+            transition: background-color 0.2s ease;
+            gap: 20px;
+        }
+        
+        .issue-item:last-child {
+            border-bottom: none;
+        }
+        
+        .issue-item:hover {
+            background: #f8fafc;
+        }
+        
+        .rank-section {
+            flex-shrink: 0;
+            width: 60px;
+            text-align: center;
+        }
+        
+        .rank {
+            font-size: 1.25rem;
+            font-weight: 700;
+            color: #1e3a8a;
+        }
+        
+        .status-section {
+            flex-shrink: 0;
+            width: 24px;
+        }
+        
+        .status-indicator {
+            width: 16px;
+            height: 16px;
+            border-radius: 50%;
+            border: 2px solid;
+        }
+        
+        .status-open {
+            border-color: #059669;
+            background: #d1fae5;
+        }
+        
+        .status-closed {
+            border-color: #dc2626;
+            background: #fee2e2;
+        }
+        
+        .issue-main {
+            flex: 1;
+            min-width: 0;
+        }
+        
+        .issue-title {
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: #111827;
+            margin-bottom: 6px;
+            line-height: 1.4;
+        }
+        
+        .issue-title:hover {
+            color: #1e3a8a;
+            cursor: pointer;
+        }
+        
+        .issue-meta {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            flex-wrap: wrap;
+        }
+        
+        .labels {
+            display: flex;
+            gap: 6px;
+            flex-wrap: wrap;
+        }
+        
+        .label {
+            padding: 2px 8px;
+            border-radius: 12px;
+            font-size: 0.75rem;
+            font-weight: 500;
+            border: 1px solid;
+        }
+        
+        .label-bug { 
+            background: #fef2f2; 
+            color: #b91c1c; 
+            border-color: #fecaca;
+        }
+        
+        .label-feature { 
+            background: #eff6ff; 
+            color: #1d4ed8; 
+            border-color: #bfdbfe;
+        }
+        
+        .label-enhancement { 
+            background: #f0fdf4; 
+            color: #166534; 
+            border-color: #bbf7d0;
+        }
+        
+        .label-priority { 
+            background: #fffbeb; 
+            color: #92400e; 
+            border-color: #fed7aa;
+        }
+        
+        .issue-number {
+            color: #6b7280;
+            font-size: 0.875rem;
+        }
+        
+        .donation-section {
+            flex-shrink: 0;
+            text-align: right;
+            min-width: 120px;
+        }
+        
+        .donation-amount {
+            font-size: 1.3rem;
+            font-weight: 700;
+            color: #059669;
+            margin-bottom: 2px;
+        }
+        
+        .contributors {
+            font-size: 0.8rem;
+            color: #6b7280;
+        }
+        
+        .action-section {
+            flex-shrink: 0;
+        }
+        
+        .donate-btn {
+            background: #1e3a8a;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 6px;
+            font-weight: 500;
+            font-size: 0.9rem;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+        
+        .donate-btn:hover {
+            background: #1e40af;
+            transform: translateY(-1px);
+        }
+        
+        .list-compact .issue-item {
+            padding: 12px 24px;
+            gap: 16px;
+        }
+        
+        .list-compact .issue-title {
+            font-size: 1rem;
+            margin-bottom: 4px;
+        }
+        
+        .list-compact .donation-amount {
+            font-size: 1.1rem;
+        }
+        
+        .list-compact .rank {
+            font-size: 1.1rem;
+        }
+        
+        .table-layout .issues-list {
+            border: none;
+            background: none;
+        }
+        
+        .table-layout .table-header {
+            display: flex;
+            align-items: center;
+            padding: 12px 24px;
+            background: #f9fafb;
+            border: 1px solid #e5e7eb;
+            border-bottom: none;
+            border-radius: 8px 8px 0 0;
+            font-weight: 600;
+            color: #374151;
+            font-size: 0.875rem;
+            gap: 20px;
+        }
+        
+        .table-layout .issue-item {
+            border: 1px solid #e5e7eb;
+            border-top: none;
+            border-radius: 0;
+            background: white;
+        }
+        
+        .table-layout .issue-item:last-child {
+            border-radius: 0 0 8px 8px;
+        }
+        
+        .header-rank { width: 60px; text-align: center; }
+        .header-status { width: 24px; }
+        .header-issue { flex: 1; }
+        .header-funding { min-width: 120px; text-align: right; }
+        .header-action { width: 80px; }
+        
+        @media (max-width: 768px) {
+            .issue-item {
+                flex-direction: column;
+                align-items: stretch;
+                gap: 12px;
+                padding: 16px 20px;
+            }
+            
+            .rank-section,
+            .status-section,
+            .donation-section,
+            .action-section {
+                width: auto;
+                text-align: left;
+            }
+            
+            .donation-section {
+                text-align: left;
+            }
+            
+            .mobile-row {
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+            }
+            
+            .controls {
+                flex-direction: column;
+                gap: 16px;
+                align-items: stretch;
+            }
+            
+            .sort-controls {
+                justify-content: center;
+            }
+        }
+        
+        .summary-bar {
+            background: white;
+            border: 1px solid #e5e7eb;
+            border-radius: 8px;
+            padding: 16px 24px;
+            margin-bottom: 16px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .total-funding {
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: #059669;
+        }
+        
+        .issue-count {
+            color: #6b7280;
+            font-size: 0.9rem;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <div class="header-content">
+            <h1>BugPile</h1>
+            <div class="repo-info">
+                <span><strong>facebook/react</strong></span>
+                <div class="repo-stats">
+                    <div class="stat">
+                        <span>⭐</span>
+                        <span>218k</span>
+                    </div>
+                    <div class="stat">
+                        <span>🍴</span>
+                        <span>45.2k</span>
+                    </div>
+                    <div class="stat">
+                        <span>📋</span>
+                        <span>127 open issues</span>
+                    </div>
+                </div>
+            </div>
+            <div class="search-container">
+                <input type="text" class="search-bar" placeholder="Search issues by title, labels, or description...">
+            </div>
+        </div>
+    </div>
+    
+    <div class="container">
+        <div class="summary-bar">
+            <div class="total-funding">Total Funding: $8,234</div>
+            <div class="issue-count">Showing 127 issues</div>
+        </div>
+        
+        <div class="controls">
+            <div class="sort-controls">
+                <span class="sort-label">Sort by:</span>
+                <select class="sort-select">
+                    <option>Funding Amount (High to Low)</option>
+                    <option>Funding Amount (Low to High)</option>
+                    <option>Most Recent</option>
+                    <option>Oldest First</option>
+                    <option>Most Contributors</option>
+                </select>
+            </div>
+            <div class="view-toggle">
+                <button class="toggle-btn active" onclick="setLayout('default')">Default</button>
+                <button class="toggle-btn" onclick="setLayout('compact')">Compact</button>
+                <button class="toggle-btn" onclick="setLayout('table')">Table</button>
+            </div>
+        </div>
+        
+        <div class="issues-container" id="issuesContainer">
+            <div class="issues-list">
+                <div class="issue-item">
+                    <div class="rank-section">
+                        <div class="rank">#1</div>
+                    </div>
+                    <div class="status-section">
+                        <div class="status-indicator status-open"></div>
+                    </div>
+                    <div class="issue-main">
+                        <div class="issue-title">Memory leak in useEffect cleanup when component unmounts during async operation</div>
+                        <div class="issue-meta">
+                            <div class="labels">
+                                <span class="label label-bug">bug</span>
+                                <span class="label label-priority">high priority</span>
+                            </div>
+                            <span class="issue-number">#18472</span>
+                        </div>
+                    </div>
+                    <div class="donation-section">
+                        <div class="donation-amount">$2,847</div>
+                        <div class="contributors">23 contributors</div>
+                    </div>
+                    <div class="action-section">
+                        <button class="donate-btn">Donate</button>
+                    </div>
+                </div>
+                
+                <div class="issue-item">
+                    <div class="rank-section">
+                        <div class="rank">#2</div>
+                    </div>
+                    <div class="status-section">
+                        <div class="status-indicator status-open"></div>
+                    </div>
+                    <div class="issue-main">
+                        <div class="issue-title">Add built-in support for CSS-in-JS libraries with better tree shaking</div>
+                        <div class="issue-meta">
+                            <div class="labels">
+                                <span class="label label-feature">feature request</span>
+                                <span class="label label-enhancement">enhancement</span>
+                            </div>
+                            <span class="issue-number">#18399</span>
+                        </div>
+                    </div>
+                    <div class="donation-section">
+                        <div class="donation-amount">$1,923</div>
+                        <div class="contributors">18 contributors</div>
+                    </div>
+                    <div class="action-section">
+                        <button class="donate-btn">Donate</button>
+                    </div>
+                </div>
+                
+                <div class="issue-item">
+                    <div class="rank-section">
+                        <div class="rank">#3</div>
+                    </div>
+                    <div class="status-section">
+                        <div class="status-indicator status-closed"></div>
+                    </div>
+                    <div class="issue-main">
+                        <div class="issue-title">Hydration mismatch errors not showing helpful debugging information</div>
+                        <div class="issue-meta">
+                            <div class="labels">
+                                <span class="label label-bug">bug</span>
+                            </div>
+                            <span class="issue-number">#18301</span>
+                        </div>
+                    </div>
+                    <div class="donation-section">
+                        <div class="donation-amount">$1,456</div>
+                        <div class="contributors">12 contributors</div>
+                    </div>
+                    <div class="action-section">
+                        <button class="donate-btn">Donate</button>
+                    </div>
+                </div>
+                
+                <div class="issue-item">
+                    <div class="rank-section">
+                        <div class="rank">#4</div>
+                    </div>
+                    <div class="status-section">
+                        <div class="status-indicator status-open"></div>
+                    </div>
+                    <div class="issue-main">
+                        <div class="issue-title">Improve TypeScript integration with better inference for custom hooks</div>
+                        <div class="issue-meta">
+                            <div class="labels">
+                                <span class="label label-enhancement">enhancement</span>
+                            </div>
+                            <span class="issue-number">#18284</span>
+                        </div>
+                    </div>
+                    <div class="donation-section">
+                        <div class="donation-amount">$892</div>
+                        <div class="contributors">8 contributors</div>
+                    </div>
+                    <div class="action-section">
+                        <button class="donate-btn">Donate</button>
+                    </div>
+                </div>
+                
+                <div class="issue-item">
+                    <div class="rank-section">
+                        <div class="rank">#5</div>
+                    </div>
+                    <div class="status-section">
+                        <div class="status-indicator status-open"></div>
+                    </div>
+                    <div class="issue-main">
+                        <div class="issue-title">Add support for Suspense boundaries in concurrent rendering with better error handling</div>
+                        <div class="issue-meta">
+                            <div class="labels">
+                                <span class="label label-feature">feature request</span>
+                            </div>
+                            <span class="issue-number">#18195</span>
+                        </div>
+                    </div>
+                    <div class="donation-section">
+                        <div class="donation-amount">$673</div>
+                        <div class="contributors">6 contributors</div>
+                    </div>
+                    <div class="action-section">
+                        <button class="donate-btn">Donate</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        function setLayout(layout) {
+            const container = document.getElementById('issuesContainer');
+            const buttons = document.querySelectorAll('.toggle-btn');
+            
+            // Remove all layout classes
+            container.className = 'issues-container';
+            
+            // Add new layout class
+            if (layout === 'compact') {
+                container.classList.add('list-compact');
+            } else if (layout === 'table') {
+                container.classList.add('table-layout');
+                
+                // Add table header if it doesn't exist
+                const issuesList = container.querySelector('.issues-list');
+                let header = issuesList.querySelector('.table-header');
+                if (!header) {
+                    header = document.createElement('div');
+                    header.className = 'table-header';
+                    header.innerHTML = `
+                        <div class="header-rank">Rank</div>
+                        <div class="header-status">Status</div>
+                        <div class="header-issue">Issue</div>
+                        <div class="header-funding">Funding</div>
+                        <div class="header-action">Action</div>
+                    `;
+                    issuesList.insertBefore(header, issuesList.firstChild);
+                }
+            } else {
+                // Remove table header if it exists
+                const header = container.querySelector('.table-header');
+                if (header) {
+                    header.remove();
+                }
+            }
+            
+            // Update button states
+            buttons.forEach(btn => btn.classList.remove('active'));
+            event.target.classList.add('active');
+        }
+    </script>
+</body>
+</html>
