@@ -322,6 +322,45 @@
             opacity: 0.9;
         }
         
+        .waitlist-form {
+            max-width: 400px;
+            margin: 0 auto;
+        }
+        
+        .form-group {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 10px;
+            align-items: stretch;
+        }
+        
+        .email-input {
+            flex: 1;
+            padding: 8px 12px;
+            border: 1px solid #ccc;
+            border-radius: 3px;
+            font-size: 10pt;
+            font-family: inherit;
+        }
+        
+        .email-input:focus {
+            outline: none;
+            border-color: #1e3a8a;
+        }
+        
+        .form-note {
+            font-size: 9pt;
+            color: #666;
+            text-align: center;
+            line-height: 1.3;
+        }
+        
+        @media (max-width: 480px) {
+            .form-group {
+                flex-direction: column;
+            }
+        }
+        
         .footer {
             margin-top: 40px;
             padding-top: 20px;
@@ -386,13 +425,11 @@
             <a href="#" class="site-name">BugPile</a>
             <div class="nav-links">
                 <a href="#how">how it works</a>
-                <a href="#browse">browse issues</a>
-                <a href="#submit">submit repo</a>
                 <a href="#about">about</a>
+                <a href="#waitlist">join waitlist</a>
             </div>
             <div class="login-section">
-                <a href="#login">login</a>
-                <a href="#signup">sign up</a>
+                <a href="#contact">contact</a>
             </div>
         </div>
     </div>
@@ -403,7 +440,10 @@
                 <div class="intro-content">
                     <div class="intro-title">BugPile: Crowdfunding for GitHub Issues</div>
                     <div class="intro-text">
-                        Put your money where your bugs are. BugPile lets Free and Open Source software users pool funds to incentivize the GitHub issues that matter most to them.
+                        Put your money where your bugs are. BugPile will let Free and Open Source software users pool funds to incentivize the GitHub issues that matter most to them.
+                    </div>
+                    <div class="intro-text" style="background: #fff3cd; padding: 10px; border: 1px solid #ffeaa7; border-radius: 3px; margin: 10px 0;">
+                        <strong>Currently in private beta.</strong> Join our waitlist below to be notified when we launch.
                     </div>
                     <div class="intro-text">
                         Want to know more? Read about
@@ -470,13 +510,16 @@
                 </ul>
             </div>
             
-            <div class="cta-section">
-                <div class="cta-title">Ready to fund the fixes you need?</div>
-                <div class="cta-text">Join thousands of developers putting their money behind the issues that matter.</div>
-                <div class="cta-buttons">
-                    <a href="#signup" class="btn btn-primary">Sign Up with GitHub</a>
-                    <a href="#browse" class="btn btn-secondary">Browse Issues</a>
-                </div>
+            <div class="cta-section" id="waitlist">
+                <div class="cta-title">Join the BugPile Beta Waitlist</div>
+                <div class="cta-text">Be among the first developers to get your project funded by BugPile. We'll contact you when we're ready to launch.</div>
+                <form class="waitlist-form" action="#" method="post">
+                    <div class="form-group">
+                        <input type="email" name="email" placeholder="Enter your email address" required class="email-input">
+                        <button type="submit" class="btn btn-primary">Join Waitlist</button>
+                    </div>
+                    <div class="form-note">We'll only use your email to notify you about BugPile's launch. No spam, ever.</div>
+                </form>
             </div>
         </div>
         
