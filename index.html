@@ -1,0 +1,542 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BugPile - Crowdfund GitHub Issues</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: Verdana, Geneva, sans-serif;
+            font-size: 10pt;
+            background: #f6f6ef;
+            color: #000;
+        }
+        
+        .header {
+            background: #1e3a8a;
+            padding: 2px;
+        }
+        
+        .header-content {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 4px 8px;
+        }
+        
+        .logo {
+            width: 18px;
+            height: 18px;
+            background: white;
+            border-radius: 2px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            font-size: 12px;
+            color: #1e3a8a;
+        }
+        
+        .site-name {
+            color: white;
+            font-weight: bold;
+            text-decoration: none;
+            font-size: 12pt;
+        }
+        
+        .nav-links {
+            display: flex;
+            gap: 10px;
+            margin-left: 20px;
+        }
+        
+        .nav-links a {
+            color: white;
+            text-decoration: none;
+            font-size: 10pt;
+        }
+        
+        .nav-links a:hover {
+            text-decoration: underline;
+        }
+        
+        .login-section {
+            margin-left: auto;
+            display: flex;
+            gap: 10px;
+        }
+        
+        .login-section a {
+            color: white;
+            text-decoration: none;
+            font-size: 10pt;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px 15px;
+        }
+        
+        .main-content {
+            background: white;
+            padding: 20px;
+            border: 1px solid #e6e6df;
+        }
+        
+        .intro-section {
+            margin-bottom: 30px;
+            border-bottom: 1px solid #e6e6df;
+            padding-bottom: 20px;
+        }
+        
+        .intro-title {
+            font-size: 16pt;
+            color: #1e3a8a;
+            margin-bottom: 10px;
+            font-weight: bold;
+        }
+        
+        .intro-text {
+            line-height: 1.4;
+            color: #333;
+            margin-bottom: 15px;
+        }
+        
+        .demo-link {
+            color: #1e3a8a;
+            text-decoration: none;
+            font-weight: bold;
+        }
+        
+        .demo-link:hover {
+            text-decoration: underline;
+        }
+        
+        .featured-section {
+            margin-bottom: 25px;
+        }
+        
+        .section-header {
+            font-size: 12pt;
+            color: #1e3a8a;
+            font-weight: bold;
+            margin-bottom: 15px;
+            border-bottom: 1px solid #e6e6df;
+            padding-bottom: 5px;
+        }
+        
+        .issue-list {
+            list-style: none;
+        }
+        
+        .issue-item {
+            display: flex;
+            align-items: flex-start;
+            gap: 8px;
+            margin-bottom: 8px;
+            font-size: 10pt;
+        }
+        
+        .issue-rank {
+            color: #666;
+            font-weight: bold;
+            min-width: 25px;
+            text-align: right;
+        }
+        
+        .issue-content {
+            flex: 1;
+            line-height: 1.3;
+        }
+        
+        .issue-link {
+            color: #1e3a8a;
+            text-decoration: none;
+        }
+        
+        .issue-link:hover {
+            text-decoration: underline;
+        }
+        
+        .issue-meta {
+            color: #666;
+            font-size: 9pt;
+            margin-top: 3px;
+        }
+        
+        .funding-amount {
+            color: #059669;
+            font-weight: bold;
+        }
+        
+        .repo-name {
+            color: #666;
+        }
+        
+        .stats-section {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            margin-bottom: 25px;
+        }
+        
+        .stat-box {
+            background: #f8f9fa;
+            padding: 15px;
+            border: 1px solid #e6e6df;
+        }
+        
+        .stat-title {
+            font-weight: bold;
+            color: #1e3a8a;
+            margin-bottom: 8px;
+        }
+        
+        .stat-value {
+            font-size: 18pt;
+            font-weight: bold;
+            color: #059669;
+            margin-bottom: 5px;
+        }
+        
+        .stat-desc {
+            color: #666;
+            font-size: 9pt;
+        }
+        
+        .recent-section {
+            margin-bottom: 25px;
+        }
+        
+        .how-it-works {
+            background: #f8f9fa;
+            padding: 20px;
+            border: 1px solid #e6e6df;
+            margin: 25px 0;
+        }
+        
+        .how-title {
+            font-size: 12pt;
+            color: #1e3a8a;
+            font-weight: bold;
+            margin-bottom: 15px;
+        }
+        
+        .steps {
+            list-style: none;
+        }
+        
+        .step {
+            margin-bottom: 10px;
+            display: flex;
+            gap: 10px;
+        }
+        
+        .step-number {
+            background: #1e3a8a;
+            color: white;
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 9pt;
+            font-weight: bold;
+            flex-shrink: 0;
+        }
+        
+        .step-text {
+            line-height: 1.4;
+        }
+        
+        .cta-section {
+            text-align: center;
+            padding: 25px;
+            background: #f0f4ff;
+            border: 1px solid #e6e6df;
+            margin: 25px 0;
+        }
+        
+        .cta-title {
+            font-size: 14pt;
+            color: #1e3a8a;
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+        
+        .cta-text {
+            margin-bottom: 20px;
+            color: #333;
+        }
+        
+        .cta-buttons {
+            display: flex;
+            gap: 15px;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+        
+        .btn {
+            padding: 8px 16px;
+            border: 1px solid #1e3a8a;
+            text-decoration: none;
+            font-weight: bold;
+            border-radius: 3px;
+            font-size: 10pt;
+        }
+        
+        .btn-primary {
+            background: #1e3a8a;
+            color: white;
+        }
+        
+        .btn-secondary {
+            background: white;
+            color: #1e3a8a;
+        }
+        
+        .btn:hover {
+            opacity: 0.9;
+        }
+        
+        .footer {
+            margin-top: 40px;
+            padding-top: 20px;
+            border-top: 1px solid #e6e6df;
+            color: #666;
+            font-size: 9pt;
+            text-align: center;
+        }
+        
+        .footer-links {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            margin-bottom: 10px;
+        }
+        
+        .footer-links a {
+            color: #666;
+            text-decoration: none;
+        }
+        
+        .footer-links a:hover {
+            text-decoration: underline;
+        }
+        
+        @media (max-width: 768px) {
+            .header-content {
+                flex-wrap: wrap;
+            }
+            
+            .nav-links {
+                margin-left: 0;
+                order: 3;
+                width: 100%;
+                margin-top: 5px;
+            }
+            
+            .stats-section {
+                grid-template-columns: 1fr;
+            }
+            
+            .cta-buttons {
+                flex-direction: column;
+                align-items: center;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <div class="header-content">
+            <div class="logo">B</div>
+            <a href="#" class="site-name">BugPile</a>
+            <div class="nav-links">
+                <a href="#how">how it works</a>
+                <a href="#browse">browse issues</a>
+                <a href="#submit">submit repo</a>
+                <a href="#about">about</a>
+            </div>
+            <div class="login-section">
+                <a href="#login">login</a>
+                <a href="#signup">sign up</a>
+            </div>
+        </div>
+    </div>
+    
+    <div class="container">
+        <div class="main-content">
+            <div class="intro-section">
+                <div class="intro-title">Crowdfund GitHub Issues</div>
+                <div class="intro-text">
+                    Put your money where your bugs are. BugPile lets developers and companies pool funds to incentivize fixes for the GitHub issues that matter most to them.
+                </div>
+                <div class="intro-text">
+                    Found a critical bug blocking your project? Want a feature implemented faster? Add it to BugPile and watch the community rally behind solutions that actually get built.
+                </div>
+                <a href="#demo" class="demo-link">» See how facebook/react raised $8,234 for 127 issues</a>
+            </div>
+            
+            <div class="stats-section">
+                <div class="stat-box">
+                    <div class="stat-title">Total Funded</div>
+                    <div class="stat-value">$47,329</div>
+                    <div class="stat-desc">across 234 repositories</div>
+                </div>
+                <div class="stat-box">
+                    <div class="stat-title">Issues Resolved</div>
+                    <div class="stat-value">89</div>
+                    <div class="stat-desc">with an average funding of $532</div>
+                </div>
+            </div>
+            
+            <div class="featured-section">
+                <div class="section-header">Trending Issues</div>
+                <ul class="issue-list">
+                    <li class="issue-item">
+                        <span class="issue-rank">1.</span>
+                        <div class="issue-content">
+                            <a href="#" class="issue-link">Memory leak in useEffect cleanup when component unmounts during async operation</a>
+                            <div class="issue-meta">
+                                <span class="funding-amount">$2,847</span> from 23 contributors | 
+                                <span class="repo-name">facebook/react</span> | 4 hours ago
+                            </div>
+                        </div>
+                    </li>
+                    <li class="issue-item">
+                        <span class="issue-rank">2.</span>
+                        <div class="issue-content">
+                            <a href="#" class="issue-link">TypeScript performance regression in 5.0 with large union types</a>
+                            <div class="issue-meta">
+                                <span class="funding-amount">$1,923</span> from 31 contributors | 
+                                <span class="repo-name">microsoft/TypeScript</span> | 8 hours ago
+                            </div>
+                        </div>
+                    </li>
+                    <li class="issue-item">
+                        <span class="issue-rank">3.</span>
+                        <div class="issue-content">
+                            <a href="#" class="issue-link">Add support for ECMAScript modules in Node.js worker threads</a>
+                            <div class="issue-meta">
+                                <span class="funding-amount">$1,756</span> from 19 contributors | 
+                                <span class="repo-name">nodejs/node</span> | 12 hours ago
+                            </div>
+                        </div>
+                    </li>
+                    <li class="issue-item">
+                        <span class="issue-rank">4.</span>
+                        <div class="issue-content">
+                            <a href="#" class="issue-link">Webpack 5 tree shaking not working correctly with dynamic imports</a>
+                            <div class="issue-meta">
+                                <span class="funding-amount">$1,456</span> from 24 contributors | 
+                                <span class="repo-name">webpack/webpack</span> | 1 day ago
+                            </div>
+                        </div>
+                    </li>
+                    <li class="issue-item">
+                        <span class="issue-rank">5.</span>
+                        <div class="issue-content">
+                            <a href="#" class="issue-link">Docker build context optimization for monorepos</a>
+                            <div class="issue-meta">
+                                <span class="funding-amount">$1,203</span> from 16 contributors | 
+                                <span class="repo-name">docker/buildx</span> | 1 day ago
+                            </div>
+                        </div>
+                    </li>
+                </ul>
+            </div>
+            
+            <div class="how-it-works" id="how">
+                <div class="how-title">How BugPile Works</div>
+                <ol class="steps">
+                    <li class="step">
+                        <span class="step-number">1</span>
+                        <span class="step-text">Repository maintainers submit their project to BugPile or users can suggest repositories</span>
+                    </li>
+                    <li class="step">
+                        <span class="step-number">2</span>
+                        <span class="step-text">Issues are automatically synced from GitHub and ranked by total funding received</span>
+                    </li>
+                    <li class="step">
+                        <span class="step-number">3</span>
+                        <span class="step-text">Developers and companies donate money toward issues they want fixed or features they need</span>
+                    </li>
+                    <li class="step">
+                        <span class="step-number">4</span>
+                        <span class="step-text">Maintainers see which issues have the most financial backing and can prioritize accordingly</span>
+                    </li>
+                    <li class="step">
+                        <span class="step-number">5</span>
+                        <span class="step-text">When issues are resolved, funds are distributed to maintainers and contributors</span>
+                    </li>
+                </ol>
+            </div>
+            
+            <div class="recent-section">
+                <div class="section-header">Recently Funded</div>
+                <ul class="issue-list">
+                    <li class="issue-item">
+                        <span class="issue-rank">•</span>
+                        <div class="issue-content">
+                            <a href="#" class="issue-link">Fix CSS-in-JS hydration mismatch in production builds</a>
+                            <div class="issue-meta">
+                                <span class="funding-amount">+$150</span> | 
+                                <span class="repo-name">vercel/next.js</span> | 23 minutes ago
+                            </div>
+                        </div>
+                    </li>
+                    <li class="issue-item">
+                        <span class="issue-rank">•</span>
+                        <div class="issue-content">
+                            <a href="#" class="issue-link">Add native ESM support to Jest without experimental flags</a>
+                            <div class="issue-meta">
+                                <span class="funding-amount">+$200</span> | 
+                                <span class="repo-name">facebook/jest</span> | 1 hour ago
+                            </div>
+                        </div>
+                    </li>
+                    <li class="issue-item">
+                        <span class="issue-rank">•</span>
+                        <div class="issue-content">
+                            <a href="#" class="issue-link">Improve Rust-analyzer performance with large workspaces</a>
+                            <div class="issue-meta">
+                                <span class="funding-amount">+$75</span> | 
+                                <span class="repo-name">rust-lang/rust-analyzer</span> | 2 hours ago
+                            </div>
+                        </div>
+                    </li>
+                </ul>
+            </div>
+            
+            <div class="cta-section">
+                <div class="cta-title">Ready to fund the fixes you need?</div>
+                <div class="cta-text">Join thousands of developers putting their money behind the issues that matter.</div>
+                <div class="cta-buttons">
+                    <a href="#signup" class="btn btn-primary">Sign Up with GitHub</a>
+                    <a href="#browse" class="btn btn-secondary">Browse Issues</a>
+                </div>
+            </div>
+        </div>
+        
+        <div class="footer">
+            <div class="footer-links">
+                <a href="#about">About</a>
+                <a href="#faq">FAQ</a>
+                <a href="#terms">Terms</a>
+                <a href="#privacy">Privacy</a>
+                <a href="#contact">Contact</a>
+            </div>
+            <div>BugPile is not affiliated with GitHub, Inc.</div>
+        </div>
+    </div>
+</body>
+</html>
