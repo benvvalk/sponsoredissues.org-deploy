@@ -94,6 +94,24 @@
             margin-bottom: 30px;
             border-bottom: 1px solid #e6e6df;
             padding-bottom: 20px;
+            display: flex;
+            gap: 30px;
+            align-items: flex-start;
+        }
+
+        .intro-content {
+            flex: 1;
+        }
+
+        .intro-screenshot {
+            flex: 0 0 400px;
+        }
+
+        .intro-screenshot img {
+            width: 100%;
+            height: auto;
+            border: 1px solid #e6e6df;
+            border-radius: 4px;
         }
         
         .intro-title {
@@ -344,6 +362,15 @@
                 margin-top: 5px;
             }
             
+            .intro-section {
+                flex-direction: column;
+            }
+
+            .intro-screenshot {
+                flex: none;
+                order: 2;
+            }
+
             .stats-section {
                 grid-template-columns: 1fr;
             }
@@ -376,14 +403,21 @@
     <div class="container">
         <div class="main-content">
             <div class="intro-section">
-                <div class="intro-title">BugPile: Crowdfunding for GitHub Issues</div>
-                <div class="intro-text">
-                    Put your money where your bugs are. BugPile lets Free and Open Source software users pool funds to incentivize the GitHub issues that matter most to them.
+                <div class="intro-content">
+                    <div class="intro-title">BugPile: Crowdfunding for GitHub Issues</div>
+                    <div class="intro-text">
+                        Put your money where your bugs are. BugPile lets Free and Open Source software users pool funds to incentivize the GitHub issues that matter most to them.
+                    </div>
+                    <div class="intro-text">
+                        Found a critical bug blocking your project? Want a feature implemented faster? Fund it on BugPile and watch the community rally behind solutions that actually get built.
+                    </div>
+                    <a href="#demo" class="demo-link">» See how facebook/react raised $8,234 for 127 issues</a>
                 </div>
-                <div class="intro-text">
-                    Found a critical bug blocking your project? Want a feature implemented faster? Fund it on BugPile and watch the community rally behind solutions that actually get built.
+                <div class="intro-screenshot">
+                    <a href="images/issues-page-mockup.png">
+                        <img src="images/issues-page-mockup.png" alt="BugPile issues page mockup showing funded GitHub issues">
+                    </a>
                 </div>
-                <a href="#demo" class="demo-link">» See how facebook/react raised $8,234 for 127 issues</a>
             </div>
             
             <div class="stats-section">
