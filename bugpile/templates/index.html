@@ -1,3 +1,5 @@
+{% load static %}
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -451,8 +453,8 @@
                     </div>
                 </div>
                 <div class="intro-screenshot">
-                    <a href="images/issues-page-mockup.png">
-                        <img src="images/issues-page-mockup.png" alt="BugPile issues page mockup showing funded GitHub issues">
+                    <a href="{% static 'images/issues-page-mockup.png' %}">
+                        <img src="{% static 'images/issues-page-mockup.png' %}" alt="BugPile issues page mockup showing funded GitHub issues">
                     </a>
                 </div>
             </div>
