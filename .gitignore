@@ -1,2 +1,7 @@
-# Personal environment variable settings (for `direnv`).
+# Personal environment variable settings for `direnv`.
+#
+# Note: It is important that this file is never committed to version
+# control, because it usually contains API secrets, and it usually
+# enables debugging options (e.g. `DJANGO_DEBUG=1`) that shouldn't
+# be enabled in production.
 .envrc
