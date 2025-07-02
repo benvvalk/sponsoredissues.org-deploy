@@ -1,7 +1,20 @@
-# Personal environment variable settings for `direnv`.
+# `.env`:
+#
+# Local development settings for Django (e.g. `DJANGO_DEBUG=True`).
+#
+# The environment variables in this file are automatically loaded by
+# `settings.py` using the `django-environ` package.
 #
 # Note: It is important that this file is never committed to version
 # control, because it usually contains API secrets, and it usually
 # enables debugging options (e.g. `DJANGO_DEBUG=1`) that shouldn't
 # be enabled in production.
+.env
+
+# Personal environment variable settings for `direnv`.
+#
+# This is where I put personal environment settings that aren't
+# related to Django settings (and don't belong in `.env`). For
+# example, I use my `.envrc` to load my python virtual environment
+# using `source ~/python-env/bugpile/bin/activate`.
 .envrc
