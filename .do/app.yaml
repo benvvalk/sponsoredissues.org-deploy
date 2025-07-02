@@ -26,3 +26,10 @@ services:
   name: bugpile-web
   source_dir: /
   run_command: ./manage.py makemigrations && ./manage.py migrate && gunicorn --worker-tmp-dir /dev/shm bugpile.wsgi
+  envs:
+    - key: DJANGO_DEBUG
+      value: 'False'
+      scope: RUN_TIME
+    - key: DJANGO_ALLOWED_HOSTS
+      value: bugpile-app-yvkdq.ondigitalocean.app,bugpile.net
+      scope: RUN_TIME
