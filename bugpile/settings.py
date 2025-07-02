@@ -31,7 +31,10 @@ SECRET_KEY = env.str('DJANGO_SECRET_KEY', default=get_random_secret_key())
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = env.bool('DJANGO_DEBUG', default=True)
 
-ALLOWED_HOSTS = []
+# `ALLOWED_HOSTS` is a security measure to block "HTTP Host header
+# attacks". For further info, see:
+# https://docs.djangoproject.com/en/5.2/ref/settings/#allowed-hosts
+ALLOWED_HOSTS = env.list('DJANGO_ALLOWED_HOSTS', default=[])
 
 
 # Application definition
