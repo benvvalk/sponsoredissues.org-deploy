@@ -3,15 +3,6 @@ alerts:
 - rule: DOMAIN_FAILED
 features:
 - buildpack-stack=ubuntu-22
-# ingress:
-#   rules:
-#   - component:
-#       name: bugpile-web
-#     match:
-#       authority:
-#         exact: ""
-#       path:
-#         prefix: /
 name: bugpile-app
 region: tor
 services:
