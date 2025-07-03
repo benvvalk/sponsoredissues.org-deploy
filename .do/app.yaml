@@ -25,7 +25,7 @@ services:
   instance_size_slug: apps-s-1vcpu-0.5gb
   name: bugpile-web
   source_dir: /
-  run_command: ./manage.py makemigrations && ./manage.py migrate && gunicorn --worker-tmp-dir /dev/shm bugpile.wsgi
+  run_command: ./manage.py makemigrations && ./manage.py migrate && ./manage.py collectstatic --no-input && gunicorn --worker-tmp-dir /dev/shm bugpile.wsgi
   envs:
     - key: DJANGO_DEBUG
       value: 'False'
