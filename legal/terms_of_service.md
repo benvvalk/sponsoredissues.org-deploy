@@ -28,6 +28,11 @@ Note: This outline was created by modifying a ChatGPT-generated outline of the G
 
    * "Transfers": The process of moving funds raised through the Services to the Maintainer's bank account or other financial account.
 
+   * "User Profile": A profile page for a User, which allows them to (optionally) share details about their usage of the Platform with the public, including but not limited to:
+     * Bug Report Campaigns that they have donated to.
+     * Bug Report Campaigns that they have created for their own software projects.
+     * Bug Report Campaigns and Maintainers that they wish to endorse.
+
    * "We", "Us", "Platform", "Services", "Website": All features and functionalities provided by the BugPile website, which enable Users to donate to Bug Report Campaigns, or to create and receive funds from Bug Report Campaigns.
 
    * "You", "User": Any individual or entity that accesses, registers, or uses the Platform, including but not limited to Donors and Maintainers.
@@ -62,25 +67,27 @@ Note: This outline was created by modifying a ChatGPT-generated outline of the G
 
 Maintainers
 
-    * You agree to create Bug Report Campaigns solely for the purpose of funding software development work on your own FOSS (Free and Open Source Software) projects.
+    * You (the Maintainer) agree to create Bug Report Campaigns solely for the purpose of funding software development work on your own FOSS (Free and Open Source Software) projects.
       * You agree not create Bug Report Campaigns on behalf of another person or organization.
 
-    * You have no formal obligation to resolve the Bug Reports that are funded by your Bug Report Campaigns in any particular time frame.
-       * However, maintaining a good track record for resolving Bug Report Campaigns will likely improve your chances of success with any future Bug Report Campaigns.
+    * All contributions to your Bug Report Campaigns are donations, and you (the Maintainer) are under no formal obligation to resolve Bug Report Campaigns in any specific time frame. However:
+       * Establishing a track record of clear communication about your Bug Report Campaigns will help you build a good reputation on the Platform, and improve your chances of raising funds from Users in future Bug Report Campaigns.
 
-    * You agree to cooperate with any requests for further information about a Bug Report Campaign, in order to verify that it is for the purpose of FOSS software development and otherwise complies with these Terms of Service.
+    * You (the Maintainer) agree to cooperate with any requests for further information about your Bug Report Campaign, in order to verify that it is for the purpose of FOSS software development and otherwise complies with these Terms of Service.
+
+    * We do not withhold taxes from donation payments that are sent to your Bug Report Campaigns. You (the Maintainer) are solely responsible for reporting and paying any applicable taxes to your local tax authorities, for any donations that you receive through the Services.
 
 Donors
 
-    * For any donation you make on the Platform, you represent and warrant that you are legally authorized to use your payment method (e.g. credit card), and that any information associated with your payment method is correct.
+    * For any donation you make on the Platform, you (the Donor) represent and warrant that you are legally authorized to use your payment method (e.g. credit card), and that any information associated with your payment method is correct.
 
-    * You donate to Bug Report Campaigns at own risk, and without any expectation of returns.
+    * You (the Donor) donate to Bug Report Campaigns at own risk, and without any expectation of returns.
       * Donations are non-refundable, although we may grant refunds in exceptional circumstances, and at our sole discretion.
       * The purpose of donating to a Bug Report Campaign is only to help encourage and prioritize the work, and does not create any obligation for the Maintainer resolve the associated Bug Report within any particular time frame.
       * It is your responsibility to understand the software development goals for particular Bug Report Campaigns, and to correctly target your donations to the Bug Report Campaigns that you wish to support.
       * We are not responsible for the accuracy of information that Maintainers provide regarding their Bug Reports and Bug Report Campaigns, nor for any promises that they make regarding the resolution of those Bug Reports.
 
-    * If you opt into recurring donations, you authorize BugPile to charge your designated payment method for the amount and frequency that you have selected, without further authorization froe you.
+    * If you opt into recurring donations, you authorize BugPile to charge your designated payment method for the amount and frequency that you have selected, without further authorization from you.
       * You may cancel your recurring donation to a Bug Report Campaign at any time on the Website. Upon receiving your cancellation request, we will promptly cancel any future payments to the Bug Report Campaign(s) in question.
       * Any donations processed prior to your cancellation request will not be refunded, except at our sole discretion.
       * Your recurring donations to a Bug Report Campaign will be automatically stopped when the Bug Report Campaign is closed or deleted by the Maintainer.
@@ -89,15 +96,15 @@ Donors
 
 7. Transfers, Holds, Refunds
 
-    * We will make commercially reasonable efforts to make Transfers available to Maintainers promptly. However:
-      * Completion of a Transfer is dependent on you (the Maintainer) providing accurate and up-to-date information in your BugPile, Software Forge, and Payment Processor accounts.
+    * We will make commercially reasonable efforts to make Transfers promptly available to Maintainers. However:
+      * Completion of a Transfer depends on you (the Maintainer) providing accurate and up-to-date information in your BugPile, Software Forge, and Payment Processor accounts.
       * We do not guarantee that Transfers will be available to you (the Maintainer) within any specific time frame.
       * We expressly disclaim any and all responsibility for delays in Transfers, and any consequences arising from such delays.
 
     * We may choose, at our sole discretion and without prior notice, to issue refunds for a Bug Report Campaign, up to and including the entire amount donated to the Bug Report Campaign. We may issue refunds for several reasons, including but not limited to:
       * We have determined that a Bug Report Campaign does not comply with these Terms of Service.
-      * The Maintainer has not cooperated with our requests for further information about the Bug Report Campaign, in order to verify that it complies with these Terms of Service.
-      * To comply with applicable laws or regulations, or to comply with a court order, injunction, or writ.
+      * You (the Maintainer) have not cooperated with our requests for further information about your Bug Report Campaign, in order to verify that it complies with these Terms of Service.
+      * In order to comply with applicable laws or regulations, or to comply with a court order, injunction, or writ.
 
     * We may, at our sole discretion, place a hold on a Bug Report Campaign, restrict Transfers, reverse Transfers, or secure reserves in order to protect our Users. We may initiate these actions for several reasons, including but not limited to:
       * We need more information about a Bug Report Campaign, in order to verify that it complies with these Terms of Service.
@@ -119,33 +126,55 @@ Donors
      * any form of violent crime
      * any form of gambling, including but not limited to contests, raffles, sports betting, sweepstakes, and lotteries
      * any activity that disguises, conceals, or otherwise obscures the origin of funds
-     * any form of financial investments
+     * any form of financial investment
      * any form of bullying, harassment, or discrimination with respect to race, ethnicity, national origin, religious affiliation, sexual orientation, gender, gender identity, disabilities, or health conditions
      * any form of political fundraising
 
-   * In the case that is a Bug Report Campaign involves any of the above-mentioned prohibited and/or illegal activities, we may:
-     * Remove the Bug Report Campaign from the Website.
-     * Ban or disable the BugPile Account that created the Bug Report Campaign.
-     * Place a hold on the donations and/or Transfers to the Bug Report Campaign.
-     * Report the Maintainer of the Bug Report Campaign to law enforcement authorities, or undertake any other appropriate legal actions.
+   * In the case that your (the Maintainer's) Bug Report Campaign involves any of the above-mentioned prohibited and/or illegal activities, we may:
+     * Remove or disable the Bug Report Campaign on the Website.
+     * Remove or disable your BugPile Account.
+     * Place a hold on donations and/or Transfers to the Bug Report Campaign.
+     * Report your activities to law enforcement authorities, or undertake any other appropriate legal actions.
 
 9. Prohibited User Conduct
 
-    Bans actions like fraud, impersonation, spamming, unauthorized data use, use of bots, etc.
+   * By using the Services, you agree:
+     * not to interfere with or disrupt the servers or networks that provide the Services
+     * not to harvest the personally identifiable information of other Users
+     * not to impersonate another User or use another User's Account without their permission
+     * not to gain unauthorized access to the Services, or to any account, computer system, or network connected to the Services
+     * not to transmit more requests to the Services in a given time period than a human would reasonably produce using a conventional web browser
+     * not to use automated scripts ("bots") to interact with the Services, except as expressly permitted by these Terms of Service
+     * not to share your password or login credentials with others, for any reason
+     * not to make or accept donations that you know or suspect to be suspicious or fraudulent
+     * not to use the Services for the benefit of any country, organization, or individual that is under economic sanctions by applicable payment processors or governments
 
-    Requires proper use and security of accounts.
+   * In the case that you (the User) utilize the Services for any of the above-mentioned prohibited activities, we may:
+     * Delete or disable your BugPile Account.
+     * Freeze, cancel, or reverse any past or future donations connected with your BugPile Account or with your payment method.
 
-10. Content Moderation
+10. Moderation of Bug Report Campaigns
 
-    Users can report fundraisers or content.
+    * We closely moderate Bug Report Campaigns, using a combination of human review and automated tools, to help ensure that Bug Report Campaigns are related to FOSS development work, and otherwise comply with our Terms of Service.
 
-    Uses human and AI review to enforce policies.
+    * In order to create a new Bug Report Campaign, there is a two-step process:
+      1. You (the Maintainer) submit a request to create a new Bug Report Campaign, for a Bug Report that is connected to one of your FOSS (Free and Open Source Software) projects.
+      2. We review your request, make a decision to approve or reject the creation of the Bug Report Campaign, and notify you about our decision.
+
+    * You agree that there will be a delay between the time that you (the Maintainer) submit a request to create a Bug Report Campaign, and the time that we respond with decision to approve or reject the Bug Report Campaign. Further, you agree that:
+      * Our ability to reach an approve/reject decision about a Bug Report Campaign may depend on your (the Maintainer's) cooperation to provide additional information about the Bug Report Campaign, in order verify that it complies with these Terms of Service.
+      * We do not guarantee that we will review your (the Maintainer's) requests to create Bug Report Campaigns within any specific time frame.
+      * We expressly disclaim any financial losses that might result from a delay to review a Bug Report Campaign, or from a decision to reject a Bug Report Campaign.
+
+    * In the case that we reject your (the Maintainer's) request to a create a Bug Report Campaign, you may appeal the decision by providing further information about the Bug Report Campaign. However:
+      * We do not guarantee that we will change our decision in response to your appeal, or that we will review your appeal within any specific time frame.
+      * You (the Maintainer) agree to abide by our decision to reject a Bug Report Campaign, in spite of any appeals.
 
 11. Fees
 
-    No platform fee for personal fundraisers.
-
-    Transaction and recurring donation fees apply.
+    * You (the Maintainer) agree that Transaction Fees will be deducted from each donation payment that is sent to your Bug Report Campaign(s), including:
+      1. A Transaction Fee deducted by the Payment Processor.
+      2. A Transaction Fee deducted by BugPile.
 
 12. Intellectual Property & User Content
 
@@ -166,8 +195,6 @@ Donors
 14. Third-Party Services
 
     Platform may link to or rely on third-party services (not endorsed or controlled by BugPile).
-
-    Includes provisions for Apple-enabled apps.
 
 15. Account Termination
 
