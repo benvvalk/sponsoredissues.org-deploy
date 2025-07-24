@@ -150,16 +150,15 @@ For prohibited activities, we may:
 - See BugPile's Privacy Policy.
 - Certain information that you (the User) provide to BugPile will be publicly visible on the Website, including:
   - Information that you add to your User Profile (e.g. name, photo, biography).
-  - Information about which Bug Report Campaigns you (the Maintainer) have run or are currently running, the total amount of funds raised for those campaigns, and the number of contributors to each campaign.
-- By default, all donations to Bug Report Campaigns are anonymous. The public will not be able to see the amounts that you (the Donor) have donated, or which Bug Report Campaigns you have donated to. Further, when a Bug Report Campaign receives your donation, the owner (Maintainer) of that Bug Report Campaign will only be able see the amount donated, and not who has made the donation.
+  - Information about your (the Maintainer's) Bug Report Campaigns, including the total amount of funds raised for those campaigns, and the number of contributors to those campaigns.
+- By default, all donations to Bug Report Campaigns are anonymous. The public will not be able to see the amounts that you (the Donor) have donated, or which Bug Report Campaigns you have donated to. Further, when a Bug Report Campaign receives your donation, the owner (Maintainer) of the campaign will only be able see the amount donated, and not who has made the donation.
   - If you wish to make your donation public, you may enable the "Make this donation public" checkbox when making your payment, in which case the details of your donation will be made publicly visible on your User Profile, and will also be made visible to the Maintainer that owns the Bug Report Campaign.
 
 ## 12. Account Termination
 
-- You (the User) agree that we may, at our sole discretion and without prior notice, suspend or terminate your BugPile Account in response to concerns about account activities that are fraudulent, illegal, or constitute a material breach of these Terms of Service. In addition, we may suspend or terminate your BugPile Account if:
-  - We are unable to confirm that your (the Maintainer's) Bug Report Campaign complies with these Terms of Service.
-  - Your (the Maintainer's) third party Payment Processor and/or Software Forge accounts have been suspended or terminated.
-  - We need to close your BugPile Account in order to comply with applicable laws or regulations, or to comply with a court order, writ, or injunction.
+- We may, at our sole discretion and without prior notice, suspend or terminate your BugPile Account in response to concerns about account activities that are fraudulent, illegal, or constitute a material breach of these Terms of Service. In addition, we may suspend or terminate your BugPile Account if:
+  - You (Maintainer) violate the terms of your Payment Processor and/or Software Forge accounts.
+  - We need to comply with applicable laws or regulations, or to comply with a court order, writ, or injunction.
 - If we suspend or terminate your BugPile Account, we may also permanently delete the User Content associated with your BugPile Account, including but not limited to your User Profile and Bug Report Campaigns. To the extent permitted by applicable law, we disclaim any liability for damages or losses resulting from such deletion of data.
 
 ## 13. Disclaimers & Liability Limits
