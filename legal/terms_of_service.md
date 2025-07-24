@@ -43,7 +43,7 @@ Note: This outline was created by modifying a ChatGPT-generated outline of the G
 - Maintainers agree to comply with the Terms of Service for any Software Forge accounts or Payment Processor accounts that they use in conjunction with the Services.
 - Maintainers are responsible for safeguarding access to their BugPile, Software Forge, and Payment Processor accounts.
 
-## 6. User Responsibilities
+## 5. User Responsibilities
 
 ### Maintainers
 
@@ -67,7 +67,7 @@ Note: This outline was created by modifying a ChatGPT-generated outline of the G
   - Your recurring donations to a Bug Report Campaign will be automatically stopped when the Bug Report Campaign is closed or deleted by the Maintainer.
 - We reserve the right to limit the amount and/or frequency of your donations, to guard against fraudulent or abusive uses of the Platform (e.g. credit card testing, charging of stolen credit cards).
 
-## 7. Transfers, Holds, Refunds
+## 6. Transfers, Holds, Refunds
 
 - We will make commercially reasonable efforts to make Transfers promptly available to Maintainers. However:
   - Completion of a Transfer depends on you (the Maintainer) providing accurate and up-to-date information in your BugPile, Software Forge, and Payment Processor accounts.
@@ -82,7 +82,7 @@ Note: This outline was created by modifying a ChatGPT-generated outline of the G
   - One or more Donor(s) to the Bug Report Campaign have issued chargebacks with their payment processors, due to unauthorized uses of their credit cards or for any other reason.
   - In order to comply with applicable laws or regulations, or to comply with a court order, injunction, or writ.
 
-## 8. Prohibited Activities
+## 7. Prohibited Activities
 
 ### Bug Report Campaigns
 Maintainers may not conduct Bug Report Campaigns involving:
@@ -119,7 +119,7 @@ For prohibited activities, we may:
 - Freeze, cancel, or reverse donations
 - Report to law enforcement or take other legal actions
 
-## 10. Moderation of Bug Report Campaigns
+## 8. Moderation of Bug Report Campaigns
 
 - We closely moderate Bug Report Campaigns, using a combination of human review and automated tools, to help ensure that Bug Report Campaigns are related to FOSS development work, and otherwise comply with our Terms of Service.
 - In order to create a new Bug Report Campaign, there is a two-step process:
@@ -133,19 +133,19 @@ For prohibited activities, we may:
   - We do not guarantee that we will change our decision in response to your appeal, or that we will review your appeal within any specific time frame.
   - You (the Maintainer) agree to abide by our decision to reject a Bug Report Campaign, in spite of any appeals.
 
-## 11. Fees
+## 9. Fees
 
 - You (the Maintainer) agree that Transaction Fees will be deducted from each donation payment that is sent to your Bug Report Campaign(s), including:
   1. A Transaction Fee deducted by the Payment Processor.
   2. A Transaction Fee deducted by BugPile.
 
-## 12. Intellectual Property & User Content
+## 10. Intellectual Property & User Content
 
 - You (the User) represent and warrant that you have the necessary permissions to share any content that you publish on the Website, including but not limited to any information that you share on your User Profile.
 - You (the User) grant BugPile a worldwide, non-exclusive, royalty-free, perpetual, irrevocable license to copy, distribute, translate, publish, or prepare derivative works of any content that you share on the Website.
 - You (the Public) may notify us about possible copyright or trademark infringements of your intellectual property by Users of our Website, as per the Copyright Modernization Act of Canada. If we determine that your intellectual property rights have been violated, we may terminate the BugPile Account(s) of the offending User(s), or remove the infringing User Content from the Website.
 
-## 13. Privacy
+## 11. Privacy
 
 - See BugPile's Privacy Policy.
 - Certain information that you (the User) provide to BugPile will be publicly visible on the Website, including:
@@ -154,7 +154,7 @@ For prohibited activities, we may:
 - By default, all donations to Bug Report Campaigns are anonymous. The public will not be able to see the amounts that you (the Donor) have donated, or which Bug Report Campaigns you have donated to. Further, when a Bug Report Campaign receives your donation, the owner (Maintainer) of that Bug Report Campaign will only be able see the amount donated, and not who has made the donation.
   - If you wish to make your donation public, you may enable the "Make this donation public" checkbox when making your payment, in which case the details of your donation will be made publicly visible on your User Profile, and will also be made visible to the Maintainer that owns the Bug Report Campaign.
 
-## 15. Account Termination
+## 12. Account Termination
 
 - You (the User) agree that we may, at our sole discretion and without prior notice, suspend or terminate your BugPile Account in response to concerns about account activities that are fraudulent, illegal, or constitute a material breach of these Terms of Service. In addition, we may suspend or terminate your BugPile Account if:
   - We are unable to confirm that your (the Maintainer's) Bug Report Campaign complies with these Terms of Service.
@@ -162,18 +162,18 @@ For prohibited activities, we may:
   - We need to close your BugPile Account in order to comply with applicable laws or regulations, or to comply with a court order, writ, or injunction.
 - If we suspend or terminate your BugPile Account, we may also permanently delete the User Content associated with your BugPile Account, including but not limited to your User Profile and Bug Report Campaigns. To the extent permitted by applicable law, we disclaim any liability for damages or losses resulting from such deletion of data.
 
-## 16. Disclaimers & Liability Limits
+## 13. Disclaimers & Liability Limits
 
 - Services provided "as is."
 - No guarantee that any Bug Report Campaign will receive a specific amount of donations, or any donations at all.
 - Donors are responsible determining which Bug Report Campaigns they wish to support.
 - Liability capped at $100 or the amount paid to BugPile in past 6 months.
 
-## 17. Indemnification
+## 14. Indemnification
 
 - Users must indemnify BugPile for losses arising from use of the Services or from violation of these Terms of Service.
 
-## 18. Dispute Resolution & Arbitration
+## 15. Dispute Resolution & Arbitration
 
 - Users must resolve disputes via arbitration, in the legal jurisdiction of Ontario, Canada.
 - Class actions and jury trials waived.
