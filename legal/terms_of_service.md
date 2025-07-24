@@ -8,22 +8,22 @@ Note: This outline was created by modifying a ChatGPT-generated outline of the G
 
 ## 2. Key Definitions
 
-- **"BugPile Account"**: An account created by a User to access and utilize BugPile's Services. An Account includes personal information, credentials, and activity logs.
-- **"Bug Report"**: A description of a software bug which has yet to fixed, or a software feature which has yet to be implemented, in the context of a FOSS (Free and Open Source Software) Project.
-- **"Bug Report Campaign"**: A fundraising campaign initiated using the Services, towards the goal of resolving a specific Bug Report.
-- **"Donor"**: Any individual or entity that contributes funds to a Bug Report Campaign using the Services.
-- **"Maintainer"**: An individual, group, or entity who initiates one or more Bug Report Campaigns, and is the recipient of donations to those Bug Report Campaigns.
-- **"Software Project"**: A software project that is hosted on a supported Software Forge, and which solicits donations for Bug Reports on BugPile. Currently the only supported Software Forge is GitHub.
-- **"Software Forge"**: A platform that hosts the source code files and associated Bug Reports for a Software Project. Currently, the only Software Forge that BugPile supports is GitHub.
-- **"Transaction Fee"**: A fee charged by BugPile or its payment processors for processing donations.
-- **"Transfers"**: The process of moving funds raised through the Services to the Maintainer's bank account or other financial account.
-- **"User Content"**: Any content on the Website that is created by the activities of Users, including but not limited to BugPile Account data, User Profile contents, and Bug Report Campaigns.
-- **"User Profile"**: A profile page for a User, which allows them to (optionally) share details about their usage of the Platform with the public, including but not limited to:
-  - Bug Report Campaigns that they have donated to.
-  - Bug Report Campaigns that they are running for their own software projects.
-  - Bug Report Campaigns and Maintainers that they wish to endorse.
-- **"We", "Us", "Platform", "Services", "Website"**: All features and functionalities provided by the BugPile website, which enable Users to donate to Bug Report Campaigns, or to create and receive funds from Bug Report Campaigns.
-- **"You", "User"**: Any individual or entity that accesses, registers, or uses the Platform, including but not limited to Donors and Maintainers.
+- **"BugPile Account"**: User account for accessing Services, including personal information, credentials, and activity logs.
+- **"Bug Report"**: Description of a software bug or unimplemented feature in a Software Project.
+- **"Bug Report Campaign"**: Fundraising campaign to resolve a specific Bug Report.
+- **"Donor"**: Individual or entity contributing funds to Bug Report Campaigns.
+- **"Maintainer"**: Individual, group, or entity that owns a Software Project and conducts Bug Report Campaigns for that project.
+- **"Software Project"**: A software development project that publicly shares its source code and Bug Reports on a Software Forge.
+- **"Software Forge"**: A platform that hosts source code files and Bug Reports for Software Projects (currently GitHub only).
+- **"Transaction Fee"**: Fee charged by BugPile or payment processors for processing donations.
+- **"Transfers"**: Movement of raised funds to Maintainer's financial account.
+- **"User Content"**: Content created by Users on the Website.
+- **"User Profile"**: Optional public profile displaying:
+  • Donations to Bug Report Campaigns
+  • Owned Bug Report Campaigns
+  • Endorsed Campaigns and Maintainers
+- **"We", "Us", "Platform", "Services", "Website"**: BugPile's fundraising platform and all related features.
+- **"You", "User"**: Any individual or entity using the Platform.
 
 ## 3. Services Provided
 
