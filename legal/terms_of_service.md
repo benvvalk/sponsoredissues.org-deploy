@@ -83,45 +83,42 @@ Note: This outline was created by modifying a ChatGPT-generated outline of the G
   - One or more Donor(s) to the Bug Report Campaign have issued chargebacks with their payment processors, due to unauthorized uses of their credit cards or for any other reason.
   - In order to comply with applicable laws or regulations, or to comply with a court order, injunction, or writ.
 
-## 8. Prohibited Bug Report Campaigns
+## 8. Prohibited Activities
 
-- You (the Maintainer) agree that you will not conduct Bug Report Campaigns that involve:
-  - fraudulent, inaccurate, dishonest, or impossible claims
-  - violation of any law, regulation, industry requirement, or agreement by which you are bound, including those of payment card providers
-  - the promotion, advertisement, or sale of goods or services
-  - pornographic content
-  - purchase or use of controlled substances
-  - interaction with countries, regions, governments, persons, or entities that subject to economic sanctions by applicable payment providers or governments
-  - infringement of copyrights, trademarks, patents, or other intellectual property
-  - sale or purchase of weapons
-  - any form of financial crime
-  - any form of violent crime
-  - any form of gambling, including but not limited to contests, raffles, sports betting, sweepstakes, and lotteries
-  - any activity that disguises, conceals, or otherwise obscures the origin of funds
-  - any form of financial investment
-  - any form of bullying, harassment, or discrimination with respect to race, ethnicity, national origin, religious affiliation, sexual orientation, gender, gender identity, disabilities, or health conditions
-  - any form of political fundraising
-- In the case that your (the Maintainer's) Bug Report Campaign involves any of the above-mentioned prohibited and/or illegal activities, we may:
-  - Remove or disable the Bug Report Campaign on the Website.
-  - Remove or disable your BugPile Account.
-  - Place a hold on donations and/or Transfers to the Bug Report Campaign.
-  - Report your activities to law enforcement authorities, or undertake any other appropriate legal actions.
+### Bug Report Campaigns
+Maintainers may not conduct Bug Report Campaigns involving:
+- Fraudulent, inaccurate, dishonest, or impossible claims
+- Violation of laws, regulations, or payment card provider requirements
+- Promotion, advertisement, or sale of goods or services
+- Pornographic content
+- Controlled substances
+- Sanctioned countries, regions, governments, persons, or entities
+- Intellectual property infringement
+- Weapons
+- Financial or violent crime
+- Gambling, contests, raffles, sports betting, sweepstakes, or lotteries
+- Money laundering or fund origin concealment
+- Financial investment
+- Bullying, harassment, or discrimination
+- Political fundraising
 
-## 9. Prohibited User Conduct
+### User Conduct
+Users may not:
+- Interfere with or disrupt servers or networks
+- Harvest personally identifiable information of other Users
+- Impersonate other Users or use their accounts without permission
+- Gain unauthorized access to Services or connected systems
+- Generate excessive automated requests or use unauthorized bots
+- Share login credentials
+- Make or accept suspicious or fraudulent donations
+- Use Services for sanctioned entities
 
-- By using the Services, you agree:
-  - not to interfere with or disrupt the servers or networks that provide the Services
-  - not to harvest the personally identifiable information of other Users
-  - not to impersonate another User or use another User's Account without their permission
-  - not to gain unauthorized access to the Services, or to any account, computer system, or network connected to the Services
-  - not to transmit more requests to the Services in a given time period than a human would reasonably produce using a conventional web browser
-  - not to use automated scripts ("bots") to interact with the Services, except as expressly permitted by these Terms of Service
-  - not to share your password or login credentials with others, for any reason
-  - not to make or accept donations that you know or suspect to be suspicious or fraudulent
-  - not to use the Services for the benefit of any country, organization, or individual that is under economic sanctions by applicable payment processors or governments
-- In the case that you (the User) utilize the Services for any of the above-mentioned prohibited activities, we may:
-  - Delete or disable your BugPile Account.
-  - Freeze, cancel, or reverse any past or future donations connected with your BugPile Account or with your payment method.
+### Enforcement
+For prohibited activities, we may:
+- Remove or disable Bug Report Campaigns or Accounts
+- Place holds on donations and Transfers
+- Freeze, cancel, or reverse donations
+- Report to law enforcement or take other legal actions
 
 ## 10. Moderation of Bug Report Campaigns
 
