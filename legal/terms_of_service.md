@@ -47,26 +47,25 @@ Note: This outline was created by modifying a ChatGPT-generated outline of the G
 
 ### Maintainers
 
-- You (the Maintainer) agree to create Bug Report Campaigns solely for the purpose of funding software development work on your own FOSS (Free and Open Source Software) projects.
-  - You agree not create Bug Report Campaigns on behalf of another person or organization.
-- All contributions to your Bug Report Campaigns are donations, and you (the Maintainer) are under no formal obligation to resolve Bug Report Campaigns in any specific time frame. However:
-  - Establishing a track record of clear communication about your Bug Report Campaigns will help you build a good reputation on the Platform, and improve your chances of raising funds from Users in future Bug Report Campaigns.
-- You (the Maintainer) agree to cooperate with any requests for further information about your Bug Report Campaign, in order to verify that it is for the purpose of FOSS software development and otherwise complies with these Terms of Service.
-- We do not withhold taxes from donation payments that are sent to your Bug Report Campaigns. You (the Maintainer) are solely responsible for reporting and paying any applicable taxes to your local tax authorities, for any donations that you receive through the Services.
+- You agree to create Bug Report Campaigns solely for the purpose of funding work on your own Software Projects.
+- All contributions to your Bug Report Campaigns are donations, and you are have no formal obligation to resolve campaigns in any specific time frame. However:
+  - Maintaining clear communication with Donors about your Bug Report Campaigns will help you keep a good reputation on the Platform, and improve your chances of raising funds for future campaigns.
+- You  agree to cooperate with any requests for further information about your Bug Report Campaign(s), in order to verify that your campaign(s) comply with these Terms of Service.
+- We do not withhold taxes from donations that are sent to your Bug Report Campaigns. You are solely responsible for calculating, reporting, and paying any applicable taxes that you owe to your local tax authorities.
 
 ### Donors
 
-- For any donation you make on the Platform, you (the Donor) represent and warrant that you are legally authorized to use your payment method (e.g. credit card), and that any information associated with your payment method is correct.
-- You (the Donor) donate to Bug Report Campaigns at own risk, and without any expectation of returns.
-  - Donations are non-refundable, although we may grant refunds in exceptional circumstances, and at our sole discretion.
-  - The purpose of donating to a Bug Report Campaign is only to help encourage and prioritize the work, and does not create any obligation for the Maintainer resolve the associated Bug Report within any particular time frame.
-  - It is your responsibility to understand the software development goals for particular Bug Report Campaigns, and to correctly target your donations to the Bug Report Campaigns that you wish to support.
-  - We are not responsible for the accuracy of information that Maintainers provide regarding their Bug Reports and Bug Report Campaigns, nor for any promises that they make regarding the resolution of those Bug Reports.
+- For any donation you make on the Platform, you represent and warrant that you are legally authorized to use your payment method (e.g. credit card), and that any information associated with your payment method is correct and up to date.
+- You donate to Bug Report Campaigns at own risk, and without any expectation of returns.
+  - Donations are non-refundable.
+  - The purpose of donating to a Bug Report Campaign is only to help encourage and prioritize the work. It does not create any obligation for the Maintainer resolve the Bug Report Campaign within any particular time frame.
+  - It is your responsibility to understand the software development goals for particular Bug Report Campaigns, and to correctly target your donations to the campaigns that you wish to support.
+  - We are not responsible for the accuracy of any information provided by Maintainers about their Bug Report Campaigns, nor for any promises they make regarding resolution of those campaigns.
 - If you opt into recurring donations, you authorize BugPile to charge your designated payment method for the amount and frequency that you have selected, without further authorization from you.
-  - You may cancel your recurring donation to a Bug Report Campaign at any time on the Website. Upon receiving your cancellation request, we will promptly cancel any future payments to the Bug Report Campaign(s) in question.
-  - Any donations processed prior to your cancellation request will not be refunded, except at our sole discretion.
+  - You may cancel your recurring donation to a Bug Report Campaign at any time on the Website.
+  - Any donations processed prior to your cancellation request will not be refunded.
   - Your recurring donations to a Bug Report Campaign will be automatically stopped when the Bug Report Campaign is closed or deleted by the Maintainer.
-- We reserve the right to limit the amount and/or frequency of your donations to Bug Report Campaigns, to guard against fraudulent or abusive uses of the Platform (e.g. credit card testing, charging of stolen credit cards).
+- We reserve the right to limit the amount and/or frequency of your donations, to guard against fraudulent or abusive uses of the Platform (e.g. credit card testing, charging of stolen credit cards).
 
 ## 7. Transfers, Holds, Refunds
 
