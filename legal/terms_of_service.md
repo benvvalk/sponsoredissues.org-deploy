@@ -8,12 +8,15 @@ Note: This outline was created by modifying a ChatGPT-generated outline of the G
 ## 2. Key Definitions
 
 - **"BugPile Account"**: User account for accessing Services, including personal information, credentials, and activity logs.
-- **"Bug Report"**: Description of a software bug or unimplemented feature in a Software Project.
+- **"Bug Report"**: Description of a software bug or unimplemented feature in a FOSS Project.
 - **"Bug Report Campaign"**: Fundraising campaign to resolve a specific Bug Report.
 - **"Donor"**: Individual or entity contributing funds to Bug Report Campaigns.
-- **"Maintainer"**: Individual, group, or entity that owns a Software Project and conducts Bug Report Campaigns for that project.
-- **"Software Project"**: A software development project that publicly shares its source code and Bug Reports on a Software Forge.
-- **"Software Forge"**: A platform that hosts source code files and Bug Reports for Software Projects (currently GitHub only).
+- **"Maintainer"**: Individual, group, or entity that owns a FOSS Project and conducts Bug Report Campaigns for that project.
+- **"FOSS Project"**: A software development project that:
+  - Uses a Free and Open Source Software (FOSS) license approved by either the Open Source Initiative (OSI) or the Free Software Foundation (FSF)
+  - Publicly shares its complete source code and Bug Reports on GitHub
+  - Provides clear licensing information in its repository
+- **"Software Forge"**: A platform that hosts source code files and Bug Reports for FOSS Projects (currently GitHub only).
 - **"Transaction Fee"**: Fee charged by BugPile or payment processors for processing donations.
 - **"Transfers"**: Movement of raised funds to Maintainer's financial account.
 - **"User Content"**: Content created by Users on the Website.
@@ -26,7 +29,7 @@ Note: This outline was created by modifying a ChatGPT-generated outline of the G
 
 ## 3. Services Provided
 
-- BugPile offers tools for Maintainers raise funds for their software development work, by creating and managing Bug Report Campaigns.
+- BugPile offers tools for Maintainers to raise funds for their FOSS development work, by creating and managing Bug Report Campaigns.
 - BugPile does not solicit donations on behalf of its Users.
 - BugPile is a for-profit organization. BugPile is not a bank, charity, or financial advisor.
 - We reserve the right to change or suspend the Services at any time.
@@ -37,8 +40,9 @@ Note: This outline was created by modifying a ChatGPT-generated outline of the G
 - Users must be 18+ to create a BugPile account.
 - Users may donate to Bug Report Campaigns without creating an account.
 - Maintainers must create a BugPile Account in order to initiate Bug Report Campaigns. In addition to a BugPile Account, maintainers must also have:
-  1. A third-party account with a supported Software Forge. (Currently, GitHub is the only supported Software Forge.)
-  2. A third-party account with a supported Payment Processor.
+  1. A GitHub account hosting their FOSS Project with complete source code under an OSI or FSF-approved FOSS license.
+  2. Clear license documentation (LICENSE file or equivalent) in their repository root.
+  3. A third-party account with a supported Payment Processor.
 - Maintainers agree to comply with the Terms of Service for any Software Forge accounts or Payment Processor accounts that they use in conjunction with the Services.
 - Maintainers are responsible for safeguarding access to their BugPile, Software Forge, and Payment Processor accounts.
 
@@ -46,7 +50,7 @@ Note: This outline was created by modifying a ChatGPT-generated outline of the G
 
 ### Maintainers
 
-- You agree to create Bug Report Campaigns solely for the purpose of funding work on your own Software Projects.
+- You agree to create Bug Report Campaigns solely for the purpose of funding work on your own FOSS Projects.
 - All contributions to your Bug Report Campaigns are donations, and you have no formal obligation to resolve campaigns in any specific time frame. However:
   - Maintaining clear communication with Donors to your Bug Report Campaigns will help you establish a good reputation on the Platform, and improve your chances of raising funds for future campaigns.
 - You  agree to cooperate with our requests for further information about your Bug Report Campaign(s), in order to verify that your campaign(s) comply with these Terms of Service.
@@ -92,6 +96,9 @@ Maintainers may not conduct Bug Report Campaigns involving:
 
 - Fraudulent, inaccurate, dishonest, or impossible claims
 - Violation of laws, regulations, or payment card provider requirements
+- Software projects that do not use OSI or FSF-approved licenses
+- Software projects with incomplete, obfuscated, or proprietary source code
+- Projects hosted on platforms other than GitHub
 - Promotion, advertisement, or sale of goods or services
 - Pornographic content
 - Controlled substances
@@ -131,7 +138,7 @@ For prohibited activities, we may:
 
 - We closely moderate Bug Report Campaigns, using a combination of human review and automated tools, to help ensure that Bug Report Campaigns are related to software development work, and otherwise comply with our Terms of Service.
 - In order to create a new Bug Report Campaign, there is a two-step process:
-  1. You (the Maintainer) submit a request to create a new Bug Report Campaign, for a Bug Report that is related to one of your Software Projects.
+  1. You (the Maintainer) submit a request to create a new Bug Report Campaign, for a Bug Report that is related to one of your FOSS Projects.
   2. We review your request, and make a decision to approve or reject the campaign.
 - You agree that there will be a delay between the time that you (the Maintainer) submit a request to create a Bug Report Campaign, and the time that we respond with decision to approve or reject your request. Further, you agree that:
   - Our ability to reach an approve/reject  your request may depend on your (the Maintainer's) cooperation to provide additional information about the Bug Report Campaign, in order verify that it complies with these Terms of Service.
