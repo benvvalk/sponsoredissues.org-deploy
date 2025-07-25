@@ -4,7 +4,6 @@ Note: This outline was created by modifying a ChatGPT-generated outline of the G
 
 - These Terms of Service apply to all use of BugPile's Platform.
 - Use of the Platform constitutes agreement to these Terms.
-- Binding arbitration applies, with disputes resolved in the jurisdiction of Ontario, Canada.
 
 ## 2. Key Definitions
 
@@ -27,7 +26,7 @@ Note: This outline was created by modifying a ChatGPT-generated outline of the G
 
 ## 3. Services Provided
 
-- BugPile offers tools for Maintainers FOSS (Free and Open Source Software) projects to create and manage Bug Report Campaigns.
+- BugPile offers tools for Maintainers raise funds for their software development work, by creating and managing Bug Report Campaigns.
 - BugPile does not solicit donations on behalf of its Users.
 - BugPile is a for-profit organization. BugPile is not a bank, charity, or financial advisor.
 - We reserve the right to change or suspend the Services at any time.
@@ -48,9 +47,9 @@ Note: This outline was created by modifying a ChatGPT-generated outline of the G
 ### Maintainers
 
 - You agree to create Bug Report Campaigns solely for the purpose of funding work on your own Software Projects.
-- All contributions to your Bug Report Campaigns are donations, and you are have no formal obligation to resolve campaigns in any specific time frame. However:
-  - Maintaining clear communication with Donors about your Bug Report Campaigns will help you keep a good reputation on the Platform, and improve your chances of raising funds for future campaigns.
-- You  agree to cooperate with any requests for further information about your Bug Report Campaign(s), in order to verify that your campaign(s) comply with these Terms of Service.
+- All contributions to your Bug Report Campaigns are donations, and you have no formal obligation to resolve campaigns in any specific time frame. However:
+  - Maintaining clear communication with Donors to your Bug Report Campaigns will help you establish a good reputation on the Platform, and improve your chances of raising funds for future campaigns.
+- You  agree to cooperate with our requests for further information about your Bug Report Campaign(s), in order to verify that your campaign(s) comply with these Terms of Service.
 - We do not withhold taxes from donations that are sent to your Bug Report Campaigns. You are solely responsible for calculating, reporting, and paying any applicable taxes that you owe to your local tax authorities.
 
 ### Donors
@@ -88,7 +87,9 @@ Note: This outline was created by modifying a ChatGPT-generated outline of the G
 ## 7. Prohibited Activities
 
 ### Bug Report Campaigns
+
 Maintainers may not conduct Bug Report Campaigns involving:
+
 - Fraudulent, inaccurate, dishonest, or impossible claims
 - Violation of laws, regulations, or payment card provider requirements
 - Promotion, advertisement, or sale of goods or services
@@ -105,7 +106,9 @@ Maintainers may not conduct Bug Report Campaigns involving:
 - Political fundraising
 
 ### User Conduct
+
 Users may not:
+
 - Interfere with or disrupt servers or networks
 - Harvest personally identifiable information of other Users
 - Impersonate other Users or use their accounts without permission
@@ -116,7 +119,9 @@ Users may not:
 - Use Services for sanctioned entities
 
 ### Enforcement
+
 For prohibited activities, we may:
+
 - Remove or disable Bug Report Campaigns or Accounts
 - Place holds on donations and Transfers
 - Freeze, cancel, or reverse donations
@@ -124,15 +129,15 @@ For prohibited activities, we may:
 
 ## 8. Moderation of Bug Report Campaigns
 
-- We closely moderate Bug Report Campaigns, using a combination of human review and automated tools, to help ensure that Bug Report Campaigns are related to FOSS development work, and otherwise comply with our Terms of Service.
+- We closely moderate Bug Report Campaigns, using a combination of human review and automated tools, to help ensure that Bug Report Campaigns are related to software development work, and otherwise comply with our Terms of Service.
 - In order to create a new Bug Report Campaign, there is a two-step process:
-  1. You (the Maintainer) submit a request to create a new Bug Report Campaign, for a Bug Report that is connected to one of your FOSS (Free and Open Source Software) projects.
-  2. We review your request, make a decision to approve or reject the creation of the Bug Report Campaign, and notify you about our decision.
-- You agree that there will be a delay between the time that you (the Maintainer) submit a request to create a Bug Report Campaign, and the time that we respond with decision to approve or reject the Bug Report Campaign. Further, you agree that:
-  - Our ability to reach an approve/reject decision about a Bug Report Campaign may depend on your (the Maintainer's) cooperation to provide additional information about the Bug Report Campaign, in order verify that it complies with these Terms of Service.
-  - We do not guarantee that we will review your (the Maintainer's) requests to create Bug Report Campaigns within any specific time frame.
+  1. You (the Maintainer) submit a request to create a new Bug Report Campaign, for a Bug Report that is related to one of your Software Projects.
+  2. We review your request, and make a decision to approve or reject the campaign.
+- You agree that there will be a delay between the time that you (the Maintainer) submit a request to create a Bug Report Campaign, and the time that we respond with decision to approve or reject your request. Further, you agree that:
+  - Our ability to reach an approve/reject  your request may depend on your (the Maintainer's) cooperation to provide additional information about the Bug Report Campaign, in order verify that it complies with these Terms of Service.
+  - We do not guarantee that we will review your request to create a Bug Report Campaigns within any specific time frame.
   - We expressly disclaim any financial losses that might result from a delay to review a Bug Report Campaign, or from a decision to reject a Bug Report Campaign.
-- In the case that we reject your (the Maintainer's) request to a create a Bug Report Campaign, you may appeal the decision by providing further information about the Bug Report Campaign. However:
+- In the case that we reject your (the Maintainer's) request to a create a Bug Report Campaign, you may appeal the decision by providing further information. However:
   - We do not guarantee that we will change our decision in response to your appeal, or that we will review your appeal within any specific time frame.
   - You (the Maintainer) agree to abide by our decision to reject a Bug Report Campaign, in spite of any appeals.
 
