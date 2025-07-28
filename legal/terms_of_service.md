@@ -1,4 +1,4 @@
-Note: This outline was created by modifying a ChatGPT-generated outline of the GoFundMe Terms of Service: https://chatgpt.com/share/686d336d-6dd0-8006-b6d1-40476d507aa3
+# BugPile: Terms of Service
 
 ## 1. Introduction
 
