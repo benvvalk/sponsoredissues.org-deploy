@@ -32,6 +32,7 @@ Note: This outline was created by modifying a ChatGPT-generated outline of the G
 - BugPile offers tools for Maintainers to raise funds for their FOSS development work, by creating and managing Bug Report Campaigns.
 - BugPile does not solicit donations on behalf of its Users.
 - BugPile is a for-profit organization. BugPile is not a bank, charity, or financial advisor.
+  - Any information on the Website about legal, financial, or tax matters is not guaranteed to be accurate or up to date, and does not constitute professional advice. 
 - We reserve the right to change or suspend the Services at any time.
   - We are not liable for any financial losses that might result from interruptions to the Services.
 
