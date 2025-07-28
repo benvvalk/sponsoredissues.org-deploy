@@ -173,14 +173,15 @@ For prohibited activities, we may:
 
 ## 12. Disclaimers & Liability Limits
 
-- Services provided "as is."
-- No guarantee that any Bug Report Campaign will receive a specific amount of donations, or any donations at all.
+- You use the services at your own risk. The services are provided on an "as is" and "as available" basis.
+- We provide no guarantee that Bug Report Campaigns will receive any specific amount of donations, or any donations at all.
 - Donors are responsible determining which Bug Report Campaigns they wish to support.
-- Liability capped at $100 or the amount paid to BugPile in past 6 months.
+  - We do not endorse any Bug Report Campaigns, and we are not liable for the software development outcomes associated with Bug Report Campaigns.
+- Liability capped at $100 or the amount paid to BugPile in past 6 months, whichever is less.
 
 ## 13. Indemnification
 
-- Users must indemnify BugPile for losses arising from use of the Services or from violation of these Terms of Service.
+- You agree to indemnify BugPile for any losses, damages, expenses, fines arising from use of the Services or from violation of these Terms of Service.
 
 ## 14. Dispute Resolution & Arbitration
 
