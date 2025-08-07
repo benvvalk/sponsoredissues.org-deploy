@@ -8,6 +8,8 @@ class GitHubIssue(models.Model):
 
     class Meta:
         ordering = ['-created_at']
+        verbose_name = 'GitHub Issue'
+        verbose_name_plural = 'GitHub Issues'
 
     def __str__(self):
         return self.url
