@@ -20,5 +20,6 @@ from . import views
 
 urlpatterns = [
     path('', views.index, name='index'),
+    path('gh/<str:owner>/<str:repo>/issues', views.repo_issues, name='repo_issues'),
     path('admin/', admin.site.urls),
 ]

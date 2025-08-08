@@ -1,0 +1,371 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BugPile - {{ owner }}/{{ repo }} Issues</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: #f8f9fa;
+            color: #495057;
+            line-height: 1.6;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 0 20px;
+        }
+
+        .header {
+            background: white;
+            border-bottom: 1px solid #e9ecef;
+            padding: 24px 0;
+            margin-bottom: 0;
+        }
+
+        .header-content {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 0 20px;
+        }
+
+        .header h1 {
+            font-size: 2rem;
+            color: #1e3a8a;
+            margin-bottom: 8px;
+            font-weight: 700;
+        }
+
+        .repo-info {
+            color: #6b7280;
+            font-size: 1rem;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
+
+        .repo-stats {
+            display: flex;
+            gap: 24px;
+            font-size: 0.9rem;
+        }
+
+        .stat {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            color: #6b7280;
+        }
+
+        .search-container {
+            position: relative;
+            max-width: 600px;
+        }
+
+        .search-bar {
+            width: 100%;
+            padding: 12px 16px;
+            border: 1px solid #d1d5db;
+            border-radius: 6px;
+            font-size: 1rem;
+            background: white;
+            transition: all 0.2s ease;
+        }
+
+        .search-bar:focus {
+            outline: none;
+            border-color: #1e3a8a;
+            box-shadow: 0 0 0 3px rgba(30, 58, 138, 0.1);
+        }
+
+
+        .issues-list {
+            background: white;
+            border: 1px solid #e5e7eb;
+            border-radius: 8px;
+            overflow: hidden;
+        }
+
+        .issue-item {
+            display: flex;
+            align-items: center;
+            padding: 12px 24px;
+            border-bottom: 1px solid #f3f4f6;
+            transition: background-color 0.2s ease;
+            gap: 16px;
+        }
+
+        .issue-item:last-child {
+            border-bottom: none;
+        }
+
+        .issue-item:hover {
+            background: #f8fafc;
+        }
+
+        .rank-section {
+            flex-shrink: 0;
+            width: 60px;
+            text-align: center;
+        }
+
+        .rank {
+            font-size: 1.1rem;
+            font-weight: 700;
+            color: #1e3a8a;
+        }
+
+        .status-section {
+            flex-shrink: 0;
+            width: 24px;
+        }
+
+        .status-indicator {
+            width: 16px;
+            height: 16px;
+            border-radius: 50%;
+            border: 2px solid;
+        }
+
+        .status-open {
+            border-color: #059669;
+            background: #d1fae5;
+        }
+
+        .status-closed {
+            border-color: #dc2626;
+            background: #fee2e2;
+        }
+
+        .issue-main {
+            flex: 1;
+            min-width: 0;
+        }
+
+        .issue-title {
+            font-size: 1rem;
+            font-weight: 600;
+            color: #111827;
+            margin-bottom: 4px;
+            line-height: 1.4;
+        }
+
+        .issue-title:hover {
+            color: #1e3a8a;
+            cursor: pointer;
+        }
+
+        .issue-meta {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            flex-wrap: wrap;
+        }
+
+        .labels {
+            display: flex;
+            gap: 6px;
+            flex-wrap: wrap;
+        }
+
+        .label {
+            padding: 2px 8px;
+            border-radius: 12px;
+            font-size: 0.75rem;
+            font-weight: 500;
+            border: 1px solid;
+        }
+
+        .label-bug {
+            background: #fef2f2;
+            color: #b91c1c;
+            border-color: #fecaca;
+        }
+
+        .label-feature {
+            background: #eff6ff;
+            color: #1d4ed8;
+            border-color: #bfdbfe;
+        }
+
+        .label-enhancement {
+            background: #f0fdf4;
+            color: #166534;
+            border-color: #bbf7d0;
+        }
+
+        .label-priority {
+            background: #fffbeb;
+            color: #92400e;
+            border-color: #fed7aa;
+        }
+
+        .label-default {
+            background: #f3f4f6;
+            color: #374151;
+            border-color: #d1d5db;
+        }
+
+        .issue-number {
+            color: #6b7280;
+            font-size: 0.875rem;
+        }
+
+        .donation-section {
+            flex-shrink: 0;
+            text-align: right;
+            min-width: 120px;
+        }
+
+        .donation-amount {
+            font-size: 1.1rem;
+            font-weight: 700;
+            color: #059669;
+            margin-bottom: 2px;
+        }
+
+        .contributors {
+            font-size: 0.8rem;
+            color: #6b7280;
+        }
+
+        .action-section {
+            flex-shrink: 0;
+        }
+
+        .donate-btn {
+            background: #1e3a8a;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 6px;
+            font-weight: 500;
+            font-size: 0.9rem;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .donate-btn:hover {
+            background: #1e40af;
+            transform: translateY(-1px);
+        }
+
+        .no-issues {
+            text-align: center;
+            padding: 40px 20px;
+            color: #6b7280;
+        }
+
+        @media (max-width: 768px) {
+            .issue-item {
+                flex-direction: column;
+                align-items: stretch;
+                gap: 12px;
+                padding: 16px 20px;
+            }
+
+            .rank-section,
+            .status-section,
+            .donation-section,
+            .action-section {
+                width: auto;
+                text-align: left;
+            }
+
+            .donation-section {
+                text-align: left;
+            }
+
+            .mobile-row {
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+            }
+
+        }
+
+    </style>
+</head>
+<body>
+    <div class="header">
+        <div class="header-content">
+            <h1>{{ owner }}/{{ repo }}</h1>
+            <div class="repo-info">
+                <div class="repo-stats">
+                    <div class="stat">
+                        <span>⭐</span>
+                        <span>{{ stars }}</span>
+                    </div>
+                    <div class="stat">
+                        <span>🍴</span>
+                        <span>{{ forks }}</span>
+                    </div>
+                    <div class="stat">
+                        <span>📋</span>
+                        <span>{{ open_issues_count }} open issues</span>
+                    </div>
+                    <div class="stat">
+                        <span>💰</span>
+                        <span>${{ total_funding }} total funding</span>
+                    </div>
+                </div>
+            </div>
+            <div class="search-container">
+                <input type="text" class="search-bar" placeholder="Search issues by title, labels, or description...">
+            </div>
+        </div>
+    </div>
+
+    <div class="container">
+        <div class="issues-container">
+            <div class="issues-list">
+                {% if issues %}
+                    {% for issue in issues %}
+                    <div class="issue-item">
+                        <div class="rank-section">
+                            <div class="rank">#{{ issue.rank }}</div>
+                        </div>
+                        <div class="status-section">
+                            <div class="status-indicator {% if issue.state == 'open' %}status-open{% else %}status-closed{% endif %}"></div>
+                        </div>
+                        <div class="issue-main">
+                            <div class="issue-title">{{ issue.title }}</div>
+                            <div class="issue-meta">
+                                <div class="labels">
+                                    {% for label in issue.labels %}
+                                    <span class="label {% if 'bug' in label.name|lower %}label-bug{% elif 'feature' in label.name|lower %}label-feature{% elif 'enhancement' in label.name|lower %}label-enhancement{% elif 'priority' in label.name|lower %}label-priority{% else %}label-default{% endif %}">{{ label.name }}</span>
+                                    {% endfor %}
+                                </div>
+                                <span class="issue-number">#{{ issue.number }}</span>
+                            </div>
+                        </div>
+                        <div class="donation-section">
+                            <div class="donation-amount">${{ issue.donation_amount }}</div>
+                            <div class="contributors">{{ issue.contributors }} contributors</div>
+                        </div>
+                        <div class="action-section">
+                            <button class="donate-btn">Donate</button>
+                        </div>
+                    </div>
+                    {% endfor %}
+                {% else %}
+                    <div class="no-issues">
+                        <h3>No issues found</h3>
+                        <p>This repository doesn't have any issues yet.</p>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+</body>
+</html>
