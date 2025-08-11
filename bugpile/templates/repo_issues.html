@@ -263,14 +263,6 @@
             width: 120px;
         }
 
-        .donation-input {
-            width: 80px;
-            padding: 4px 8px;
-            border: 1px solid #d1d5db;
-            border-radius: 4px;
-            margin-bottom: 8px;
-            font-size: 0.875rem;
-        }
 
         .no-issues {
             text-align: center;
@@ -367,7 +359,6 @@
                         </div>
                         <div class="action-section">
                             <div class="paypal-container">
-                                <input type="number" class="donation-input" id="amount-{{ issue.number }}" placeholder="$10" min="1" step="0.01">
                                 <div id="paypal-button-{{ issue.number }}"></div>
                                 <button class="donate-btn" id="fallback-btn-{{ issue.number }}" style="display: none;">Donate via PayPal</button>
                             </div>
@@ -392,12 +383,10 @@
         {% for issue in issues %}
         paypal.Buttons({
             createOrder: function(data, actions) {
-                const amount = document.getElementById('amount-{{ issue.number }}').value || '10';
                 return actions.order.create({
                     purchase_units: [{
                         amount: {
-                            value: amount,
-                            currency_code: 'USD'
+                            value: '{{ issue.donation_amount|default:"10.00" }}'
                         },
                         description: 'Donation for {{ owner }}/{{ repo }} Issue #{{ issue.number }}: {{ issue.title|escapejs }}'
                     }]
