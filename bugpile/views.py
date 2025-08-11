@@ -1,4 +1,5 @@
 from django.shortcuts import render
+from django.conf import settings
 from .models import GitHubIssue
 import json
 
@@ -42,6 +43,7 @@ def repo_issues(request, owner, repo):
         'stars': 0,          # Hard-coded as requested
         'forks': 0,          # Hard-coded as requested
         'total_funding': 0,  # Hard-coded as requested
+        'paypal_client_id': settings.PAYPAL_CLIENT_ID,
     }
 
     return render(request, 'repo_issues.html', context)

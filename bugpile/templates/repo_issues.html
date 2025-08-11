@@ -259,6 +259,19 @@
             transform: translateY(-1px);
         }
 
+        .paypal-container {
+            width: 120px;
+        }
+
+        .donation-input {
+            width: 80px;
+            padding: 4px 8px;
+            border: 1px solid #d1d5db;
+            border-radius: 4px;
+            margin-bottom: 8px;
+            font-size: 0.875rem;
+        }
+
         .no-issues {
             text-align: center;
             padding: 40px 20px;
@@ -353,7 +366,11 @@
                             <div class="contributors">{{ issue.contributors }} contributors</div>
                         </div>
                         <div class="action-section">
-                            <button class="donate-btn">Donate</button>
+                            <div class="paypal-container">
+                                <input type="number" class="donation-input" id="amount-{{ issue.number }}" placeholder="$10" min="1" step="0.01">
+                                <div id="paypal-button-{{ issue.number }}"></div>
+                                <button class="donate-btn" id="fallback-btn-{{ issue.number }}" style="display: none;">Donate via PayPal</button>
+                            </div>
                         </div>
                     </div>
                     {% endfor %}
@@ -366,6 +383,54 @@
             </div>
         </div>
     </div>
+
+    <!-- PayPal SDK -->
+    <script src="https://www.paypal.com/sdk/js?client-id={{ paypal_client_id }}&currency=USD"></script>
+
+    <script>
+        // Initialize PayPal buttons for each issue
+        {% for issue in issues %}
+        paypal.Buttons({
+            createOrder: function(data, actions) {
+                const amount = document.getElementById('amount-{{ issue.number }}').value || '10';
+                return actions.order.create({
+                    purchase_units: [{
+                        amount: {
+                            value: amount,
+                            currency_code: 'USD'
+                        },
+                        description: 'Donation for {{ owner }}/{{ repo }} Issue #{{ issue.number }}: {{ issue.title|escapejs }}'
+                    }]
+                });
+            },
+            onApprove: function(data, actions) {
+                return actions.order.capture().then(function(details) {
+                    // Payment successful
+                    alert('Thank you for your donation of $' + details.purchase_units[0].amount.value + ' for issue #{{ issue.number }}!');
+
+                    // Optional: Send payment details to your server
+                    fetch('/donate/complete/', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'X-CSRFToken': '{{ csrf_token }}'
+                        },
+                        body: JSON.stringify({
+                            issue_number: {{ issue.number }},
+                            amount: details.purchase_units[0].amount.value,
+                            transaction_id: details.id,
+                            payer_email: details.payer.email_address
+                        })
+                    });
+                });
+            },
+            onError: function(err) {
+                console.error('PayPal payment error:', err);
+                alert('Payment failed. Please try again.');
+            }
+        }).render('#paypal-button-{{ issue.number }}');
+        {% endfor %}
+    </script>
 
 </body>
 </html>
