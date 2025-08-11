@@ -36,6 +36,14 @@ DEBUG = env.bool('DJANGO_DEBUG', default=True)
 # https://docs.djangoproject.com/en/5.2/ref/settings/#allowed-hosts
 ALLOWED_HOSTS = env.list('DJANGO_ALLOWED_HOSTS', default=[])
 
+# You need to set this so that donations will be correctly routed to
+# your PayPal account.
+#
+# To get your `PAYPAL_CLIENT_ID`:
+# (1) Go to `https://developer.paypal.com` and log in with your PayPal username/password.
+# (2) Go to the "Apps & Credentials" tab.
+# (3) Beside "Client ID" for "Default Application", click the "Copy to Clipboard" icon.
+PAYPAL_CLIENT_ID = env.str('PAYPAL_CLIENT_ID', default=None)
 
 # Application definition
 
