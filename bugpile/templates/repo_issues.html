@@ -386,7 +386,7 @@
                             <div class="contributors">{{ issue.contributors }} contributors</div>
                         </div>
                         <div class="action-section">
-                            <button class="donate-btn" onclick="openModal()">Donate</button>
+                            <button class="donate-btn" onclick="openModal('#{{ issue.rank }}', '{{ issue.title|escapejs }}', '{{ issue.number }}')">Donate</button>
                         </div>
                     </div>
                     {% endfor %}
@@ -407,11 +407,14 @@
     <div id="donateModal" class="modal">
         <div class="modal-content">
             <span class="close" onclick="closeModal()">&times;</span>
+            <h3 id="modalTitle"></h3>
         </div>
     </div>
 
     <script>
-        function openModal() {
+        function openModal(rank, title, issueNumber) {
+            const titleElement = document.getElementById('modalTitle');
+            titleElement.innerHTML = `Donate to <a href="https://github.com/{{ owner }}/{{ repo }}/issues/${issueNumber}" target="_blank" style="color: #1e3a8a; text-decoration: none;">${title}</a>`;
             document.getElementById('donateModal').style.display = 'block';
         }
 
