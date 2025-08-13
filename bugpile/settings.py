@@ -45,6 +45,10 @@ ALLOWED_HOSTS = env.list('DJANGO_ALLOWED_HOSTS', default=[])
 # (3) Beside "Client ID" for "Default Application", click the "Copy to Clipboard" icon.
 PAYPAL_CLIENT_ID = env.str('PAYPAL_CLIENT_ID', default=None)
 
+# Fixes blank pop-up window when clicking "PayPal" button.
+# See: https://github.com/paypal/paypal-js/issues/534#issuecomment-2230393690
+SECURE_CROSS_ORIGIN_OPENER_POLICY = 'same-origin-allow-popups'
+
 # Application definition
 
 INSTALLED_APPS = [
