@@ -292,6 +292,33 @@
             position: relative;
         }
 
+        .donation-input-group {
+            margin: 20px 0;
+        }
+
+        .donation-input-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #374151;
+        }
+
+        .donation-amount-input {
+            width: 100%;
+            padding: 10px 12px;
+            border: 1px solid #d1d5db;
+            border-radius: 6px;
+            font-size: 1rem;
+            background: white;
+            transition: all 0.2s ease;
+        }
+
+        .donation-amount-input:focus {
+            outline: none;
+            border-color: #1e3a8a;
+            box-shadow: 0 0 0 3px rgba(30, 58, 138, 0.1);
+        }
+
         .close {
             color: #999;
             float: right;
@@ -408,6 +435,11 @@
         <div class="modal-content">
             <span class="close" onclick="closeModal()">&times;</span>
             <h3 id="modalTitle"></h3>
+            <div class="donation-input-group">
+                <label for="donationAmount">Donation Amount (USD)</label>
+                <input type="number" id="donationAmount" class="donation-amount-input" 
+                       value="2" min="2" step="1" placeholder="2">
+            </div>
         </div>
     </div>
 
