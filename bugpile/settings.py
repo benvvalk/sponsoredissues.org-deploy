@@ -36,14 +36,25 @@ DEBUG = env.bool('DJANGO_DEBUG', default=True)
 # https://docs.djangoproject.com/en/5.2/ref/settings/#allowed-hosts
 ALLOWED_HOSTS = env.list('DJANGO_ALLOWED_HOSTS', default=[])
 
-# You need to set this so that donations will be correctly routed to
-# your PayPal account.
+# You need to set the `PAYPAL_CLIENT_ID` and `PAYPAL_CLIENT_SECRET`
+# values, in order to receive donations to your PayPal account.
 #
-# To get your `PAYPAL_CLIENT_ID`:
-# (1) Go to `https://developer.paypal.com` and log in with your PayPal username/password.
+# Note also that your PayPal account has two different pairs of
+# `PAYPAL_CLIENT_ID`/`PAYPAL_CLIENT_SECRET` values. One pair values is
+# for "sandbox" mode and the other pair is for "live" mode.
+#
+# To get your `PAYPAL_CLIENT_ID`/`PAYPAL_CLIENT_SECRET` values:
+# (1) Go to `https://developer.paypal.com` and log in with your PayPal
+# username/password.
 # (2) Go to the "Apps & Credentials" tab.
-# (3) Beside "Client ID" for "Default Application", click the "Copy to Clipboard" icon.
+# (3) Note the current state of the "Sandbox" radio button in the top
+# right corner of the page, which indicates whether you are viewing the
+# `PAYPAL_CLIENT_ID`/`PAYPAL_CLIENT_SECRET` values for sandbox mode or
+# live mode.
+# (3) Copy the values from "Client ID"/"Secret" columns from the
+# "Default Application" row in the table.
 PAYPAL_CLIENT_ID = env.str('PAYPAL_CLIENT_ID', default=None)
+PAYPAL_CLIENT_SECRET = env.str('PAYPAL_CLIENT_SECRET', default=None)
 
 # Fixes blank pop-up window when clicking "PayPal" button.
 # See: https://github.com/paypal/paypal-js/issues/534#issuecomment-2230393690
