@@ -333,6 +333,27 @@
             color: #333;
         }
 
+        .banner {
+            background: #fef3c7;
+            border: 1px solid #f59e0b;
+            color: #92400e;
+            padding: 12px 0;
+            text-align: center;
+            font-weight: 500;
+        }
+
+        .banner.sandbox {
+            background: #fef3c7;
+            border-color: #f59e0b;
+            color: #92400e;
+        }
+
+        .banner.no-paypal {
+            background: #fee2e2;
+            border-color: #f87171;
+            color: #b91c1c;
+        }
+
         @media (max-width: 768px) {
             .issue-item {
                 flex-direction: column;
@@ -385,6 +406,16 @@
             </div>
         </div>
     </div>
+
+    {% if not paypal_mode %}
+    <div class="banner no-paypal">
+        ⚠️ PayPal is not configured. Donations are currently unavailable.
+    </div>
+    {% elif paypal_mode == 'sandbox' %}
+    <div class="banner sandbox">
+        🧪 PayPal is running in sandbox mode for testing. Real payments will not be processed.
+    </div>
+    {% endif %}
 
     <div class="container">
         <div class="issues-container">
