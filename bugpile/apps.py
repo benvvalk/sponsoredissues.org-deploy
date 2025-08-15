@@ -8,6 +8,7 @@ class BugpileConfig(AppConfig):
     def ready(self):
         from django.conf import settings
         from .utils import detect_paypal_environment
+        from . import utils
 
         logger = logging.getLogger('bugpile')
 
@@ -16,12 +17,16 @@ class BugpileConfig(AppConfig):
 
         if not client_id and not client_secret:
             logger.info("PayPal not configured: PAYPAL_CLIENT_ID and PAYPAL_CLIENT_SECRET need to be set")
+            utils.PAYPAL_MODE = None
         elif not client_id:
             logger.info("PayPal not configured: PAYPAL_CLIENT_ID needs to be set")
+            utils.PAYPAL_MODE = None
         elif not client_secret:
             logger.info("PayPal not configured: PAYPAL_CLIENT_SECRET needs to be set")
+            utils.PAYPAL_MODE = None
         else:
             environment = detect_paypal_environment()
+            utils.PAYPAL_MODE = environment
             if environment:
                 logger.info(f"PayPal configured for {environment} mode")
             else:
