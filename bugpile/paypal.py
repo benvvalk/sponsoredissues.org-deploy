@@ -6,7 +6,7 @@ from django.conf import settings
 # Global variable to cache PayPal environment, set during app startup
 PAYPAL_MODE: Optional[Literal['sandbox', 'live']] = None
 
-def detect_paypal_environment(
+def init_paypal(
     client_id: Optional[str] = None,
     client_secret: Optional[str] = None
 ) -> Optional[Literal['sandbox', 'live']]:
