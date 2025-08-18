@@ -1,7 +1,7 @@
 from django.shortcuts import render
 from django.conf import settings
 from .models import GitHubIssue
-from . import utils
+from . import paypal
 import json
 
 def index(request):
@@ -45,7 +45,7 @@ def repo_issues(request, owner, repo):
         'forks': 0,          # Hard-coded as requested
         'total_funding': 0,  # Hard-coded as requested
         'paypal_client_id': settings.PAYPAL_CLIENT_ID,
-        'paypal_mode': utils.PAYPAL_MODE,
+        'paypal_mode': paypal.PAYPAL_MODE,
     }
 
     return render(request, 'repo_issues.html', context)
