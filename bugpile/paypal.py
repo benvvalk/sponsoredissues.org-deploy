@@ -6,7 +6,7 @@ from django.conf import settings
 # Global variable to cache PayPal environment, set during app startup
 PAYPAL_MODE: Optional[Literal['sandbox', 'live']] = None
 
-def get_access_token(
+def get_api_token(
     mode: Literal['sandbox', 'live'],
     client_id: str,
     client_secret: str
@@ -77,11 +77,11 @@ def init_paypal(
         return None
 
     # Test sandbox first (more common during development)
-    if get_access_token('sandbox', client_id, client_secret):
+    if get_api_token('sandbox', client_id, client_secret):
         return 'sandbox'
 
     # Test live environment
-    if get_access_token('live', client_id, client_secret):
+    if get_api_token('live', client_id, client_secret):
         return 'live'
 
     return None
