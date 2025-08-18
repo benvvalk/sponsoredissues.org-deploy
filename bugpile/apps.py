@@ -25,7 +25,7 @@ class BugpileConfig(AppConfig):
             logger.info("PayPal not configured: PAYPAL_CLIENT_SECRET needs to be set")
             paypal.PAYPAL_MODE = None
         else:
-            environment = init_paypal()
+            environment = init_paypal(client_id, client_secret)
             paypal.PAYPAL_MODE = environment
             if environment:
                 logger.info(f"PayPal configured for {environment} mode")

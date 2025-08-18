@@ -8,24 +8,20 @@ PAYPAL_MODE: Optional[Literal['sandbox', 'live']] = None
 
 def get_access_token(
     mode: Literal['sandbox', 'live'],
-    client_id: Optional[str] = None,
-    client_secret: Optional[str] = None
+    client_id: str,
+    client_secret: str
 ) -> Optional[str]:
     """
     Gets an access token from PayPal for the specified environment.
 
     Args:
         mode: PayPal environment ('sandbox' or 'live')
-        client_id: PayPal client ID. If None, uses settings.PAYPAL_CLIENT_ID
-        client_secret: PayPal client secret. If None, uses settings.PAYPAL_CLIENT_SECRET
+        client_id: PayPal client ID (required)
+        client_secret: PayPal client secret (required)
 
     Returns:
         Access token string if successful, None if failed
     """
-    # Use provided credentials or fall back to settings
-    client_id = client_id or settings.PAYPAL_CLIENT_ID
-    client_secret = client_secret or settings.PAYPAL_CLIENT_SECRET
-
     if not client_id or not client_secret:
         return None
 
@@ -59,8 +55,8 @@ def get_access_token(
     return None
 
 def init_paypal(
-    client_id: Optional[str] = None,
-    client_secret: Optional[str] = None
+    client_id: str,
+    client_secret: str
 ) -> Optional[Literal['sandbox', 'live']]:
     """
     Determines if PayPal credentials are for sandbox or live environment.
@@ -69,18 +65,14 @@ def init_paypal(
     sandbox first since it's the more common use case during development.
 
     Args:
-        client_id: PayPal client ID. If None, uses settings.PAYPAL_CLIENT_ID
-        client_secret: PayPal client secret. If None, uses settings.PAYPAL_CLIENT_SECRET
+        client_id: PayPal client ID (required)
+        client_secret: PayPal client secret (required)
 
     Returns:
         'sandbox' if credentials work with sandbox API
         'live' if credentials work with live API
         None if credentials don't work with either API or are missing
     """
-    # Use provided credentials or fall back to settings
-    client_id = client_id or settings.PAYPAL_CLIENT_ID
-    client_secret = client_secret or settings.PAYPAL_CLIENT_SECRET
-
     if not client_id or not client_secret:
         return None
 
