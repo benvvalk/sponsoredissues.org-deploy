@@ -6,6 +6,21 @@ from django.conf import settings
 # Global variable to cache PayPal environment, set during app startup
 PAYPAL_MODE: Optional[Literal['sandbox', 'live']] = None
 
+def get_api_url(mode: Literal['sandbox', 'live']) -> str:
+    """
+    Returns the base URL for PayPal API requests based on the mode.
+
+    Args:
+        mode: PayPal environment ('sandbox' or 'live')
+
+    Returns:
+        Base URL for the specified PayPal environment
+    """
+    if mode == 'sandbox':
+        return 'https://api-m.sandbox.paypal.com'
+    else:  # live
+        return 'https://api-m.paypal.com'
+
 def get_api_token(
     mode: Literal['sandbox', 'live'],
     client_id: str,
@@ -38,11 +53,8 @@ def get_api_token(
 
     data = 'grant_type=client_credentials'
 
-    # Determine URL based on mode
-    if mode == 'sandbox':
-        url = 'https://api-m.sandbox.paypal.com/v1/oauth2/token'
-    else:  # live
-        url = 'https://api-m.paypal.com/v1/oauth2/token'
+    # Use the get_api_url method to determine URL based on mode
+    url = f"{get_api_url(mode)}/v1/oauth2/token"
 
     try:
         response = requests.post(url, headers=headers, data=data, timeout=10)
