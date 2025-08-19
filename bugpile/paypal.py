@@ -85,6 +85,12 @@ def init_paypal(
         'live' if credentials work with live API
         None if credentials don't work with either API or are missing
     """
+    if not client_id:
+        print("PayPal not configured: PAYPAL_CLIENT_ID needs to be set")
+
+    if not client_secret:
+        print("PayPal not configured: PAYPAL_CLIENT_SECRET needs to be set")
+
     if not client_id or not client_secret:
         PAYPAL_MODE = None
         return PAYPAL_MODE
@@ -92,12 +98,13 @@ def init_paypal(
     # Test sandbox first (more common during development)
     if get_api_token('sandbox', client_id, client_secret):
         PAYPAL_MODE = 'sandbox'
-        return PAYPAL_MODE
-
-    # Test live environment
-    if get_api_token('live', client_id, client_secret):
+    elif get_api_token('live', client_id, client_secret):
         PAYPAL_MODE = 'live'
-        return PAYPAL_MODE
+    else:
+        PAYPAL_MODE = None
 
-    PAYPAL_MODE = None
-    return PAYPAL_MODE
+    if PAYPAL_MODE:
+        print(f"PayPal configured for {PAYPAL_MODE} mode")
+    else:
+        print("PayPal not configured: invalid PAYPAL_CLIENT_ID/PAYPAL_CLIENT_SECRET")
+
