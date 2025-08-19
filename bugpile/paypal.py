@@ -86,14 +86,18 @@ def init_paypal(
         None if credentials don't work with either API or are missing
     """
     if not client_id or not client_secret:
-        return None
+        PAYPAL_MODE = None
+        return PAYPAL_MODE
 
     # Test sandbox first (more common during development)
     if get_api_token('sandbox', client_id, client_secret):
-        return 'sandbox'
+        PAYPAL_MODE = 'sandbox'
+        return PAYPAL_MODE
 
     # Test live environment
     if get_api_token('live', client_id, client_secret):
-        return 'live'
+        PAYPAL_MODE = 'live'
+        return PAYPAL_MODE
 
-    return None
+    PAYPAL_MODE = None
+    return PAYPAL_MODE
