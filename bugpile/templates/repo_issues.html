@@ -496,6 +496,21 @@
             document.getElementById('donateModal').style.display = 'none';
         }
 
+        // PayPal integration.
+        //
+        // For a great tutorial about implementing PayPal, see:
+        // https://www.youtube.com/watch?v=DNM9FdFrI1k
+        //
+        // Note: Since this PayPal integration is mostly done on the client-side,
+        // it means that the client can easily hack the
+        // payment amount, target GitHub issue, etc.. However, it doesn't
+        // really matter since the payments are donations.
+        //
+        // One thing that we do want to prevent is the client pretending that
+        // they donated more to an issue than they actually sent through PayPal,
+        // in order to game the issue ranking. Such a hack is not possible because
+        // the payment amount is not accessible in the "onApprove" callback. (It
+        // is hidden behind the PayPal order ID.)
         function renderPayPalButton() {
             paypal.Buttons({
                 createOrder: function(data, actions) {
@@ -511,12 +526,26 @@
                     });
                 },
                 onApprove: function(data, actions) {
-                    return actions.order.capture().then(function(details) {
-                        alert('Thank you for your donation, ' + details.payer.name.given_name + '!');
-                        closeModal();
-                        // Here you could send the transaction details to your server
-                        // to record the donation and update the issue funding
-                    });
+                    return fetch("/paypal/capture_order", {
+                        method: "post",
+                        headers: {
+                            "Content-Type": "application/json; charset=utf-8",
+                            "X-CSRFToken": "{{ csrf_token }}"
+                        },
+                        body: JSON.stringify({
+                            issue_number: currentIssueNumber,
+                            owner: "{{ owner }}",
+                            paypal_order_id: data.orderID,
+                            repo: "{{ repo }}",
+                        })
+                    })
+                    .then((res) => {
+                        if (res.ok) return res.json
+                        return res.json().then(json => Promise.reject(json))
+                    })
+                    .catch(e => {
+                        console.error(e.error)
+                    })
                 },
                 onError: function(err) {
                     console.error('PayPal error:', err);

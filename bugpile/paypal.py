@@ -1,7 +1,11 @@
 import requests
 import base64
+import json
+import logging
 from typing import Optional, Literal
 from django.conf import settings
+from django.http import JsonResponse
+from django.views.decorators.http import require_POST
 
 # Global variable to cache PayPal environment, set during app startup
 PAYPAL_MODE: Optional[Literal['sandbox', 'live']] = None
@@ -110,3 +114,65 @@ def init_paypal(
     else:
         print("PayPal not configured: invalid PAYPAL_CLIENT_ID/PAYPAL_CLIENT_SECRET")
 
+    return PAYPAL_MODE
+
+"""
+Capture a PayPal payment.
+
+This is a webhook that gets invoked immediately after the user has
+approved a payment in the PayPal browser pop-up window.
+
+PayPal API documentation:
+https://developer.paypal.com/docs/api/orders/v2/#orders_capture
+
+Security note:
+
+In the code below, the `order_id` field from the incoming POST data is
+directly injected into the URLs that we use for our PayPal REST API
+calls. This doesn't feel great from a security standpoint, but I think
+it's fine actually. The PayPal API calls are authenticated using our
+API token (`api_token` below), and we're only allowed to make API calls
+against PayPal order IDs that were created with ourselves (with our
+PAYPAL_CLIENT_ID). On top of that, this method uses Django's usual CSRF
+token checking.
+"""
+@require_POST
+def capture_order(request):
+    global PAYPAL_MODE
+
+    # Check if PayPal settings (`PAYPAL_CLIENT_ID`/`PAYPAL_CLIENT_SECRET`)
+    # are correctly configured.
+
+    if PAYPAL_MODE is None:
+        return JsonResponse({'reason': 'paypal settings not correctly configured'}, status=500)
+
+    # Get PayPal order details (e.g. amount, currency).
+
+    paypal_order_id = json.loads(request.body)['paypal_order_id']
+
+    api_token = get_api_token(
+        PAYPAL_MODE, settings.PAYPAL_CLIENT_ID, settings.PAYPAL_CLIENT_SECRET)
+
+    headers = {
+        'Authorization': 'Bearer ' + api_token,
+        'Content-Type': 'application/json'
+    }
+
+    url = f'{get_api_url(PAYPAL_MODE)}/v2/checkout/orders/{paypal_order_id}'
+
+    response = requests.get(url, headers=headers)
+    if response.status_code != 200:
+        return JsonResponse({'reason': 'paypal API call failed'}, status=500)
+
+    order = response.json()
+    if settings.DEBUG:
+        print(f"PayPal order data: {json.dumps(order, indent=2)}")
+
+    # sanity check (might not be necessary)
+    if order['status'] != 'APPROVED':
+        return JsonResponse({'reason': 'paypal order is not APPROVED'}, status=500)
+
+    # TODO: Update the donation total for the target GitHub issue
+    # in our database.
+
+    return JsonResponse({'status': 'success'})
