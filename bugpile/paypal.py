@@ -85,6 +85,8 @@ def init_paypal(
         'live' if credentials work with live API
         None if credentials don't work with either API or are missing
     """
+    global PAYPAL_MODE
+
     if not client_id:
         print("PayPal not configured: PAYPAL_CLIENT_ID needs to be set")
 
