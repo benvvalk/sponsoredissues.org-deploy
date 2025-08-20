@@ -42,6 +42,13 @@ def repo_issues(request, owner, repo):
         except (json.JSONDecodeError, AttributeError):
             continue
 
+    # Sort issues by donation amount in descending order
+    parsed_issues.sort(key=lambda issue: issue['donation_amount'], reverse=True)
+
+    # Update ranks after sorting
+    for i, issue in enumerate(parsed_issues):
+        issue['rank'] = i + 1
+
     # Calculate repository stats
     open_issues_count = sum(1 for issue in parsed_issues if issue['state'] == 'open')
     total_issues_count = len(parsed_issues)
