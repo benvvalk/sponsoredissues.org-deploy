@@ -13,3 +13,19 @@ class GitHubIssue(models.Model):
 
     def __str__(self):
         return self.url
+
+class Donation(models.Model):
+    amount = models.DecimalField(max_digits=10, decimal_places=2)
+    currency = models.CharField(max_length=3, default='USD')
+    paypal_order_id = models.CharField(max_length=100, unique=True)
+    target_github_issue = models.ForeignKey(GitHubIssue, on_delete=models.CASCADE, related_name='donations')
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ['-created_at']
+        verbose_name = 'Donation'
+        verbose_name_plural = 'Donations'
+
+    def __str__(self):
+        return f"{self.currency} {self.amount} for {self.target_github_issue.url}"
