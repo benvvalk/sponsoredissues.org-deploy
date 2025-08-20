@@ -6,6 +6,7 @@ from typing import Optional, Literal
 from django.conf import settings
 from django.http import JsonResponse
 from django.views.decorators.http import require_POST
+from .models import Donation, GitHubIssue
 
 # Global variable to cache PayPal environment, set during app startup
 PAYPAL_MODE: Optional[Literal['sandbox', 'live']] = None
@@ -146,9 +147,16 @@ def capture_order(request):
     if PAYPAL_MODE is None:
         return JsonResponse({'reason': 'paypal settings not correctly configured'}, status=500)
 
-    # Get PayPal order details (e.g. amount, currency).
+    # Parse input JSON.
 
-    paypal_order_id = json.loads(request.body)['paypal_order_id']
+    args = json.loads(request.body)
+
+    issue_number = args['issue_number']
+    owner = args['owner']
+    paypal_order_id = args['paypal_order_id']
+    repo = args['repo']
+
+    # Get PayPal order details (e.g. amount, currency).
 
     api_token = get_api_token(
         PAYPAL_MODE, settings.PAYPAL_CLIENT_ID, settings.PAYPAL_CLIENT_SECRET)
@@ -168,11 +176,31 @@ def capture_order(request):
     if settings.DEBUG:
         print(f"PayPal order data: {json.dumps(order, indent=2)}")
 
-    # sanity check (might not be necessary)
+    # Sanity check on PayPal order status (might not be necessary).
+
     if order['status'] != 'APPROVED':
         return JsonResponse({'reason': 'paypal order is not APPROVED'}, status=500)
 
-    # TODO: Update the donation total for the target GitHub issue
-    # in our database.
+    # Extract payment details from the PayPal order
+
+    amount = order['purchase_units'][0]['amount']['value']
+    currency = order['purchase_units'][0]['amount']['currency_code']
+
+    # Get the record for the target GitHub issue.
+
+    issue_url = f'https://github.com/{owner}/{repo}/issues/{issue_number}'
+    github_issue = GitHubIssue.objects.get(url=issue_url)
+
+    # Save the donation details to the database.
+
+    donation = Donation.objects.create(
+        amount=amount,
+        currency=currency,
+        paypal_order_id=paypal_order_id,
+        target_github_issue=github_issue
+    )
+
+    if settings.DEBUG:
+        print(f"Saved donation: {donation}")
 
     return JsonResponse({'status': 'success'})
