@@ -1,6 +1,7 @@
 from django.shortcuts import render
 from django.conf import settings
-from .models import GitHubIssue
+from django.db.models import Sum, Count
+from .models import GitHubIssue, Donation
 from . import paypal
 import json
 
@@ -17,6 +18,16 @@ def repo_issues(request, owner, repo):
     for issue in issues:
         try:
             issue_data = issue.data
+
+            # Calculate donation amount and contributors for this issue
+            donation_stats = issue.donations.aggregate(
+                total_amount=Sum('amount'),
+                contributor_count=Count('id')
+            )
+
+            # Note: `or 0` is needed below because `Sum('amount')`
+            # returns `None` when there are no `Donation` records for
+            # the GitHub issue.
             parsed_issue = {
                 'rank': len(parsed_issues) + 1,  # Simple ranking by order
                 'title': issue_data.get('title', 'No title'),
@@ -24,8 +35,8 @@ def repo_issues(request, owner, repo):
                 'state': issue_data.get('state', 'open'),
                 'labels': issue_data.get('labels', []),
                 'url': issue.url,
-                'donation_amount': 0,  # Hard-coded for now
-                'contributors': 0,     # Hard-coded for now
+                'donation_amount': donation_stats['total_amount'] or 0,
+                'contributors': donation_stats['contributor_count'],
             }
             parsed_issues.append(parsed_issue)
         except (json.JSONDecodeError, AttributeError):
