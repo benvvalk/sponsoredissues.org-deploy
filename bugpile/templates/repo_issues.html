@@ -18,12 +18,6 @@
             line-height: 1.6;
         }
 
-        .container {
-            max-width: 1400px;
-            margin: 0 auto;
-            padding: 0 20px;
-        }
-
         .header {
             background: white;
             border-bottom: 1px solid #e9ecef;
@@ -68,7 +62,6 @@
         .issues-list {
             background: white;
             border: 1px solid #e5e7eb;
-            border-radius: 8px;
             overflow: hidden;
         }
 
@@ -391,46 +384,42 @@
     </div>
     {% endif %}
 
-    <div class="container">
-        <div class="issues-container">
-            <div class="issues-list">
-                {% if issues %}
-                    {% for issue in issues %}
-                    <div class="issue-item">
-                        <div class="rank-section">
-                            <div class="rank">#{{ issue.rank }}</div>
+    <div class="issues-list">
+        {% if issues %}
+            {% for issue in issues %}
+            <div class="issue-item">
+                <div class="rank-section">
+                    <div class="rank">#{{ issue.rank }}</div>
+                </div>
+                <div class="status-section">
+                    <div class="status-indicator {% if issue.state == 'open' %}status-open{% else %}status-closed{% endif %}"></div>
+                </div>
+                <div class="issue-main">
+                    <div class="issue-title"><a href="https://github.com/{{ owner }}/{{ repo }}/issues/{{ issue.number }}" target="_blank">{{ issue.title }}</a></div>
+                    <div class="issue-meta">
+                        <div class="labels">
+                            {% for label in issue.labels %}
+                            <span class="label {% if 'bug' in label.name|lower %}label-bug{% elif 'feature' in label.name|lower %}label-feature{% elif 'enhancement' in label.name|lower %}label-enhancement{% elif 'priority' in label.name|lower %}label-priority{% else %}label-default{% endif %}">{{ label.name }}</span>
+                            {% endfor %}
                         </div>
-                        <div class="status-section">
-                            <div class="status-indicator {% if issue.state == 'open' %}status-open{% else %}status-closed{% endif %}"></div>
-                        </div>
-                        <div class="issue-main">
-                            <div class="issue-title"><a href="https://github.com/{{ owner }}/{{ repo }}/issues/{{ issue.number }}" target="_blank">{{ issue.title }}</a></div>
-                            <div class="issue-meta">
-                                <div class="labels">
-                                    {% for label in issue.labels %}
-                                    <span class="label {% if 'bug' in label.name|lower %}label-bug{% elif 'feature' in label.name|lower %}label-feature{% elif 'enhancement' in label.name|lower %}label-enhancement{% elif 'priority' in label.name|lower %}label-priority{% else %}label-default{% endif %}">{{ label.name }}</span>
-                                    {% endfor %}
-                                </div>
-                                <span class="issue-number">#{{ issue.number }}</span>
-                            </div>
-                        </div>
-                        <div class="donation-section">
-                            <div class="donation-amount">${{ issue.donation_amount }}</div>
-                            <div class="contributors">{{ issue.contributors }} contributors</div>
-                        </div>
-                        <div class="action-section">
-                            <button class="donate-btn" onclick="openModal('#{{ issue.rank }}', '{{ issue.title|escapejs }}', '{{ issue.number }}')">Donate</button>
-                        </div>
+                        <span class="issue-number">#{{ issue.number }}</span>
                     </div>
-                    {% endfor %}
-                {% else %}
-                    <div class="no-issues">
-                        <h3>No issues found</h3>
-                        <p>This repository doesn't have any issues yet.</p>
-                    </div>
-                {% endif %}
+                </div>
+                <div class="donation-section">
+                    <div class="donation-amount">${{ issue.donation_amount }}</div>
+                    <div class="contributors">{{ issue.contributors }} contributors</div>
+                </div>
+                <div class="action-section">
+                    <button class="donate-btn" onclick="openModal('#{{ issue.rank }}', '{{ issue.title|escapejs }}', '{{ issue.number }}')">Donate</button>
+                </div>
             </div>
-        </div>
+            {% endfor %}
+        {% else %}
+            <div class="no-issues">
+                <h3>No issues found</h3>
+                <p>This repository doesn't have any issues yet.</p>
+            </div>
+        {% endif %}
     </div>
 
     <!-- PayPal SDK -->
