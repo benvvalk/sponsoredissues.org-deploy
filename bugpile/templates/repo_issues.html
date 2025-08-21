@@ -94,27 +94,6 @@
             color: #1e3a8a;
         }
 
-        .status-section {
-            flex-shrink: 0;
-            width: 24px;
-        }
-
-        .status-indicator {
-            width: 16px;
-            height: 16px;
-            border-radius: 50%;
-            border: 2px solid;
-        }
-
-        .status-open {
-            border-color: #059669;
-            background: #d1fae5;
-        }
-
-        .status-closed {
-            border-color: #dc2626;
-            background: #fee2e2;
-        }
 
         .issue-main {
             flex: 1;
@@ -136,9 +115,8 @@
 
         .issue-meta {
             display: flex;
-            align-items: center;
-            gap: 12px;
-            flex-wrap: wrap;
+            flex-direction: column;
+            gap: 8px;
         }
 
         .labels {
@@ -333,7 +311,6 @@
             }
 
             .rank-section,
-            .status-section,
             .donation-section,
             .action-section {
                 width: auto;
@@ -387,9 +364,6 @@
                 <div class="rank-section">
                     <div class="rank">#{{ issue.rank }}</div>
                 </div>
-                <div class="status-section">
-                    <div class="status-indicator {% if issue.state == 'open' %}status-open{% else %}status-closed{% endif %}"></div>
-                </div>
                 <div class="issue-main">
                     <div class="issue-title"><a href="https://github.com/{{ owner }}/{{ repo }}/issues/{{ issue.number }}" target="_blank">{{ issue.title }}</a></div>
                     <div class="issue-meta">
@@ -398,7 +372,7 @@
                             <span class="label {% if 'bug' in label.name|lower %}label-bug{% elif 'feature' in label.name|lower %}label-feature{% elif 'enhancement' in label.name|lower %}label-enhancement{% elif 'priority' in label.name|lower %}label-priority{% else %}label-default{% endif %}">{{ label.name }}</span>
                             {% endfor %}
                         </div>
-                        <span class="issue-number">#{{ issue.number }}</span>
+                        <div class="issue-number">{{ owner }}/{{ repo }}#{{ issue.number }} {% if issue.state == 'open' %}(open){% else %}(closed){% endif %}</div>
                     </div>
                 </div>
                 <div class="donation-section">
