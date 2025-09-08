@@ -2,7 +2,7 @@
 
 SponsoredIssues is a self-hosted website that enables you, the noble FOSS developer, to receive donations for your GitHub issues. At the same time, SponsoredIssues allows your users to make their voices heard, by donating to the GitHub issues that matter most to them.
 
-![SponsoredIssues website screenshot](/home/benv/git/sponsoredissues/static/images/issues-page-mockup.png)
+![SponsoredIssues website screenshot](static/images/issues-page-mockup.png)
 
 # Incentives for Donors and Developers
 
