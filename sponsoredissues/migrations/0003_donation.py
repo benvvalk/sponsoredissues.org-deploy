@@ -7,7 +7,7 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('bugpile', '0002_alter_githubissue_options'),
+        ('sponsoredissues', '0002_alter_githubissue_options'),
     ]
 
     operations = [
@@ -20,7 +20,7 @@ class Migration(migrations.Migration):
                 ('paypal_order_id', models.CharField(max_length=100, unique=True)),
                 ('created_at', models.DateTimeField(auto_now_add=True)),
                 ('updated_at', models.DateTimeField(auto_now=True)),
-                ('target_github_issue', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='donations', to='bugpile.githubissue')),
+                ('target_github_issue', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='donations', to='sponsoredissues.githubissue')),
             ],
             options={
                 'verbose_name': 'Donation',

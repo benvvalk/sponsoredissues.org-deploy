@@ -2,9 +2,9 @@ from django.apps import AppConfig
 import logging
 import sys
 
-class BugpileConfig(AppConfig):
+class SponsoredIssuesConfig(AppConfig):
     default_auto_field = 'django.db.models.BigAutoField'
-    name = 'bugpile'
+    name = 'sponsoredissues'
 
     def ready(self):
         # Only call `init_paypal` when starting the Django server

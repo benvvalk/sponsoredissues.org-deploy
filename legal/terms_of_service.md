@@ -1,13 +1,13 @@
-# BugPile: Terms of Service
+# SponsoredIssues: Terms of Service
 
 ## 1. Introduction
 
-- These Terms of Service apply to all use of BugPile's Platform.
+- These Terms of Service apply to all use of SponsoredIssues's Platform.
 - Use of the Platform constitutes agreement to these Terms.
 
 ## 2. Key Definitions
 
-- **"BugPile Account"**: User account for accessing Services, including personal information, credentials, and activity logs.
+- **"SponsoredIssues Account"**: User account for accessing Services, including personal information, credentials, and activity logs.
 - **"Bug Report"**: Description of a software bug or unimplemented feature in a FOSS Project.
 - **"Bug Report Campaign"**: Fundraising campaign to resolve a specific Bug Report.
 - **"Donor"**: Individual or entity contributing funds to Bug Report Campaigns.
@@ -17,35 +17,35 @@
   - Publicly shares its complete source code and Bug Reports on GitHub
   - Provides clear licensing information in its repository
 - **"Software Forge"**: A platform that hosts source code files and Bug Reports for FOSS Projects (currently GitHub only).
-- **"Transaction Fee"**: Fee charged by BugPile or payment processors for processing donations.
+- **"Transaction Fee"**: Fee charged by SponsoredIssues or payment processors for processing donations.
 - **"Transfers"**: Movement of raised funds to Maintainer's financial account.
 - **"User Content"**: Content created by Users on the Website.
 - **"User Profile"**: Optional public profile displaying:
   • Donations to Bug Report Campaigns
   • Owned Bug Report Campaigns
   • Endorsed Campaigns and Maintainers
-- **"We", "Us", "Platform", "Services", "Website"**: BugPile's fundraising platform and all related features.
+- **"We", "Us", "Platform", "Services", "Website"**: SponsoredIssues's fundraising platform and all related features.
 - **"You", "User"**: Any individual or entity using the Platform.
 
 ## 3. Services Provided
 
-- BugPile offers tools for Maintainers to raise funds for their FOSS development work, by creating and managing Bug Report Campaigns.
-- BugPile does not solicit donations on behalf of its Users.
-- BugPile is a for-profit organization. BugPile is not a bank, charity, or financial advisor.
+- SponsoredIssues offers tools for Maintainers to raise funds for their FOSS development work, by creating and managing Bug Report Campaigns.
+- SponsoredIssues does not solicit donations on behalf of its Users.
+- SponsoredIssues is a for-profit organization. SponsoredIssues is not a bank, charity, or financial advisor.
   - Any information on the Website about legal, financial, or tax matters is not guaranteed to be accurate or up to date, and does not constitute professional advice. 
 - We reserve the right to change or suspend the Services at any time.
   - We are not liable for any financial losses that might result from interruptions to the Services.
 
 ## 4. Accounts and Eligibility
 
-- Users must be 18+ to create a BugPile account.
+- Users must be 18+ to create a SponsoredIssues account.
 - Users may donate to Bug Report Campaigns without creating an account.
-- Maintainers must create a BugPile Account in order to initiate Bug Report Campaigns. In addition to a BugPile Account, maintainers must also have:
+- Maintainers must create a SponsoredIssues Account in order to initiate Bug Report Campaigns. In addition to a SponsoredIssues Account, maintainers must also have:
   1. A GitHub account hosting their FOSS Project with complete source code under an OSI or FSF-approved FOSS license.
   2. Clear license documentation (LICENSE file or equivalent) in their repository root.
   3. A third-party account with a supported Payment Processor.
 - Maintainers agree to comply with the Terms of Service for any Software Forge accounts or Payment Processor accounts that they use in conjunction with the Services.
-- Maintainers are responsible for safeguarding access to their BugPile, Software Forge, and Payment Processor accounts.
+- Maintainers are responsible for safeguarding access to their SponsoredIssues, Software Forge, and Payment Processor accounts.
 
 ## 5. User Responsibilities
 
@@ -65,7 +65,7 @@
   - The purpose of donating to a Bug Report Campaign is only to help encourage and prioritize the work. It does not create any obligation for the Maintainer resolve the Bug Report Campaign within any particular time frame.
   - It is your responsibility to understand the software development goals for particular Bug Report Campaigns, and to correctly target your donations to the campaigns that you wish to support.
   - We are not responsible for the accuracy of any information provided by Maintainers about their Bug Report Campaigns, nor for any promises they make regarding resolution of those campaigns.
-- If you opt into recurring donations, you authorize BugPile to charge your designated payment method for the amount and frequency that you have selected, without further authorization from you.
+- If you opt into recurring donations, you authorize SponsoredIssues to charge your designated payment method for the amount and frequency that you have selected, without further authorization from you.
   - You may cancel your recurring donation to a Bug Report Campaign at any time on the Website.
   - Any donations processed prior to your cancellation request will not be refunded.
   - Your recurring donations to a Bug Report Campaign will be automatically stopped when the Bug Report Campaign is closed or deleted by the Maintainer.
@@ -75,9 +75,9 @@
 
 - You (the Maintainer) agree that Transaction Fees will be deducted from each donation payment that is sent to your Bug Report Campaign(s), including:
   1. A Transaction Fee deducted by the Payment Processor.
-  2. A Transaction Fee deducted by BugPile.
+  2. A Transaction Fee deducted by SponsoredIssues.
 - We will make commercially reasonable efforts to make Transfers promptly available to Maintainers. However:
-  - Completion of a Transfer depends on you (the Maintainer) providing accurate and up-to-date information in your BugPile, Software Forge, and Payment Processor accounts.
+  - Completion of a Transfer depends on you (the Maintainer) providing accurate and up-to-date information in your SponsoredIssues, Software Forge, and Payment Processor accounts.
   - We do not guarantee that Transfers will be available to you (the Maintainer) within any specific time frame.
   - We expressly disclaim any and all responsibility for delays in Transfers, and any consequences arising from such delays.
 - We may choose, at our sole discretion and without prior notice, to issue refunds for a Bug Report Campaign, up to and including the entire amount donated to the Bug Report Campaign. We may issue refunds for several reasons, including but not limited to:
@@ -152,13 +152,13 @@ For prohibited activities, we may:
 ## 9. Intellectual Property & User Content
 
 - You (the User) represent and warrant that you have the necessary permissions to share any content that you publish on the Website, including but not limited to any information that you share on your User Profile.
-- You (the User) grant BugPile a worldwide, non-exclusive, royalty-free, perpetual, irrevocable license to copy, distribute, translate, publish, or prepare derivative works of any content that you share on the Website.
-- You (the Public) may notify us about possible copyright or trademark infringements of your intellectual property by Users of our Website, as per the Copyright Modernization Act of Canada. If we determine that your intellectual property rights have been violated, we may terminate the BugPile Account(s) of the offending User(s), or remove the infringing User Content from the Website.
+- You (the User) grant SponsoredIssues a worldwide, non-exclusive, royalty-free, perpetual, irrevocable license to copy, distribute, translate, publish, or prepare derivative works of any content that you share on the Website.
+- You (the Public) may notify us about possible copyright or trademark infringements of your intellectual property by Users of our Website, as per the Copyright Modernization Act of Canada. If we determine that your intellectual property rights have been violated, we may terminate the SponsoredIssues Account(s) of the offending User(s), or remove the infringing User Content from the Website.
 
 ## 10. Privacy
 
-- See BugPile's Privacy Policy.
-- Certain information that you (the User) provide to BugPile will be publicly visible on the Website, including:
+- See SponsoredIssues's Privacy Policy.
+- Certain information that you (the User) provide to SponsoredIssues will be publicly visible on the Website, including:
   - Information that you add to your User Profile (e.g. name, photo, biography).
   - Information about your (the Maintainer's) Bug Report Campaigns, including the total amount of funds raised for those campaigns, and the number of contributors to those campaigns.
 - By default, all donations to Bug Report Campaigns are anonymous. The public will not be able to see the amounts that you (the Donor) have donated, or which Bug Report Campaigns you have donated to. Further, when a Bug Report Campaign receives your donation, the owner (Maintainer) of the campaign will only be able see the amount donated, and not who has made the donation.
@@ -166,10 +166,10 @@ For prohibited activities, we may:
 
 ## 11. Account Termination
 
-- We may, at our sole discretion and without prior notice, suspend or terminate your BugPile Account in response to concerns about account activities that are fraudulent, illegal, or constitute a material breach of these Terms of Service. In addition, we may suspend or terminate your BugPile Account if:
+- We may, at our sole discretion and without prior notice, suspend or terminate your SponsoredIssues Account in response to concerns about account activities that are fraudulent, illegal, or constitute a material breach of these Terms of Service. In addition, we may suspend or terminate your SponsoredIssues Account if:
   - You (Maintainer) violate the terms of your Payment Processor and/or Software Forge accounts.
   - We need to comply with applicable laws or regulations, or to comply with a court order, writ, or injunction.
-- If we suspend or terminate your BugPile Account, we may also permanently delete the User Content associated with your BugPile Account, including but not limited to your User Profile and Bug Report Campaigns. To the extent permitted by applicable law, we disclaim any liability for damages or losses resulting from such deletion of data.
+- If we suspend or terminate your SponsoredIssues Account, we may also permanently delete the User Content associated with your SponsoredIssues Account, including but not limited to your User Profile and Bug Report Campaigns. To the extent permitted by applicable law, we disclaim any liability for damages or losses resulting from such deletion of data.
 
 ## 12. Disclaimers & Liability Limits
 
@@ -177,11 +177,11 @@ For prohibited activities, we may:
 - We provide no guarantee that Bug Report Campaigns will receive any specific amount of donations, or any donations at all.
 - Donors are responsible determining which Bug Report Campaigns they wish to support.
   - We do not endorse any Bug Report Campaigns, and we are not liable for the software development outcomes associated with Bug Report Campaigns.
-- Liability capped at $100 or the amount paid to BugPile in past 6 months, whichever is less.
+- Liability capped at $100 or the amount paid to SponsoredIssues in past 6 months, whichever is less.
 
 ## 13. Indemnification
 
-- You agree to indemnify BugPile for any losses, damages, expenses, fines arising from use of the Services or from violation of these Terms of Service.
+- You agree to indemnify SponsoredIssues for any losses, damages, expenses, fines arising from use of the Services or from violation of these Terms of Service.
 
 ## 14. Dispute Resolution & Arbitration
 

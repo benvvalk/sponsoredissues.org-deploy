@@ -1,7 +1,7 @@
 import re
 import requests
 from django.core.management.base import BaseCommand, CommandError
-from bugpile.models import GitHubIssue
+from sponsoredissues.models import GitHubIssue
 
 class Command(BaseCommand):
     help = 'Add a GitHub issue to the database by fetching data from GitHub API'

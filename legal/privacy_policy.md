@@ -1,18 +1,18 @@
-# BugPile: Privacy Policy
+# SponsoredIssues: Privacy Policy
 
 **Effective Date:** [Effective Date]
 
 ## 1. Introduction
 
-BugPile is committed to protecting your privacy and handling your personal information with care and transparency. This Privacy Policy explains how we collect, use, share, and protect your information when you use our fundraising platform for Free and Open Source Software (FOSS) projects.
+SponsoredIssues is committed to protecting your privacy and handling your personal information with care and transparency. This Privacy Policy explains how we collect, use, share, and protect your information when you use our fundraising platform for Free and Open Source Software (FOSS) projects.
 
-This Privacy Policy should be read alongside our Terms of Service, which govern your use of the BugPile platform.
+This Privacy Policy should be read alongside our Terms of Service, which govern your use of the SponsoredIssues platform.
 
 ## 2. Information We Collect
 
 ### Account Information
 
-When you create a BugPile account, we collect:
+When you create a SponsoredIssues account, we collect:
 
 - Email address
 - Username
@@ -110,7 +110,7 @@ We may disclose your information when required by law, including:
 
 ## 5. Our Commitment to an Ad-Free Experience
 
-BugPile is committed to providing a clean, focused experience for our users:
+SponsoredIssues is committed to providing a clean, focused experience for our users:
 
 - **We do not display advertisements on our website**
 - **We do not send advertising or marketing emails**
@@ -135,7 +135,7 @@ All user data is hosted by cloud services located in the United States. By using
 
 ## 8. Age Requirements and Minor Protection
 
-BugPile requires all users to be 18 years or older to create an account. We do not knowingly collect personal information from individuals under 18.
+SponsoredIssues requires all users to be 18 years or older to create an account. We do not knowingly collect personal information from individuals under 18.
 
 If you believe we have collected information about a minor, please contact us immediately at [Privacy Contact Email Address]. We will promptly investigate and delete any such information.
 
@@ -229,4 +229,4 @@ We will respond to privacy inquiries within a reasonable timeframe and work to a
 
 ---
 
-*This Privacy Policy is effective as of [Effective Date] and governs the collection, use, and protection of your information on the BugPile platform.*
+*This Privacy Policy is effective as of [Effective Date] and governs the collection, use, and protection of your information on the SponsoredIssues platform.*

@@ -6,7 +6,7 @@ from django.db import migrations
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('bugpile', '0001_initial'),
+        ('sponsoredissues', '0001_initial'),
     ]
 
     operations = [
