@@ -145,6 +145,33 @@
                 margin-top: 5px;
             }
         }
+
+        /* Message Banner Styles */
+        .message-banner {
+            background: #fef3c7;
+            color: #92400e;
+            border-bottom: 1px solid #fde68a;
+            padding: 10px 20px;
+            font-size: 14px;
+        }
+
+        .message-banner.error {
+            background: #fee2e2;
+            color: #991b1b;
+            border-bottom: 1px solid #fecaca;
+        }
+
+        .message-banner.warning {
+            background: #fef3c7;
+            color: #92400e;
+            border-bottom: 1px solid #fde68a;
+        }
+
+        .message-banner.info {
+            background: #dbeafe;
+            color: #1e40af;
+            border-bottom: 1px solid #bfdbfe;
+        }
     </style>
 
     {% block head %}{% endblock %}
@@ -194,6 +221,14 @@
             </div>
         </div>
     </div>
+
+    {% if messages %}
+    {% for message in messages %}
+    <div class="message-banner {{ message.tags }}">
+        {{ message }}
+    </div>
+    {% endfor %}
+    {% endif %}
 
     {% block content %}{% endblock %}
 </body>
