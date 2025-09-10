@@ -164,12 +164,24 @@
                     <a href="#" class="username">{{ user.username }}</a>
                     <form method="post" action="/accounts/logout/" style="display: inline;">
                         {% csrf_token %}
+                        <!--
+                            Note: The `next` param tells
+                            `django-allauth` to return us back to the
+                            same page after GitHub login/logout.
+                          -->
+                        <input type="hidden" name="next" value="{{ request.get_full_path }}">
                         <button type="submit" class="logout-btn">Logout</button>
                     </form>
                 </div>
                 {% else %}
                 <form method="post" action="/accounts/github/login/" style="display: inline;">
                     {% csrf_token %}
+                    <!--
+                        Note: The `next` param tells
+                        `django-allauth` to return us back to the
+                        same page after GitHub login/logout.
+                      -->
+                    <input type="hidden" name="next" value="{{ request.get_full_path }}">
                     <button type="submit" class="signin-btn">
                         <!-- GitHub octocat logo -->
                         <svg height="16" width="16" viewBox="0 0 16 16" fill="currentColor">
