@@ -1,0 +1,106 @@
+{% load static %}
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}SponsoredIssues{% endblock %}</title>
+
+    <!-- Common styles for navbar -->
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        .header {
+            background: #1e3a8a;
+            padding: 2px;
+        }
+
+        .header-content {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 4px 8px;
+        }
+
+        .logo {
+            width: 18px;
+            height: 18px;
+            background: white;
+            border-radius: 2px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            font-size: 12px;
+            color: #1e3a8a;
+        }
+
+        .site-name {
+            color: white;
+            font-weight: bold;
+            text-decoration: none;
+            font-size: 12pt;
+        }
+
+        .nav-links {
+            display: flex;
+            gap: 10px;
+            margin-left: 20px;
+        }
+
+        .nav-links a {
+            color: white;
+            text-decoration: none;
+            font-size: 10pt;
+        }
+
+        .nav-links a:hover {
+            text-decoration: underline;
+        }
+
+        .login-section {
+            margin-left: auto;
+            display: flex;
+            gap: 10px;
+        }
+
+        .login-section a {
+            color: white;
+            text-decoration: none;
+            font-size: 10pt;
+        }
+
+        @media (max-width: 768px) {
+            .header-content {
+                flex-wrap: wrap;
+            }
+
+            .nav-links {
+                margin-left: 0;
+                order: 3;
+                width: 100%;
+                margin-top: 5px;
+            }
+        }
+    </style>
+
+    {% block head %}{% endblock %}
+</head>
+<body>
+    <div class="header">
+        <div class="header-content">
+            <div class="logo">S</div>
+            <a href="/" class="site-name">sponsoredissues.org</a>
+            {% block nav_links %}{% endblock %}
+            {% block login_section %}{% endblock %}
+        </div>
+    </div>
+
+    {% block content %}{% endblock %}
+</body>
+</html>
