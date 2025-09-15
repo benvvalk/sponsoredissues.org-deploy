@@ -103,6 +103,10 @@ SOCIALACCOUNT_PROVIDERS = {
     }
 }
 
+# GitHub App configuration for API access
+GITHUB_APP_ID = env.str('GITHUB_APP_ID', default=None)
+GITHUB_APP_PRIVATE_KEY = env.str('GITHUB_APP_PRIVATE_KEY', default=None)
+
 # Disable login with local Django accounts. Only allow "Login with GitHub".
 SOCIALACCOUNT_ONLY = True
 ACCOUNT_EMAIL_VERIFICATION = "none" # required for `SOCIALACCOUNT_ONLY = True`
