@@ -257,10 +257,6 @@
         box-shadow: 0 0 0 3px rgba(30, 58, 138, 0.1);
     }
 
-    #paypal-button-container {
-        margin-top: 20px;
-    }
-
     .close {
         color: #999;
         float: right;
@@ -272,27 +268,6 @@
 
     .close:hover {
         color: #333;
-    }
-
-    .banner {
-        background: #fef3c7;
-        border: 1px solid #f59e0b;
-        color: #92400e;
-        padding: 12px 0;
-        text-align: center;
-        font-weight: 500;
-    }
-
-    .banner.sandbox {
-        background: #fef3c7;
-        border-color: #f59e0b;
-        color: #92400e;
-    }
-
-    .banner.no-paypal {
-        background: #fee2e2;
-        border-color: #f87171;
-        color: #b91c1c;
     }
 
     @media (max-width: 768px) {
@@ -340,15 +315,6 @@
     </div>
 </div>
 
-{% if not paypal_mode %}
-<div class="banner no-paypal">
-    ⚠️ PayPal is not configured. Donations are currently unavailable.
-</div>
-{% elif paypal_mode == 'sandbox' %}
-<div class="banner sandbox">
-    🧪 PayPal is running in sandbox mode for testing. Real payments will not be processed.
-</div>
-{% endif %}
 
 <div class="issues-list">
     {% if issues %}
@@ -395,97 +361,22 @@
             <input type="number" id="donationAmount" class="donation-amount-input"
                    value="2" min="2" step="1" placeholder="2">
         </div>
-        <div id="paypal-button-container"></div>
     </div>
 </div>
 
-<!-- PayPal SDK -->
-<script src="https://www.paypal.com/sdk/js?client-id={{ paypal_client_id }}&currency=USD"></script>
-
 <script>
     let currentIssueNumber = null;
-    let paypalButtonRendered = false;
 
     function openModal(rank, title, issueNumber) {
         const titleElement = document.getElementById('modalTitle');
         titleElement.innerHTML = `Donate to <a href="https://github.com/{{ owner }}/{{ repo }}/issues/${issueNumber}" target="_blank" style="color: #1e3a8a; text-decoration: none;">${title}</a>`;
         currentIssueNumber = issueNumber;
         document.getElementById('donateModal').style.display = 'block';
-
-        if (!paypalButtonRendered) {
-            renderPayPalButton();
-            paypalButtonRendered = true;
-        }
     }
 
     function closeModal() {
         document.getElementById('donateModal').style.display = 'none';
     }
 
-    // PayPal integration.
-    //
-    // For a great tutorial about implementing PayPal, see:
-    // https://www.youtube.com/watch?v=DNM9FdFrI1k
-    //
-    // Note: Since this PayPal integration is mostly done on the client-side,
-    // it means that the client can easily hack the
-    // payment amount, target GitHub issue, etc.. However, it doesn't
-    // really matter since the payments are donations.
-    //
-    // One thing that we do want to prevent is the client pretending that
-    // they donated more to an issue than they actually sent through PayPal,
-    // in order to game the issue ranking. Such a hack is not possible because
-    // the payment amount is not accessible in the "onApprove" callback. (It
-    // is hidden behind the PayPal order ID.)
-    function renderPayPalButton() {
-        paypal.Buttons({
-            createOrder: function(data, actions) {
-                const amount = document.getElementById('donationAmount').value;
-                return actions.order.create({
-                    purchase_units: [{
-                        amount: {
-                            value: amount,
-                            currency_code: 'USD'
-                        },
-                        description: `Donation for {{ owner }}/{{ repo }} issue #${currentIssueNumber}`
-                    }]
-                });
-            },
-            onApprove: function(data, actions) {
-                return fetch("/paypal/capture_order", {
-                    method: "post",
-                    headers: {
-                        "Content-Type": "application/json; charset=utf-8",
-                        "X-CSRFToken": "{{ csrf_token }}"
-                    },
-                    body: JSON.stringify({
-                        issue_number: currentIssueNumber,
-                        owner: "{{ owner }}",
-                        paypal_order_id: data.orderID,
-                        repo: "{{ repo }}",
-                    })
-                })
-                .then((res) => {
-                    if (res.ok) return res.json
-                    return res.json().then(json => Promise.reject(json))
-                })
-                .catch(e => {
-                    console.error(e.error)
-                })
-            },
-            onError: function(err) {
-                console.error('PayPal error:', err);
-                alert('An error occurred during the payment process. Please try again.');
-            }
-        }).render('#paypal-button-container');
-    }
-
-    // Close modal when clicking outside of it
-    window.onclick = function(event) {
-        const modal = document.getElementById('donateModal');
-        if (event.target === modal) {
-            closeModal();
-        }
-    }
 </script>
 {% endblock %}

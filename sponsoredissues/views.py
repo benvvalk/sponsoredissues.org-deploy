@@ -2,7 +2,6 @@ from django.shortcuts import render
 from django.conf import settings
 from django.db.models import Sum, Count
 from .models import GitHubIssue, Donation
-from . import paypal
 import json
 
 def index(request):
@@ -62,8 +61,6 @@ def repo_issues(request, owner, repo):
         'stars': 0,          # Hard-coded as requested
         'forks': 0,          # Hard-coded as requested
         'total_funding': 0,  # Hard-coded as requested
-        'paypal_client_id': settings.PAYPAL_CLIENT_ID,
-        'paypal_mode': paypal.PAYPAL_MODE,
     }
 
     return render(request, 'repo_issues.html', context)

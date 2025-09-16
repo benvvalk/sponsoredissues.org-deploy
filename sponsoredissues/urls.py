@@ -16,7 +16,6 @@ Including another URLconf
 """
 from django.contrib import admin
 from django.urls import include, path
-from . import paypal
 from . import views
 
 urlpatterns = [
@@ -24,5 +23,4 @@ urlpatterns = [
     path('accounts/', include('allauth.urls')),
     path('gh/<str:owner>/<str:repo>/issues', views.repo_issues, name='repo_issues'),
     path('admin/', admin.site.urls),
-    path('paypal/capture_order', paypal.capture_order),
 ]
