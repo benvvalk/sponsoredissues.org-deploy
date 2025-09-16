@@ -1,7 +1,9 @@
+from decimal import Decimal
 from django.shortcuts import render
 from django.conf import settings
 from django.db.models import Sum, Count
-from .models import GitHubIssue, Donation
+from .models import GitHubIssue, SponsorAmount
+from .github_service import GitHubSponsorService
 import json
 
 def index(request):
@@ -19,13 +21,13 @@ def repo_issues(request, owner, repo):
             issue_data = issue.data
 
             # Calculate donation amount and contributors for this issue
-            donation_stats = issue.donations.aggregate(
+            donation_stats = issue.sponsor_amounts.aggregate(
                 total_amount=Sum('amount'),
                 contributor_count=Count('id')
             )
 
             # Note: `or 0` is needed below because `Sum('amount')`
-            # returns `None` when there are no `Donation` records for
+            # returns `None` when there are no `SponsorAmount` records for
             # the GitHub issue.
             parsed_issue = {
                 'rank': len(parsed_issues) + 1,  # Simple ranking by order
@@ -52,6 +54,16 @@ def repo_issues(request, owner, repo):
     open_issues_count = sum(1 for issue in parsed_issues if issue['state'] == 'open')
     total_issues_count = len(parsed_issues)
 
+    # Calculate sponsor dollars for current user and repo owner
+    allocated_sponsor_dollars = 0  # Hard-coded as requested - will be updated in future iterations
+    total_sponsor_dollars = 0
+
+    if request.user.is_authenticated:
+        github_service = GitHubSponsorService()
+        (allocated_sponsor_cents, total_sponsor_cents) = github_service.calculate_allocated_sponsor_cents(request.user, owner)
+        allocated_sponsor_dollars = allocated_sponsor_cents / Decimal(100)
+        total_sponsor_dollars = total_sponsor_cents / Decimal(100)
+
     context = {
         'owner': owner,
         'repo': repo,
@@ -61,6 +73,8 @@ def repo_issues(request, owner, repo):
         'stars': 0,          # Hard-coded as requested
         'forks': 0,          # Hard-coded as requested
         'total_funding': 0,  # Hard-coded as requested
+        'allocated_sponsor_dollars': allocated_sponsor_dollars,
+        'total_sponsor_dollars': total_sponsor_dollars,
     }
 
     return render(request, 'repo_issues.html', context)

@@ -1,4 +1,5 @@
 from django.db import models
+from django.contrib.auth.models import User
 
 class GitHubIssue(models.Model):
     url = models.URLField(primary_key=True, max_length=500)
@@ -14,17 +15,18 @@ class GitHubIssue(models.Model):
     def __str__(self):
         return self.url
 
-class Donation(models.Model):
+class SponsorAmount(models.Model):
     amount = models.DecimalField(max_digits=10, decimal_places=2)
     currency = models.CharField(max_length=3, default='USD')
-    target_github_issue = models.ForeignKey(GitHubIssue, on_delete=models.CASCADE, related_name='donations')
+    sponsor_user_id = models.ForeignKey(User, on_delete=models.CASCADE, related_name='sponsor_amounts')
+    target_github_issue = models.ForeignKey(GitHubIssue, on_delete=models.CASCADE, related_name='sponsor_amounts')
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
     class Meta:
         ordering = ['-created_at']
-        verbose_name = 'Donation'
-        verbose_name_plural = 'Donations'
+        verbose_name = 'Sponsor Amount'
+        verbose_name_plural = 'Sponsor Amounts'
 
     def __str__(self):
-        return f"{self.currency} {self.amount} for {self.target_github_issue.url}"
+        return f"{self.currency} {self.amount} from {self.sponsor_user_id.username} for {self.target_github_issue.url}"
