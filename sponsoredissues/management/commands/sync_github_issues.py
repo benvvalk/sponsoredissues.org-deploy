@@ -1,11 +1,10 @@
 import time
 import random
 import requests
-import jwt
-from datetime import datetime, timedelta
 from django.core.management.base import BaseCommand, CommandError
 from django.conf import settings
 from sponsoredissues.models import GitHubIssue
+from sponsoredissues.github_auth import GitHubAppAuth
 
 # Rate limiting configuration
 REQUEST_DELAY_MIN = 1.0  # Minimum delay between requests (seconds)
@@ -14,6 +13,10 @@ RETRY_DELAY = 5.0        # Delay before retrying failed requests (seconds)
 
 class Command(BaseCommand):
     help = 'Sync GitHub issues with "sponsoredissues.org" label using GraphQL API'
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.github_app_auth = GitHubAppAuth()
 
     def add_arguments(self, parser):
         parser.add_argument(
@@ -45,7 +48,7 @@ class Command(BaseCommand):
 
         # Get GitHub App installations
         try:
-            installations = self._get_app_installations(target_installation_id)
+            installations = self.github_app_auth.get_app_installations(target_installation_id)
         except Exception as e:
             self.stdout.write(self.style.ERROR(f'Failed to get GitHub App installations: {e}'))
             return
@@ -97,68 +100,8 @@ class Command(BaseCommand):
         else:
             self.stdout.write(self.style.SUCCESS('Sync completed'))
 
-    def _get_app_installations(self, target_installation_id=None):
-        """Get all GitHub App installations"""
-        app_token = self._get_github_app_token()
 
-        headers = {
-            'Authorization': f'Bearer {app_token}',
-            'Accept': 'application/vnd.github.v3+json'
-        }
 
-        response = requests.get(
-            'https://api.github.com/app/installations',
-            headers=headers,
-            timeout=30
-        )
-
-        if response.status_code != 200:
-            raise Exception(f'Failed to get installations: {response.status_code} - {response.text}')
-
-        installations = response.json()
-
-        # Filter by specific installation ID if provided
-        if target_installation_id:
-            installations = [i for i in installations if i['id'] == target_installation_id]
-
-        return installations
-
-    def _get_github_app_token(self):
-        """Generate GitHub App JWT token"""
-        app_id = settings.GITHUB_APP_ID
-        private_key_str = settings.GITHUB_APP_PRIVATE_KEY
-
-        # Handle both single-line (with \n) and multiline PEM formats
-        if '\\n' in private_key_str:
-            private_key_str = private_key_str.replace('\\n', '\n')
-
-        payload = {
-            'iat': int(datetime.utcnow().timestamp()),
-            'exp': int((datetime.utcnow() + timedelta(minutes=5)).timestamp()),
-            'iss': app_id
-        }
-
-        return jwt.encode(payload, private_key_str.encode(), algorithm='RS256')
-
-    def _get_installation_access_token(self, installation_id):
-        """Get installation access token for GitHub App"""
-        app_token = self._get_github_app_token()
-
-        headers = {
-            'Authorization': f'Bearer {app_token}',
-            'Accept': 'application/vnd.github.v3+json'
-        }
-
-        response = requests.post(
-            f'https://api.github.com/app/installations/{installation_id}/access_tokens',
-            headers=headers,
-            timeout=30
-        )
-
-        if response.status_code == 201:
-            return response.json()['token']
-        else:
-            raise Exception(f'Failed to get installation token: {response.status_code} - {response.text}')
 
     def _sync_installation_issues(self, installation, repo_limit, dry_run):
         """Sync issues for a single GitHub App installation"""
@@ -167,7 +110,7 @@ class Command(BaseCommand):
 
         # Get installation access token
         try:
-            access_token = self._get_installation_access_token(installation_id)
+            access_token = self.github_app_auth.get_installation_access_token(installation_id)
         except Exception as e:
             self.stdout.write(f'Failed to get GitHub App access token for installation {installation_id}: {e}')
             return 0, 0, 0
