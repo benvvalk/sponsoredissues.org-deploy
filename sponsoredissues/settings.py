@@ -64,6 +64,7 @@ MIDDLEWARE = [
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
     "allauth.account.middleware.AccountMiddleware",
+    'sponsoredissues.middleware.github_autorefresh_token',
 ]
 
 AUTHENTICATION_BACKENDS = [
