@@ -68,11 +68,6 @@ def repo_issues(request, owner, repo):
         'owner': owner,
         'repo': repo,
         'issues': parsed_issues,
-        'open_issues_count': open_issues_count,
-        'total_issues_count': total_issues_count,
-        'stars': 0,          # Hard-coded as requested
-        'forks': 0,          # Hard-coded as requested
-        'total_funding': 0,  # Hard-coded as requested
         'allocated_sponsor_dollars': allocated_sponsor_dollars,
         'total_sponsor_dollars': total_sponsor_dollars,
     }
