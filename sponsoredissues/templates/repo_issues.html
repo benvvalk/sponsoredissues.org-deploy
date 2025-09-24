@@ -174,7 +174,7 @@
         margin-bottom: 2px;
     }
 
-    .contributors {
+    .your-amount {
         font-size: 0.8rem;
         color: #6b7280;
     }
@@ -230,6 +230,41 @@
         position: relative;
     }
 
+    .modal-title {
+        color: #111827;
+        font-size: 1.25rem
+        font-weight: 600;
+        margin-bottom: 8px;
+    }
+
+    .issue-link {
+        color: #6b7280;
+        font-size: 0.9rem;
+        text-decoration: none;
+        margin-bottom: 16px;
+    }
+
+    .total-container {
+        text-align: center;
+        margin-top: 24px;
+        padding: 16px;
+        background: #f8fafc;
+        border-radius: 8px;
+        border: 1px solid #e5e7eb;
+    }
+
+    .total-label {
+        font-size: 0.9rem;
+        color: #6b7280;
+        margin-bottom: 4px;
+    }
+
+    .total-amount {
+        font-size: 1.75rem;
+        font-weight: 700;
+        color: #059669;
+    }
+
     .donation-input-group {
         margin: 20px 0;
     }
@@ -237,8 +272,9 @@
     .donation-input-group label {
         display: block;
         margin-bottom: 8px;
-        font-weight: 600;
+        font-weight: 500;
         color: #374151;
+        font-size: 0.9rem;
     }
 
     .donation-amount-input {
@@ -255,6 +291,19 @@
         outline: none;
         border-color: #1e3a8a;
         box-shadow: 0 0 0 3px rgba(30, 58, 138, 0.1);
+    }
+
+    .cancel-btn {
+        width: 100%;
+        background: #f3f4f6;
+        border: 1px solid #d1d5db;
+        margin: 16px 0px 4px 0px;
+    }
+
+    .update-btn {
+        width: 100%;
+        background: #1e3a8a;
+        color: white;
     }
 
     .close {
@@ -324,10 +373,10 @@
             </div>
             <div class="donation-section">
                 <div class="donation-amount">${{ issue.donation_amount }}</div>
-                <div class="contributors">{{ issue.contributors }} contributors</div>
+                <div class="your-amount">You: $5.00</div>
             </div>
             <div class="action-section">
-                <button class="donate-btn" onclick="openModal('#{{ issue.rank }}', '{{ issue.title|escapejs }}', '{{ issue.number }}')">Donate</button>
+                <button class="donate-btn" onclick="openModal('#{{ issue.rank }}', '{{ issue.title|escapejs }}', '{{ issue.number }}')">Boost</button>
             </div>
         </div>
         {% endfor %}
@@ -343,12 +392,23 @@
 <div id="donateModal" class="modal">
     <div class="modal-content">
         <span class="close" onclick="closeModal()">&times;</span>
-        <h3 id="modalTitle"></h3>
+        <h3 class="modal-title" id="modalTitle"></h3>
+        <a class="issue-link" id="modalIssueLink" href="https://github.com/example/awesome-project/issues/42" target="_blank">example/awesome-project#42</a>
+        <div class="total-container">
+            <div class="total-label">
+                New total
+            </div>
+            <div class="total-amount">
+                $0.00
+            </div>
+        </div>
         <div class="donation-input-group">
-            <label for="donationAmount">Donation Amount (USD)</label>
+            <label for="donationAmount">Your contribution (USD):</label>
             <input type="number" id="donationAmount" class="donation-amount-input"
                    value="2" min="2" step="1" placeholder="2">
         </div>
+        <button class="btn cancel-btn">Cancel</button>
+        <button class="btn update-btn">Update</button>
     </div>
 </div>
 
@@ -357,7 +417,7 @@
 
     function openModal(rank, title, issueNumber) {
         const titleElement = document.getElementById('modalTitle');
-        titleElement.innerHTML = `Donate to <a href="https://github.com/{{ owner }}/{{ repo }}/issues/${issueNumber}" target="_blank" style="color: #1e3a8a; text-decoration: none;">${title}</a>`;
+        titleElement.innerHTML = title;
         currentIssueNumber = issueNumber;
         document.getElementById('donateModal').style.display = 'block';
     }
