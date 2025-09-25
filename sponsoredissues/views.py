@@ -26,6 +26,15 @@ def repo_issues(request, owner, repo):
                 contributor_count=Count('id')
             )
 
+            # Amount that current user has donated to the issue (if any).
+            user_amount = 0
+            if request.user.is_authenticated:
+                user_amount = issue.sponsor_amounts.filter(
+                    sponsor_user_id=request.user
+                ).aggregate(
+                    total=Sum('amount')
+                )['total'] or 0
+
             # Note: `or 0` is needed below because `Sum('amount')`
             # returns `None` when there are no `SponsorAmount` records for
             # the GitHub issue.
@@ -37,6 +46,7 @@ def repo_issues(request, owner, repo):
                 'labels': issue_data.get('labels', []),
                 'url': issue.url,
                 'donation_amount': donation_stats['total_amount'] or 0,
+                'user_amount': user_amount,
                 'contributors': donation_stats['contributor_count'],
             }
             parsed_issues.append(parsed_issue)
