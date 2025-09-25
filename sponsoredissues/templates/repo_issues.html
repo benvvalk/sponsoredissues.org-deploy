@@ -376,7 +376,7 @@
                 <div class="your-amount">You: $5.00</div>
             </div>
             <div class="action-section">
-                <button class="donate-btn" onclick="openModal('#{{ issue.rank }}', '{{ issue.title|escapejs }}', '{{ issue.number }}')">Add or Remove Funds</button>
+                <button class="donate-btn" onclick="openModal({{ issue }})">Add or Remove Funds</button>
             </div>
         </div>
         {% endfor %}
@@ -407,24 +407,46 @@
             <input type="number" id="donationAmount" class="donation-amount-input"
                    value="2" min="2" step="1" placeholder="2">
         </div>
-        <button class="btn cancel-btn">Cancel</button>
+        <button class="btn cancel-btn" onclick="closeModal()">Cancel</button>
         <button class="btn update-btn">Update</button>
     </div>
 </div>
 
 <script>
-    let currentIssueNumber = null;
+    let currentIssue = null;
 
-    function openModal(rank, title, issueNumber) {
+    function openModal(issue) {
+        currentIssue = issue;
+
         const titleElement = document.getElementById('modalTitle');
-        titleElement.innerHTML = title;
-        currentIssueNumber = issueNumber;
+        titleElement.innerHTML = currentIssue.title;
+
+        const issueLinkElement = document.getElementById('modalIssueLink');
+        issueLinkElement.innerHTML = '{{ owner }}/{{ repo }}#' + currentIssue.number;
+        issueLinkElement.href = currentIssue.url;
+
         document.getElementById('donateModal').style.display = 'block';
+
+        updateTotal();
     }
 
     function closeModal() {
         document.getElementById('donateModal').style.display = 'none';
     }
+
+    function updateTotal() {
+        const donationInput = document.getElementById('donationAmount');
+        const totalElement = document.querySelector('.total-amount');
+        const currentAmount = parseFloat(donationInput.value) || 0;
+        const newTotal = {{ currentIssue.donation_amount }} + currentAmount;
+        totalElement.textContent = `$${newTotal.toFixed(2)}`;
+    }
+
+    // Add event listener to donation amount input
+    document.addEventListener('DOMContentLoaded', function() {
+        const donationInput = document.getElementById('donationAmount');
+        donationInput.addEventListener('input', updateTotal);
+    });
 
 </script>
 {% endblock %}
