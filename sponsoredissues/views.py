@@ -30,7 +30,7 @@ def repo_issues(request, owner, repo):
             user_amount = 0
             if request.user.is_authenticated:
                 user_amount = issue.sponsor_amounts.filter(
-                    sponsor_user_id=request.user
+                    sponsor_user=request.user
                 ).aggregate(
                     total=Sum('amount')
                 )['total'] or 0
