@@ -372,8 +372,8 @@
                 </div>
             </div>
             <div class="donation-section">
-                <div class="donation-amount">${{ issue.donation_amount }}</div>
-                <div class="your-amount">You: ${{ issue.user_amount }}</div>
+                <div class="donation-amount">${{ issue.donation_total_cents }}</div>
+                <div class="your-amount">You: ${{ issue.user_donation_cents }}</div>
             </div>
             <div class="action-section">
                 <button class="donate-btn" onclick="openModal({{ issue }})">Add or Remove Funds</button>
@@ -426,7 +426,7 @@
         issueLinkElement.href = currentIssue.url;
 
         const donationInput = document.getElementById('donationAmount');
-        donationInput.value = currentIssue.user_amount;
+        donationInput.value = currentIssue.user_donation_cents;
 
         document.getElementById('donateModal').style.display = 'block';
 
@@ -441,7 +441,7 @@
         const donationInput = document.getElementById('donationAmount');
         const totalElement = document.querySelector('.total-amount');
         const currentAmount = parseFloat(donationInput.value) || 0;
-        const newTotal = {{ currentIssue.donation_amount }} + currentAmount;
+        const newTotal = {{ currentIssue.donation_total_cents }} + currentAmount;
         totalElement.textContent = `$${newTotal.toFixed(2)}`;
     }
 

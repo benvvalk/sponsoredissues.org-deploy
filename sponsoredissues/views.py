@@ -22,14 +22,14 @@ def repo_issues(request, owner, repo):
 
             # Calculate donation amount and contributors for this issue
             donation_stats = issue.sponsor_amounts.aggregate(
-                total_amount=Sum('cents_usd'),
+                total_cents=Sum('cents_usd'),
                 contributor_count=Count('id')
             )
 
             # Amount that current user has donated to the issue (if any).
-            user_amount = 0
+            user_donation_cents = 0
             if request.user.is_authenticated:
-                user_amount = issue.sponsor_amounts.filter(
+                user_donation_cents = issue.sponsor_amounts.filter(
                     sponsor_user=request.user
                 ).aggregate(
                     total=Sum('cents_usd')
@@ -45,8 +45,8 @@ def repo_issues(request, owner, repo):
                 'state': issue_data.get('state', 'open'),
                 'labels': issue_data.get('labels', []),
                 'url': issue.url,
-                'donation_amount': donation_stats['total_amount'] or 0,
-                'user_amount': user_amount,
+                'donation_total_cents': donation_stats['total_cents'] or 0,
+                'user_donation_cents': user_donation_cents,
                 'contributors': donation_stats['contributor_count'],
             }
             parsed_issues.append(parsed_issue)
@@ -54,7 +54,8 @@ def repo_issues(request, owner, repo):
             continue
 
     # Sort issues by donation amount in descending order
-    parsed_issues.sort(key=lambda issue: issue['donation_amount'], reverse=True)
+    parsed_issues.sort(key=lambda issue: issue['donation_total_cents'], reverse=True)
+
 
     # Update ranks after sorting
     for i, issue in enumerate(parsed_issues):
