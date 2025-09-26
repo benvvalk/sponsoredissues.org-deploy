@@ -22,7 +22,7 @@ def repo_issues(request, owner, repo):
 
             # Calculate donation amount and contributors for this issue
             donation_stats = issue.sponsor_amounts.aggregate(
-                total_amount=Sum('amount'),
+                total_amount=Sum('cents_usd'),
                 contributor_count=Count('id')
             )
 
@@ -32,10 +32,10 @@ def repo_issues(request, owner, repo):
                 user_amount = issue.sponsor_amounts.filter(
                     sponsor_user=request.user
                 ).aggregate(
-                    total=Sum('amount')
+                    total=Sum('cents_usd')
                 )['total'] or 0
 
-            # Note: `or 0` is needed below because `Sum('amount')`
+            # Note: `or 0` is needed below because `Sum('cents_usd')`
             # returns `None` when there are no `SponsorAmount` records for
             # the GitHub issue.
             parsed_issue = {

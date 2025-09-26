@@ -93,7 +93,7 @@ class GitHubSponsorService:
         allocated_amounts = SponsorAmount.objects.filter(
             sponsor_user_id=sponsor_user,
             target_github_issue__url__contains=f"github.com/{recipient_github_username}/"
-        ).aggregate(total=Sum('amount'))
+        ).aggregate(total=Sum('cents_usd'))
         allocated_sponsor_cents = allocated_amounts['total'] or Decimal('0')
 
         # Query GitHub GraphQL API for total cents given by
