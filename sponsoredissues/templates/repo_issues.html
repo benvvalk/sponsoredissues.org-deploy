@@ -397,13 +397,16 @@
                 0.00 USD
             </div>
         </div>
-        <div class="donation-input-group">
-            <label for="donationAmount">Your contribution (USD):</label>
-            <input type="number" id="donationAmount" class="donation-amount-input"
-                   value="0" min="0" step="1">
-        </div>
-        <button class="btn cancel-btn" onclick="closeModal()">Cancel</button>
-        <button class="btn update-btn">Update</button>
+        <form id="donateForm" method="post">
+            {% csrf_token %}
+            <div class="donation-input-group">
+                <label for="donationAmount">Your contribution (USD):</label>
+                <input type="number" id="donationAmount" name="donation_dollars" class="donation-amount-input"
+                    value="0" min="0" step="1">
+            </div>
+            <button type="button" class="btn cancel-btn" onclick="closeModal()">Cancel</button>
+            <button type="submit" class="btn update-btn">Update</button>
+        </form>
     </div>
 </div>
 
@@ -422,6 +425,9 @@
 
         const donationInput = document.getElementById('donationAmount');
         donationInput.value = cents_to_dollars(currentIssue.user_donation_cents);
+
+        const donateForm = document.getElementById('donateForm')
+        donateForm.action = `/gh/{{ owner }}/{{ repo }}/issue/${currentIssue.number}/donate`;
 
         document.getElementById('donateModal').style.display = 'block';
 

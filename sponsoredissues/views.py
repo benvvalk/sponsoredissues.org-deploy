@@ -1,7 +1,11 @@
 from decimal import Decimal
-from django.shortcuts import render
+from django.shortcuts import get_object_or_404, redirect, render
 from django.conf import settings
+from django.contrib import messages
+from django.contrib.auth.decorators import login_required
+from django.core.exceptions import BadRequest
 from django.db.models import Sum, Count
+from django.views.decorators.http import require_POST
 from .models import GitHubIssue, SponsorAmount
 from .github_service import GitHubSponsorService
 import json
@@ -84,3 +88,66 @@ def repo_issues(request, owner, repo):
     }
 
     return render(request, 'repo_issues.html', context)
+
+@login_required
+@require_POST
+def donate_to_issue(request, owner, repo, issue_number):
+    donation_dollars_str = request.POST['donation_dollars']
+
+    # Convert dollar value as string to cents as integer.  Use
+    # "Banker's Rounding" if the dollar value has more than two
+    # decimal places.
+    donation_dollars = Decimal(donation_dollars_str).quantize(Decimal('1.00'))
+    donation_cents = int(donation_dollars * 100)
+
+    if donation_cents < 0:
+        raise BadRequest("You tried to donate a negative amount")
+
+    # Find the GitHub issue
+    issue_url = f"https://github.com/{owner}/{repo}/issues/{issue_number}"
+    github_issue = get_object_or_404(GitHubIssue, url=issue_url)
+
+    # Get the previous amount that the user (sponsor) has allocated to
+    # the target GitHub issue, if any.
+    existing_donation = SponsorAmount.objects.filter(
+        sponsor_user=request.user,
+        target_github_issue=github_issue,
+    ).first()
+
+    donation_cents_old = existing_donation.cents_usd if existing_donation else 0
+
+    # Ensure that the user (sponsor) cannot spend more money than
+    # they than they have donated on GitHub Sponsors.
+    #
+    # Call `github_service.calculate_allocated_sponsor_cents` to
+    # determine the total amount that the user (sponsor) has donated
+    # to the developer on GitHub Sponsors, and also how much of that
+    # money has already been allocated to other GitHub issues.
+    github_service = GitHubSponsorService()
+    (allocated_sponsor_cents, total_sponsor_cents) = github_service.calculate_allocated_sponsor_cents(request.user, owner)
+    allocated_sponsor_cents -= donation_cents_old
+    unallocated_sponsor_cents = total_sponsor_cents - allocated_sponsor_cents
+
+    if donation_cents > unallocated_sponsor_cents:
+        raise BadRequest("You tried to spend more than you've donated on GitHub Sponsors")
+
+    if existing_donation:
+        if donation_cents == 0:
+            # Remove donation from database if amount == 0
+            existing_donation.delete()
+            messages.success(request, f"Removed your donation for {owner}/{repo}#{issue_number}.")
+        else:
+            # Update donation amount.
+            existing_donation.cents_usd = donation_cents
+            existing_donation.save()
+            messages.success(request, f"Updated your amount for {owner}/{repo}#{issue_number} to {donation_dollars} USD.")
+    elif donation_cents > 0:
+        # Create new donation in database if amount > 0
+        SponsorAmount.objects.create(
+            cents_usd=donation_cents,
+            sponsor_user=request.user,
+            target_github_issue=github_issue,
+        )
+        messages.success(request, f"Updated your amount for {owner}/{repo}#{issue_number} to {donation_dollars} USD.")
+
+    return redirect('repo_issues', owner, repo)
