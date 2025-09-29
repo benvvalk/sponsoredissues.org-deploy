@@ -66,17 +66,21 @@ def repo_issues(request, owner, repo):
     total_issues_count = len(parsed_issues)
 
     # Calculate sponsor dollars for current user and repo owner
-    (allocated_sponsor_cents, total_sponsor_cents) = (0, 0)
+    total_sponsor_cents = 0
+    allocated_sponsor_cents = 0
+    unallocated_sponsor_cents = 0
     if request.user.is_authenticated:
         github_service = GitHubSponsorService()
         (allocated_sponsor_cents, total_sponsor_cents) = github_service.calculate_allocated_sponsor_cents(request.user, owner)
+        unallocated_sponsor_cents = total_sponsor_cents - allocated_sponsor_cents
 
     context = {
         'owner': owner,
         'repo': repo,
         'issues': parsed_issues,
-        'allocated_sponsor_cents': allocated_sponsor_cents,
         'total_sponsor_cents': total_sponsor_cents,
+        'allocated_sponsor_cents': allocated_sponsor_cents,
+        'unallocated_sponsor_cents': unallocated_sponsor_cents,
     }
 
     return render(request, 'repo_issues.html', context)

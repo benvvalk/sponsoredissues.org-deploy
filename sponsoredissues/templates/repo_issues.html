@@ -1,4 +1,5 @@
 {% extends 'base.html' %}
+{% load cents_to_dollars %}
 
 {% block title %}SponsoredIssues - {{ owner }}/{{ repo }} Issues{% endblock %}
 
@@ -31,25 +32,8 @@
         font-weight: 700;
     }
 
-    .repo-info {
-        color: #6b7280;
-        font-size: 1rem;
-        display: flex;
-        align-items: center;
-        gap: 16px;
-    }
-
-    .repo-stats {
-        display: flex;
-        gap: 24px;
+    .sponsor-dollars-stat {
         font-size: 0.9rem;
-    }
-
-    .stat {
-        display: flex;
-        align-items: center;
-        gap: 6px;
-        color: #6b7280;
     }
 
     .issues-list {
@@ -341,13 +325,17 @@
 <div class="repo-header">
     <div class="repo-header-content">
         <h1>{{ owner }}/{{ repo }}</h1>
-        <div class="repo-info">
-            <div class="repo-stats">
-                <div class="stat">
-                    <span>💸</span>
-                    <span>{{ allocated_sponsor_cents }}/{{ total_sponsor_cents }} sponsor cents allocated</span>
-                </div>
-            </div>
+        <div class="sponsor-dollars-stat">
+            <span>💸</span>
+            <span>You have donated a total of <strong>{{ total_sponsor_cents|cents_to_dollars }} USD</strong> to <strong>@{{owner}}</strong> on GitHub Sponsors.</span>
+        </div>
+        <div class="sponsor-dollars-stat">
+            <span>💸</span>
+            <span>Sponsor dollars assigned to issues: <strong>{{ allocated_sponsor_cents|cents_to_dollars }} USD</strong></span>
+        </div>
+        <div class="sponsor-dollars-stat">
+            <span>💸</span>
+            <span>Sponsor dollars remaining: <strong>{{ unallocated_sponsor_cents|cents_to_dollars }} USD</strong></span>
         </div>
     </div>
 </div>
@@ -372,8 +360,8 @@
                 </div>
             </div>
             <div class="donation-section">
-                <div class="donation-amount">${{ issue.donation_total_cents }}</div>
-                <div class="your-amount">You: ${{ issue.user_donation_cents }}</div>
+                <div class="donation-amount">{{ issue.donation_total_cents|cents_to_dollars }} USD</div>
+                <div class="your-amount">You: {{ issue.user_donation_cents|cents_to_dollars }} USD</div>
             </div>
             <div class="action-section">
                 <button class="donate-btn" onclick="openModal({{ issue }})">Add or Remove Funds</button>
@@ -399,7 +387,7 @@
                 New total
             </div>
             <div class="total-amount">
-                $0.00
+                0.00 USD
             </div>
         </div>
         <div class="donation-input-group">
