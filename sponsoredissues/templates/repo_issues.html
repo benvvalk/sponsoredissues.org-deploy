@@ -414,7 +414,7 @@
         issueLinkElement.href = currentIssue.url;
 
         const donationInput = document.getElementById('donationAmount');
-        donationInput.value = currentIssue.user_donation_cents;
+        donationInput.value = cents_to_dollars(currentIssue.user_donation_cents);
 
         document.getElementById('donateModal').style.display = 'block';
 
@@ -428,9 +428,82 @@
     function updateTotal() {
         const donationInput = document.getElementById('donationAmount');
         const totalElement = document.querySelector('.total-amount');
-        const currentAmount = parseFloat(donationInput.value) || 0;
-        const newTotal = {{ currentIssue.donation_total_cents }} + currentAmount;
-        totalElement.textContent = `$${newTotal.toFixed(2)}`;
+        const donation_cents = dollars_to_cents(donationInput.value);
+        const new_total_cents = {{ currentIssue.donation_total_cents }} + donation_cents;
+        totalElement.textContent = cents_to_dollars(new_total_cents) + ' USD'
+    }
+
+    // Convert a dollars USD value given as a string
+    // to an equivalent integer cents value.
+    //
+    // Return zero if the input string doesn't represent
+    // a valid dollar value (e.g. non-numeric characters).
+    //
+    // The input dollars value may be a whole number
+    // (zero decimal places), or may have any number
+    // of decimal places following the '.'. In the case that the
+    // there are more than two decimal places, use "Banker's Rounding".
+    function dollars_to_cents(dollarString) {
+        // Remove whitespace and validate input
+        const cleaned = String(dollarString).trim();
+        if (!cleaned || !/^-?\d*\.?\d*$/.test(cleaned)) {
+            return 0;
+        }
+
+        // Split on decimal point
+        const parts = cleaned.split('.');
+        const wholePart = parts[0] || '0';
+        const decimalPart = parts[1] || '';
+
+        // Convert whole dollars to cents
+        let cents = parseInt(wholePart) * 100;
+        if (isNaN(cents)) {
+            return 0;
+        }
+
+        // Handle decimal part
+        if (decimalPart.length === 0) {
+            // No decimal part
+            return cents;
+        } else if (decimalPart.length === 1) {
+            // One decimal place
+            cents += parseInt(decimalPart) * 10;
+        } else if (decimalPart.length === 2) {
+            // Two decimal places
+            cents += parseInt(decimalPart);
+        } else {
+            console.log("a")
+            // More than two decimal places - use "Banker's Rounding"
+            cents += parseInt(decimalPart.substring(0, 2));
+            thirdDigit = parseInt(decimalPart.charAt(2))
+
+            if (thirdDigit > 5) {
+                cents += 1;
+            } else if (thirdDigit === 5) {
+                // Check if there any non-zero digits after the 5
+                const hasMoreDigits = decimalPart.length > 3 && decimalPart.substring(3).match(/[1-9]/);
+                // Note: Checking if `cents` is even/odd
+                // is equivalent to checking if the second digit
+                // is even/odd.
+                if (hasMoreDigits || (cents % 2 === 1)) {
+                    cents += 1;
+                }
+            }
+        }
+
+        return cents;
+    }
+
+    // Convert an integer value in cents to equivalent
+    // dollars value as a string.
+    //
+    // Note: We use integer division/modulus instead of
+    // `parseFloat` here, in order to floating-point precision
+    // errors.
+    function cents_to_dollars(cents) {
+        const dollars = Math.floor(cents / 100);
+        const remainingCents = cents % 100;
+        return `${dollars}.${remainingCents.toString().padStart(2, '0')}`;
     }
 
     // Add event listener to donation amount input

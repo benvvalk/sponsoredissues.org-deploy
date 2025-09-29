@@ -16,7 +16,7 @@ class GitHubIssue(models.Model):
         return self.url
 
 class SponsorAmount(models.Model):
-    cents_usd = models.DecimalField(max_digits=10, decimal_places=2)
+    cents_usd = models.IntegerField()
     currency = models.CharField(max_length=3, default='USD')
     sponsor_user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='sponsor_amounts')
     target_github_issue = models.ForeignKey(GitHubIssue, on_delete=models.CASCADE, related_name='sponsor_amounts')
