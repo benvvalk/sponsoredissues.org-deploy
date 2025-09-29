@@ -23,7 +23,7 @@ def repo_issues(request, owner, repo):
             # Calculate donation amount and contributors for this issue
             donation_stats = issue.sponsor_amounts.aggregate(
                 total_cents=Sum('cents_usd'),
-                contributor_count=Count('id')
+                sponsor_count=Count('id')
             )
 
             # Amount that current user has donated to the issue (if any).
@@ -47,7 +47,7 @@ def repo_issues(request, owner, repo):
                 'url': issue.url,
                 'donation_total_cents': donation_stats['total_cents'] or 0,
                 'user_donation_cents': user_donation_cents,
-                'contributors': donation_stats['contributor_count'],
+                'num_sponsors': donation_stats['sponsor_count'],
             }
             parsed_issues.append(parsed_issue)
         except (json.JSONDecodeError, AttributeError):

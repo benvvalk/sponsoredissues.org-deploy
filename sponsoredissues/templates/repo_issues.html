@@ -155,6 +155,12 @@
         font-size: 1.1rem;
         font-weight: 700;
         color: #059669;
+    }
+
+    .num-sponsors {
+        font-size: 0.8rem;
+        font-weight: 500;
+        color: #059669;
         margin-bottom: 2px;
     }
 
@@ -361,6 +367,7 @@
             </div>
             <div class="donation-section">
                 <div class="donation-amount">{{ issue.donation_total_cents|cents_to_dollars }} USD</div>
+                <div class="num-sponsors">{{ issue.num_sponsors }} sponsors</div>
                 <div class="your-amount">You: {{ issue.user_donation_cents|cents_to_dollars }} USD</div>
             </div>
             <div class="action-section">
