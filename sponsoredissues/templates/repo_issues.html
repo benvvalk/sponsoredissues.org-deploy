@@ -333,15 +333,15 @@
         <h1>{{ owner }}/{{ repo }}</h1>
         <div class="sponsor-dollars-stat">
             <span>💸</span>
-            <span>You have donated a total of <strong>{{ total_sponsor_cents|cents_to_dollars }} USD</strong> to <strong>@{{owner}}</strong> on GitHub Sponsors.</span>
+            <span>Total donated to <strong>@{{owner}}</strong>: <strong>{{ total_sponsor_cents|cents_to_dollars }} USD</strong></span>
         </div>
         <div class="sponsor-dollars-stat">
             <span>💸</span>
-            <span>Sponsor dollars assigned to issues: <strong>{{ allocated_sponsor_cents|cents_to_dollars }} USD</strong></span>
+            <span>Assigned to issues: <strong>{{ allocated_sponsor_cents|cents_to_dollars }} USD</strong></span>
         </div>
         <div class="sponsor-dollars-stat">
             <span>💸</span>
-            <span>Sponsor dollars remaining: <strong>{{ unallocated_sponsor_cents|cents_to_dollars }} USD</strong></span>
+            <span>Remaining: <strong>{{ unallocated_sponsor_cents|cents_to_dollars }} USD</strong></span>
         </div>
     </div>
 </div>
