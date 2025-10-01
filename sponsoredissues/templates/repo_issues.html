@@ -283,6 +283,16 @@
         box-shadow: 0 0 0 3px rgba(30, 58, 138, 0.1);
     }
 
+    .donation-amount-input.error {
+        border: 1px solid red;
+    }
+
+    .donation-input-group .donation-amount-error {
+        color: red;
+        margin-top: 4px;
+        font-size: 0.875rem;
+    }
+
     .cancel-btn {
         width: 100%;
         background: #f3f4f6;
@@ -400,9 +410,10 @@
         <form id="donateForm" method="post">
             {% csrf_token %}
             <div class="donation-input-group">
-                <label for="donationAmount">Your contribution (USD):</label>
+                <label for="donationAmount">Your contribution (<span id="dollars_remaining">{{ unallocated_sponsor_cents|cents_to_dollars }}</span> USD remaining):</label>
                 <input type="number" id="donationAmount" name="donation_dollars" class="donation-amount-input"
                     value="0" min="0" step="1">
+                <label for="donationAmount" id="donationAmountError" class="donation-amount-error"></label>
             </div>
             <button type="button" class="btn cancel-btn" onclick="closeModal()">Cancel</button>
             <button type="submit" class="btn update-btn">Update</button>
@@ -425,6 +436,7 @@
 
         const donationInput = document.getElementById('donationAmount');
         donationInput.value = cents_to_dollars(currentIssue.user_donation_cents);
+        donationInput.max = cents_to_dollars(currentIssue.user_donation_cents + {{ unallocated_sponsor_cents }})
 
         const donateForm = document.getElementById('donateForm')
         donateForm.action = `/gh/{{ owner }}/{{ repo }}/issue/${currentIssue.number}/donate`;
@@ -440,10 +452,34 @@
 
     function updateTotal() {
         const donationInput = document.getElementById('donationAmount');
+
         const totalElement = document.querySelector('.total-amount');
+        const donationAmountError = document.getElementById('donationAmountError');
+
         const donation_cents = dollars_to_cents(donationInput.value);
-        const new_total_cents = {{ currentIssue.donation_total_cents }} + donation_cents;
-        totalElement.textContent = cents_to_dollars(new_total_cents) + ' USD'
+
+        // If user types in a number that is greater than their
+        // sponsor dollars remaining, show an error message and
+        // reset the displayed total.
+        var donation_delta = donation_cents - currentIssue.user_donation_cents;
+        if (donation_delta > {{ unallocated_sponsor_cents }}) {
+            donationInput.classList.add('error')
+            donationAmountError.textContent = 'Exceeded sponsor dollars remaining';
+            // Show original total and dollars remaining while input
+            // box is in error state
+            donation_delta = 0;
+        } else {
+            // Donation amount is okay, so clear any previously displayed error
+            donationInput.classList.remove('error')
+            donationAmountError.textContent = '';
+        }
+
+        const new_total_cents = currentIssue.donation_total_cents + donation_delta;
+        totalElement.textContent = cents_to_dollars(new_total_cents) + ' USD';
+
+        const dollars_remaining = document.getElementById('dollars_remaining');
+        const cents_remaining = {{ unallocated_sponsor_cents }} - donation_delta;
+        dollars_remaining.textContent = cents_to_dollars(cents_remaining);
     }
 
     // Convert a dollars USD value given as a string
