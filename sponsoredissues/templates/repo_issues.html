@@ -36,6 +36,16 @@
         font-size: 0.9rem;
     }
 
+    .sponsor-dollars-stat .dollars-value {
+        color: #059669;
+        font-weight: 700;
+    }
+
+    .sponsor-dollars-stat .github_username {
+        color: #1e3a8a;
+        font-weight: 700;
+    }
+
     .issues-list {
         background: white;
         border: 1px solid #e5e7eb;
@@ -346,15 +356,15 @@
         <h1>{{ owner }}/{{ repo }}</h1>
         <div class="sponsor-dollars-stat">
             <span>💸</span>
-            <span>Total donated to <strong>@{{owner}}</strong>: <strong>{{ total_sponsor_cents|cents_to_dollars }} USD</strong></span>
+            <span>Total donated to <span class="github_username">@{{owner}}</span>: <span class="dollars-value">{{ total_sponsor_cents|cents_to_dollars }} USD</span></span>
         </div>
         <div class="sponsor-dollars-stat">
             <span>💸</span>
-            <span>Assigned to issues: <strong>{{ allocated_sponsor_cents|cents_to_dollars }} USD</strong></span>
+            <span>Assigned to issues: <span class="dollars-value">{{ allocated_sponsor_cents|cents_to_dollars }} USD</span></span>
         </div>
         <div class="sponsor-dollars-stat">
             <span>💸</span>
-            <span>Remaining: <strong>{{ unallocated_sponsor_cents|cents_to_dollars }} USD</strong></span>
+            <span>Remaining: <span class="dollars-value">{{ unallocated_sponsor_cents|cents_to_dollars }} USD</span></span>
         </div>
     </div>
 </div>
