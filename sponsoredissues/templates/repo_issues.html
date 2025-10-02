@@ -423,7 +423,7 @@
         <form id="donateForm" method="post">
             {% csrf_token %}
             <div class="donation-input-group">
-                <label for="donationAmount">Your contribution (<span id="dollars_remaining">{{ unallocated_sponsor_cents|cents_to_dollars }}</span> USD remaining):</label>
+                <label for="donationAmount">Your contribution<span id="oldAmountReminder"></span>:</label>
                 <input type="number" id="donationAmount" name="donation_dollars" class="donation-amount-input"
                     value="0" min="0" step="1">
                 <label for="donationAmount" id="donationAmountError" class="donation-amount-error"></label>
@@ -485,6 +485,17 @@
             // Donation amount is okay, so clear any previously displayed error
             donationInput.classList.remove('error')
             donationAmountError.textContent = '';
+        }
+
+        // If the user changed their donation amount, or they have entered
+        // invalid input into the amount box, remind them what their original
+        // donation amount was.
+        const oldAmountReminder = document.getElementById('oldAmountReminder');
+        if (donation_delta !== 0 || donationInput.classList.contains('error')) {
+            const old_amount_dollars = cents_to_dollars(currentIssue.user_donation_cents);
+            oldAmountReminder.textContent = ` (was ${old_amount_dollars} USD)`;
+        } else {
+            oldAmountReminder.textContent = ''
         }
 
         const new_total_cents = currentIssue.donation_total_cents + donation_delta;
