@@ -13,6 +13,9 @@ import json
 def index(request):
     return render(request, 'index.html')
 
+def faq(request):
+    return render(request, 'faq.html')
+
 def repo_issues(request, owner, repo):
     # Filter issues for this repository
     repo_url_pattern = f"https://github.com/{owner}/{repo}"

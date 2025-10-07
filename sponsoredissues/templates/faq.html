@@ -1,0 +1,393 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}FAQ - SponsoredIssues{% endblock %}
+
+{% block head %}
+<style>
+    body {
+        font-family: Verdana, Geneva, sans-serif;
+        font-size: 10pt;
+        background: #f6f6ef;
+        color: #000;
+    }
+
+    .container {
+        max-width: 1200px;
+        margin: 0 auto;
+        padding: 20px 15px;
+    }
+
+    .main-content {
+        background: white;
+        padding: 20px;
+        border: 1px solid #e6e6df;
+    }
+
+    .intro-section {
+        margin-bottom: 30px;
+        border-bottom: 1px solid #e6e6df;
+        padding-bottom: 20px;
+    }
+
+    .intro-title {
+        font-size: 16pt;
+        color: #1e3a8a;
+        margin-bottom: 10px;
+        font-weight: bold;
+    }
+
+    .section-header {
+        font-size: 12pt;
+        color: #1e3a8a;
+        font-weight: bold;
+        margin-bottom: 15px;
+        border-bottom: 1px solid #e6e6df;
+        padding-bottom: 5px;
+    }
+
+    .faq-section {
+        margin-bottom: 30px;
+    }
+
+    .faq-item {
+        margin-bottom: 25px;
+    }
+
+    .faq-question {
+        font-size: 11pt;
+        font-weight: bold;
+        color: #1e3a8a;
+        margin-bottom: 10px;
+    }
+
+    .faq-answer {
+        line-height: 1.4;
+        color: #333;
+        margin-left: 20px;
+    }
+
+    .faq-answer p {
+        margin-bottom: 12px;
+    }
+
+    .faq-answer ul, .faq-answer ol {
+        margin: 12px 0 12px 20px;
+        line-height: 1.4;
+    }
+
+    .faq-answer li {
+        margin-bottom: 8px;
+    }
+
+    .faq-answer a {
+        color: #1e3a8a;
+        text-decoration: none;
+    }
+
+    .faq-answer a:hover {
+        text-decoration: underline;
+    }
+
+    .sponsoredissues-label {
+        padding: 2px 8px;
+        font-size: 0.75rem;
+        border-radius: 12px;
+        border: 1px solid;
+        background: #f0fdf4;
+        color: #166534;
+        border-color: #166534;
+    }
+
+    .footer {
+        margin-top: 40px;
+        padding-top: 20px;
+        border-top: 1px solid #e6e6df;
+        color: #666;
+        font-size: 9pt;
+        text-align: center;
+    }
+
+    .footer-links {
+        display: flex;
+        justify-content: center;
+        gap: 15px;
+        margin-bottom: 10px;
+    }
+
+    .footer-links a {
+        color: #666;
+        text-decoration: none;
+    }
+
+    .footer-links a:hover {
+        text-decoration: underline;
+    }
+
+    .toc {
+        background: #f9f9f9;
+        border: 1px solid #e6e6df;
+        padding: 20px;
+        margin-bottom: 30px;
+    }
+
+    .toc-title {
+        font-size: 12pt;
+        font-weight: bold;
+        color: #1e3a8a;
+        margin-bottom: 15px;
+    }
+
+    .toc-section {
+        margin-bottom: 15px;
+    }
+
+    .toc-section-title {
+        font-weight: bold;
+        color: #1e3a8a;
+        margin-bottom: 8px;
+    }
+
+    .toc-section-title a {
+        color: #1e3a8a;
+        text-decoration: none;
+    }
+
+    .toc-section-title a:hover {
+        text-decoration: underline;
+    }
+
+    .toc-questions {
+        margin-left: 20px;
+        line-height: 1.6;
+    }
+
+    .toc-questions a {
+        color: #666;
+        text-decoration: none;
+        font-size: 10pt;
+    }
+
+    .toc-questions a:hover {
+        color: #1e3a8a;
+        text-decoration: underline;
+    }
+
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="main-content">
+        <div class="intro-section">
+            <div class="intro-title">Frequently Asked Questions</div>
+        </div>
+
+        <div class="toc">
+            <div class="toc-title">Table of Contents</div>
+
+            <div class="toc-section">
+                <div class="toc-section-title"><a href="#general">General Questions</a></div>
+                <div class="toc-questions">
+                    • <a href="#what-is">What is sponsoredissues.org?</a><br>
+                    • <a href="#different-from">How is this different from other issue bounty platforms?</a><br>
+                    • <a href="#free-to-use">Is sponsoredissues.org free to use?</a>
+                </div>
+            </div>
+
+            <div class="toc-section">
+                <div class="toc-section-title"><a href="#maintainers">For Maintainers</a></div>
+                <div class="toc-questions">
+                    • <a href="#get-started">How do I get started as a maintainer?</a><br>
+                    • <a href="#which-issues">Which issues can be sponsored?</a><br>
+                    • <a href="#creative-control">Would I be giving up creative control of my project to my donors?</a><br>
+                    • <a href="#receive-donations">When do I receive the donations?</a><br>
+                    • <a href="#required-complete">Am I required to complete sponsored issues?</a>
+                </div>
+            </div>
+
+            <div class="toc-section">
+                <div class="toc-section-title"><a href="#users">For Users/Donors</a></div>
+                <div class="toc-questions">
+                    • <a href="#how-vote">How do I vote for issues on sponsoredissues.org?</a><br>
+                    • <a href="#need-account">Do I need an account to donate?</a><br>
+                    • <a href="#my-issue-is-missing">I created a GitHub issue, and I want to donate to it. Why isn't it listed on sponsoredissues.org?</a><br>
+                    • <a href="#get-refund">Can I get a refund if an issue isn't completed?</a><br>
+                    • <a href="#change-allocation">Can I change how my donation is allocated?</a>
+                </div>
+            </div>
+
+            <div class="toc-section">
+                <div class="toc-section-title"><a href="#technical">Technical Questions</a></div>
+                <div class="toc-questions">
+                    • <a href="#verify-donations">How does sponsoredissues.org verify GitHub Sponsors donations?</a><br>
+                    • <a href="#issue-closed">What happens when an issue is closed?</a><br>
+                    • <a href="#source-code">Is the source code available?</a>
+                </div>
+            </div>
+        </div>
+
+        <div class="faq-section" id="general">
+            <div class="section-header">General Questions</div>
+
+            <div class="faq-item" id="what-is">
+                <div class="faq-question">What is sponsoredissues.org?</div>
+                <div class="faq-answer">
+                    <p>sponsoredissues.org is a platform that allows GitHub Sponsors donors to assign their donations to specific GitHub issues. This gives users voting power over which features and fixes get prioritized, while helping maintainers understand what matters most to their community.</p>
+                </div>
+            </div>
+
+            <div class="faq-item" id="different-from">
+                <div class="faq-question">How is this different from other issue bounty platforms?</div>
+                <div class="faq-answer">
+                    <p>Unlike bounty platforms where money is held until work is complete, sponsoredissues.org works with GitHub Sponsors donations that have already been given (unconditionally!) to the maintainer. The funds assigned to an issue on sponsoredissues.org merely let the maintainer know that the issue is important to users, and there is no formal obligation to resolve the issue within any specific timeframe.</p>
+                </div>
+            </div>
+
+            <div class="faq-item" id="free-to-use">
+                <div class="faq-question">Is sponsoredissues.org free to use?</div>
+                <div class="faq-answer">
+                    <p>Yes, the platform is free to use for both maintainers and users. If you want to support the site, or if you want vote for specific features/fixes, you can <a href="https://github.com/sponsors/benvvalk">donate to me on GitHub Sponsors</a>.</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="faq-section" id="maintainers">
+            <div class="section-header">For Maintainers</div>
+
+            <div class="faq-item" id="get-started">
+                <div class="faq-question">How do I get started as a maintainer?</div>
+                <div class="faq-answer">
+                    <p>To get started as a maintainer:</p>
+                    <ol>
+                        <li><a href="https://docs.github.com/en/sponsors/receiving-sponsorships-through-github-sponsors/setting-up-github-sponsors-for-your-personal-account">Set up a GitHub Sponsors profile</a> for your GitHub account.
+                        </li>
+                        <li>
+                            Install the GitHub App for sponsoredissues.org.
+                        </li>
+                        <li>Add the <span class="sponsoredissues-label">sponsoredissues.org</span> label to GitHub issues you want to make sponsorable.
+                        </li>
+                        <li>
+                            Recommended: Edit the <code>README.md</code> for your repo and add a link to your sponsored issues page. You can get the URL for the sponsored issues page by replacing <code>github.com</code> with <code>sponsoredissues.org</code> in the GitHub repo URL.
+                        </li>
+                    </ol>
+                    <p>
+                        That's it! The issues you tagged should now be fundable on sponsoredissues.org.
+                    </p>
+                </div>
+            </div>
+
+            <div class="faq-item" id="which-issues">
+                <div class="faq-question">Which issues can be sponsored?</div>
+                <div class="faq-answer">
+                    <p>Only issues that you've explicitly tagged with the <span class="sponsoredissues-label">sponsoredissues.org</span> label on GitHub will be listed on sponsoredissues.org. This helps ensure that your users can only fund issues that are technically feasible and align with your project goals.</p>
+                    <p>You should think carefully about which issues you tag with <span class="sponsoredissues-label">sponsoredissues.org</span>! As general rule, make sure that you are interested in doing the work, and that you have a good implementation plan before tagging the issue. That will save both you and your users a lot of unnecessary churn.</p>
+                </div>
+            </div>
+
+            <div class="faq-item" id="creative-control">
+                <div class="faq-question">Would I be giving up creative control of my project to my donors?</div>
+                <div class="faq-answer">
+                    <p>No, you maintain creative control of your project, because you decide which issues are "sponsorable", i.e. which issues have the <span class="sponsoredissues-label">sponsoredissues.org</span> label on GitHub. You should only tag an issue if you think the requested feature/fix is reasonable and you want to do the work. See also: <a href="#which-issues">Which issues can be sponsored?</a></p>
+                </div>
+            </div>
+
+            <div class="faq-item" id="receive-donations">
+                <div class="faq-question">When do I receive the donations?</div>
+                <div class="faq-answer">
+                    <p>User donations on GitHub Sponsors are immediately sent to the maintainer, and sponsoredissues.org has no effect on when payments are sent. As such, there is no requirement for maintainers to resolve specific issues before getting paid. See also: <a href="#different-from">How is this different from other issue bounty platforms?</a> </p>
+                </div>
+            </div>
+
+            <div class="faq-item" id="required-complete">
+                <div class="faq-question">Am I required to complete sponsored issues?</div>
+                <div class="faq-answer">
+                    <p>No. All contributions on sponsoredissues.org are donations, not contracts or bounties. You have no formal obligation to resolve funded issues in any particular timeframe (or at all). The funding is meant to help encourage and prioritize work, not create legal obligations.</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="faq-section" id="users">
+            <div class="section-header">For Users/Donors</div>
+
+            <div class="faq-item" id="how-vote">
+                <div class="faq-question">How do I vote for issues on sponsoredissues.org?</div>
+                <div class="faq-answer">
+                    <p>To vote for issues:</p>
+                    <ol>
+                        <li>Make a donation to the maintainer on GitHub Sponsors. You may choose a one time donation or a monthly subscription (both options work with sponsoredissues.org).</li>
+                        <li>Sign in to sponsoredissues.org with your GitHub account.</li>
+                        <li>Navigate to the repo page on sponsoredissues.org. You can get the URL for a repo page by replacing <code>github.com</code> with <code>sponsoredissues.org</code> in the URL for the GitHub repo (e.g. <code>https://github.com/benvvalk/sponsoredissues.org</code> -> <code>https://sponsoredissues.org/benvvalk/sponsoredissues.org</code>).</li>
+                        <li>Allocate portions of your GitHub Sponsors donation to specific issues, using the "Add or Remove Funds" button next to the individual issues.</li>
+                    </ol>
+                    <p>The issue listing for a repo is sorted and ranked by donation total, to help maintainers see which issues have the most community support.</p>
+                </div>
+            </div>
+
+            <div class="faq-item" id="need-account">
+                <div class="faq-question">Do I need an account to donate?</div>
+                <div class="faq-answer">
+                    <p>You need a GitHub account to donate through GitHub Sponsors (which is how the actual money transfer happens). To allocate your donations to specific issues on sponsoredissues.org, you'll need to sign in with that GitHub account so the platform can verify your sponsorship.</p>
+                </div>
+            </div>
+
+            <div class="faq-item" id="my-issue-is-missing">
+                <div class="faq-question">I created a GitHub issue, and I want to donate to it. Why isn't it listed on sponsoredissues.org?</div>
+                <div class="faq-answer">
+                    <p>Not every GitHub issue is automatically "sponsorable". You will need to ask the maintainer to approve the issue sponsorship by adding the <span class="sponsoredissues-label">sponsoredissues.org</span> label. This helps ensure that the requested feature/fix is technically feasible, and aligns with the maintainer's goals for the project.</p>
+                </div>
+            </div>
+
+            <div class="faq-item" id="get-refund">
+                <div class="faq-question">Can I get a refund if an issue isn't completed?</div>
+                <div class="faq-answer">
+                    <p>Sorry, no. Since all payment processing is handled by GitHub Sponsors, we can't give refunds. However, you can adjust or remove your issue allocations at any time before the issue is closed. For questions about refunding your GitHub Sponsors donation, you'll need to contact GitHub support.</p>
+                </div>
+            </div>
+
+            <div class="faq-item" id="change-allocation">
+                <div class="faq-question">Can I change how my donation is allocated?</div>
+                <div class="faq-answer">
+                    <p>Yes! You can reallocate your GitHub Sponsors donation among different issues at any time, as long as the issues are still open. Simply visit the repository's issue page and adjust your allocations.</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="faq-section" id="technical">
+            <div class="section-header">Technical Questions</div>
+
+            <div class="faq-item" id="verify-donations">
+                <div class="faq-question">How does sponsoredissues.org verify GitHub Sponsors donations?</div>
+                <div class="faq-answer">
+                    <p>The platform uses GitHub's API to verify active sponsorships and donation amounts. When you sign in with GitHub, sponsoredissues.org can check which maintainers you're sponsoring and for how much, ensuring you can only allocate donations you've actually made.</p>
+                </div>
+            </div>
+
+            <div class="faq-item" id="issue-closed">
+                <div class="faq-question">What happens when an issue is closed?</div>
+                <div class="faq-answer">
+                    <p>When an issue is closed on GitHub, funding allocations for that issue are locked. The maintainer has already received the donations (as they're forwarded immediately), and donors can no longer adjust their allocations for that specific issue.</p>
+                </div>
+            </div>
+
+            <div class="faq-item" id="source-code">
+                <div class="faq-question">Is the source code available?</div>
+                <div class="faq-answer">
+                    <p>Yes! sponsoredissues.org is open source and published on GitHub with an Affero GPL license. You can view the code, report issues, or even contribute to the platform itself at <a href="https://github.com/benvvalk/sponsoredissues.org">github.com/benvvalk/sponsoredissues.org</a>.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="footer">
+        <div class="footer-links">
+            <a href="/">Home</a>
+            <a href="/faq">FAQ</a>
+            <a href="#terms">Terms</a>
+            <a href="#privacy">Privacy</a>
+            <a href="#contact">Contact</a>
+        </div>
+        <div>SponsoredIssues is not affiliated with GitHub, Inc.</div>
+    </div>
+</div>
+{% endblock %}

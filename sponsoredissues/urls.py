@@ -20,6 +20,7 @@ from . import views
 
 urlpatterns = [
     path('', views.index, name='index'),
+    path('faq', views.faq, name='faq'),
     path('accounts/', include('allauth.urls')),
     path('gh/<str:owner>/<str:repo>/issues', views.repo_issues, name='repo_issues'),
     path('gh/<str:owner>/<str:repo>/issue/<int:issue_number>/donate', views.donate_to_issue, name='donate_to_issue'),
