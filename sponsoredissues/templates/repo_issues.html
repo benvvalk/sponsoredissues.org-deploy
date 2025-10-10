@@ -175,8 +175,8 @@
         padding: 2px 8px;
         border-radius: 12px;
         font-size: 0.75rem;
-        font-weight: 500;
-        border: 1px solid rgba(0, 0, 0, 0.1);
+        font-weight: 600;
+        border: 1px solid transparent;
     }
 
     .issue-number {
@@ -442,7 +442,7 @@
                 <div class="issue-meta">
                     <div class="labels">
                         {% for label in issue.labels %}
-                        <span class="label" data-label-color="{{ label.color }}" style="background-color: #{{ label.color }};">{{ label.name }}</span>
+                        <span class="label" data-label-color="{{ label.color }}">{{ label.name }}</span>
                         {% endfor %}
                     </div>
                     <div class="issue-number">{{ owner }}/{{ repo }}#{{ issue.number }} {% if issue.state == 'open' %}(open){% else %}(closed){% endif %}</div>
@@ -639,10 +639,9 @@
         return `${dollars}.${remainingCents.toString().padStart(2, '0')}`;
     }
 
-    // Calculate the perceived brightness of a color and return
-    // the appropriate text color (black or white) for best contrast.
-    // Uses the relative luminance formula from WCAG guidelines.
-    function getContrastColor(hexColor) {
+    // Calculate the relative luminance of a color using WCAG guidelines.
+    // Returns a value between 0 (black) and 1 (white).
+    function getLuminance(hexColor) {
         // Remove # if present
         hexColor = hexColor.replace('#', '');
 
@@ -651,18 +650,66 @@
         const g = parseInt(hexColor.substring(2, 4), 16) / 255;
         const b = parseInt(hexColor.substring(4, 6), 16) / 255;
 
-        // Calculate relative luminance
         // Apply gamma correction for each channel
         const rsRGB = r <= 0.03928 ? r / 12.92 : Math.pow((r + 0.055) / 1.055, 2.4);
         const gsRGB = g <= 0.03928 ? g / 12.92 : Math.pow((g + 0.055) / 1.055, 2.4);
         const bsRGB = b <= 0.03928 ? b / 12.92 : Math.pow((b + 0.055) / 1.055, 2.4);
 
-        // Calculate luminance
-        const luminance = 0.2126 * rsRGB + 0.7152 * gsRGB + 0.0722 * bsRGB;
+        // Calculate and return luminance
+        return 0.2126 * rsRGB + 0.7152 * gsRGB + 0.0722 * bsRGB;
+    }
 
-        // Return black for light backgrounds, white for dark backgrounds
-        // GitHub uses a threshold around 0.5
-        return luminance > 0.5 ? '#000000' : '#ffffff';
+    // Convert hex color to rgba string with low opacity for soft backgrounds.
+    // Lighter colors get higher opacity (30%), darker colors get lower opacity (15%).
+    function hexToSoftRgba(hexColor) {
+        // Remove # if present
+        hexColor = hexColor.replace('#', '');
+
+        // Convert hex to RGB
+        const r = parseInt(hexColor.substring(0, 2), 16);
+        const g = parseInt(hexColor.substring(2, 4), 16);
+        const b = parseInt(hexColor.substring(4, 6), 16);
+
+        // Use higher opacity for very light colors
+        const luminance = getLuminance(hexColor);
+        const opacity = luminance > 0.7 ? 0.3 : 0.15;
+
+        return `rgba(${r}, ${g}, ${b}, ${opacity})`;
+    }
+
+    // Darken a hex color for use as text on soft background.
+    // Lighter colors are darkened more, darker colors are darkened less.
+    function darkenHexColor(hexColor) {
+        // Remove # if present
+        hexColor = hexColor.replace('#', '');
+
+        // Convert hex to RGB
+        let r = parseInt(hexColor.substring(0, 2), 16);
+        let g = parseInt(hexColor.substring(2, 4), 16);
+        let b = parseInt(hexColor.substring(4, 6), 16);
+
+        // Determine darkening factor based on luminance
+        const luminance = getLuminance(hexColor);
+        let darkenFactor;
+        if (luminance > 0.7) {
+            // Very light colors: darken significantly (40% of original)
+            darkenFactor = 0.4;
+        } else if (luminance > 0.5) {
+            // Medium-light colors: darken moderately (60% of original)
+            darkenFactor = 0.6;
+        } else {
+            // Dark colors: darken slightly (80% of original)
+            darkenFactor = 0.8;
+        }
+
+        // Apply darkening
+        r = Math.floor(r * darkenFactor);
+        g = Math.floor(g * darkenFactor);
+        b = Math.floor(b * darkenFactor);
+
+        // Convert back to hex
+        const toHex = (n) => n.toString(16).padStart(2, '0');
+        return `#${toHex(r)}${toHex(g)}${toHex(b)}`;
     }
 
     // Add event listener to donation amount input
@@ -670,13 +717,17 @@
         const donationInput = document.getElementById('donationAmount');
         donationInput.addEventListener('input', updateTotal);
 
-        // For the GitHub issue labels, set the foreground text color to
-        // black or white, depending on which is more readable (higher contrast)
-        // on top of the issue label color. (GitHub itself does something
-        // similar to ensure that the issue label text is always readable.)
+        // Soften the default colors for the GitHub issue labels,
+        // by making them semi-transparent.
+        //
+        // The default issue label colors are really varied and
+        // really intense, which makes the web page as a whole
+        // look really ugly and overwhelming.
         document.querySelectorAll('.label[data-label-color]').forEach(function(label) {
-            const bgColor = label.getAttribute('data-label-color');
-            const textColor = getContrastColor(bgColor);
+            const hexColor = label.getAttribute('data-label-color');
+            const bgColor = hexToSoftRgba(hexColor);
+            const textColor = darkenHexColor(hexColor);
+            label.style.backgroundColor = bgColor;
             label.style.color = textColor;
         });
     });
