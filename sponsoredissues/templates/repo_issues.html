@@ -204,6 +204,11 @@
         transform: translateY(-1px);
     }
 
+    .donate-btn:disabled {
+        background: #9ca3af;
+        cursor: not-allowed;
+        opacity: 0.6;
+    }
     .no-issues {
         text-align: center;
         padding: 40px 20px;
@@ -397,7 +402,7 @@
                 <div class="your-amount">You: {{ issue.user_donation_cents|cents_to_dollars }} USD</div>
             </div>
             <div class="action-section">
-                <button class="donate-btn" onclick="openModal({{ issue }})">Add or Remove Funds</button>
+                <button class="donate-btn" onclick="openModal({{ issue }})" {% if not user.is_authenticated %}disabled{% endif %}>Add or Remove Funds</button>
             </div>
         </div>
         {% endfor %}
