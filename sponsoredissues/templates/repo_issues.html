@@ -77,6 +77,21 @@
         text-decoration: underline;
     }
 
+    .sponsor-stat.message .link-btn {
+        background: none;
+        border: none;
+        padding: 0;
+        color: #1e3a8a;
+        font-weight: 700;
+        text-decoration: none;
+        cursor: pointer;
+        font: inherit;
+    }
+
+    .sponsor-stat.message .link-btn:hover {
+        text-decoration: underline;
+    }
+
     .sponsor-stat .dollars-value {
         color: #059669;
         font-weight: 700;
@@ -406,29 +421,37 @@
                 Sponsor @{{ owner }}
             </a>
         </div>
-        {% if user.is_authenticated %}
-            {% if total_sponsor_cents == 0 %}
-            <div class="sponsor-stats">
-                <div class="sponsor-stat message" style="font-style: italic;">
-                    You haven't made any donations to <span class="github_username">@{{ owner }}</span> yet. To add funds to issues, <a href="https://github.com/sponsors/{{ owner }}" target="_blank">send @{{ owner }} a donation on GitHub Sponsors</a>.
-                </div>
+        {% if not user.is_authenticated %}
+        <div class="sponsor-stats">
+            <div class="sponsor-stat message">
+                <form method="post" action="/accounts/github/login/" style="display: inline;">
+                    {% csrf_token %}
+                    <input type="hidden" name="next" value="{{ request.get_full_path }}">
+                    <button type="submit" class="link-btn">Sign in with GitHub</button>
+                </form> to add or remove funds to issues.
             </div>
-            {% else %}
-            <div class="sponsor-stats">
-                <div class="sponsor-stat">
-                    <span>💸</span>
-                    <span>You've donated to <span class="github_username">@{{owner}}</span>: <span class="dollars-value">{{ total_sponsor_cents|cents_to_dollars }} USD</span></span>
-                </div>
-                <div class="sponsor-stat">
-                    <span>💸</span>
-                    <span>Assigned to issues: <span class="dollars-value">{{ allocated_sponsor_cents|cents_to_dollars }} USD</span></span>
-                </div>
-                <div class="sponsor-stat">
-                    <span>💸</span>
-                    <span>Remaining: <span class="dollars-value">{{ unallocated_sponsor_cents|cents_to_dollars }} USD</span></span>
-                </div>
+        </div>
+        {% elif total_sponsor_cents == 0 %}
+        <div class="sponsor-stats">
+            <div class="sponsor-stat message">
+                You haven't made any donations to <span class="github_username">@{{ owner }}</span> yet. To add funds to issues, <a href="https://github.com/sponsors/{{ owner }}" target="_blank">send @{{ owner }} a donation on GitHub Sponsors</a>.
             </div>
-            {% endif %}
+        </div>
+        {% else %}
+        <div class="sponsor-stats">
+            <div class="sponsor-stat">
+                <span>💸</span>
+                <span>You've donated to <span class="github_username">@{{owner}}</span>: <span class="dollars-value">{{ total_sponsor_cents|cents_to_dollars }} USD</span></span>
+            </div>
+            <div class="sponsor-stat">
+                <span>💸</span>
+                <span>Assigned to issues: <span class="dollars-value">{{ allocated_sponsor_cents|cents_to_dollars }} USD</span></span>
+            </div>
+            <div class="sponsor-stat">
+                <span>💸</span>
+                <span>Remaining: <span class="dollars-value">{{ unallocated_sponsor_cents|cents_to_dollars }} USD</span></span>
+            </div>
+        </div>
         {% endif %}
     </div>
 </div>
