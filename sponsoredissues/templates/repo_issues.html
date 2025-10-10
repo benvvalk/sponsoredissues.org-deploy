@@ -176,37 +176,7 @@
         border-radius: 12px;
         font-size: 0.75rem;
         font-weight: 500;
-        border: 1px solid;
-    }
-
-    .label-bug {
-        background: #fef2f2;
-        color: #b91c1c;
-        border-color: #fecaca;
-    }
-
-    .label-feature {
-        background: #eff6ff;
-        color: #1d4ed8;
-        border-color: #bfdbfe;
-    }
-
-    .label-enhancement {
-        background: #f0fdf4;
-        color: #166534;
-        border-color: #bbf7d0;
-    }
-
-    .label-priority {
-        background: #fffbeb;
-        color: #92400e;
-        border-color: #fed7aa;
-    }
-
-    .label-default {
-        background: #f3f4f6;
-        color: #374151;
-        border-color: #d1d5db;
+        border: 1px solid rgba(0, 0, 0, 0.1);
     }
 
     .issue-number {
@@ -472,7 +442,7 @@
                 <div class="issue-meta">
                     <div class="labels">
                         {% for label in issue.labels %}
-                        <span class="label {% if 'bug' in label.name|lower %}label-bug{% elif 'feature' in label.name|lower %}label-feature{% elif 'enhancement' in label.name|lower %}label-enhancement{% elif 'priority' in label.name|lower %}label-priority{% else %}label-default{% endif %}">{{ label.name }}</span>
+                        <span class="label" data-label-color="{{ label.color }}" style="background-color: #{{ label.color }};">{{ label.name }}</span>
                         {% endfor %}
                     </div>
                     <div class="issue-number">{{ owner }}/{{ repo }}#{{ issue.number }} {% if issue.state == 'open' %}(open){% else %}(closed){% endif %}</div>
@@ -669,10 +639,46 @@
         return `${dollars}.${remainingCents.toString().padStart(2, '0')}`;
     }
 
+    // Calculate the perceived brightness of a color and return
+    // the appropriate text color (black or white) for best contrast.
+    // Uses the relative luminance formula from WCAG guidelines.
+    function getContrastColor(hexColor) {
+        // Remove # if present
+        hexColor = hexColor.replace('#', '');
+
+        // Convert hex to RGB
+        const r = parseInt(hexColor.substring(0, 2), 16) / 255;
+        const g = parseInt(hexColor.substring(2, 4), 16) / 255;
+        const b = parseInt(hexColor.substring(4, 6), 16) / 255;
+
+        // Calculate relative luminance
+        // Apply gamma correction for each channel
+        const rsRGB = r <= 0.03928 ? r / 12.92 : Math.pow((r + 0.055) / 1.055, 2.4);
+        const gsRGB = g <= 0.03928 ? g / 12.92 : Math.pow((g + 0.055) / 1.055, 2.4);
+        const bsRGB = b <= 0.03928 ? b / 12.92 : Math.pow((b + 0.055) / 1.055, 2.4);
+
+        // Calculate luminance
+        const luminance = 0.2126 * rsRGB + 0.7152 * gsRGB + 0.0722 * bsRGB;
+
+        // Return black for light backgrounds, white for dark backgrounds
+        // GitHub uses a threshold around 0.5
+        return luminance > 0.5 ? '#000000' : '#ffffff';
+    }
+
     // Add event listener to donation amount input
     document.addEventListener('DOMContentLoaded', function() {
         const donationInput = document.getElementById('donationAmount');
         donationInput.addEventListener('input', updateTotal);
+
+        // For the GitHub issue labels, set the foreground text color to
+        // black or white, depending on which is more readable (higher contrast)
+        // on top of the issue label color. (GitHub itself does something
+        // similar to ensure that the issue label text is always readable.)
+        document.querySelectorAll('.label[data-label-color]').forEach(function(label) {
+            const bgColor = label.getAttribute('data-label-color');
+            const textColor = getContrastColor(bgColor);
+            label.style.color = textColor;
+        });
     });
 
 </script>
