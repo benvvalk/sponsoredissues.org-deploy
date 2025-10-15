@@ -215,6 +215,12 @@
         text-decoration: underline;
     }
 
+    .issue-repo {
+        font-size: 9pt;
+        color: #666;
+        margin-bottom: 6px;
+    }
+
     .issue-stats {
         display: flex;
         gap: 15px;
@@ -362,6 +368,7 @@
                         <div class="issue-title">
                             <a href="{{ issue.url }}" target="_blank">{{ issue.title }}</a>
                         </div>
+                        <div class="issue-repo">{{ issue.repo_name }}</div>
                         <div class="issue-stats">
                             <div class="issue-stat">
                                 <span>Total:</span>
