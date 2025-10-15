@@ -177,7 +177,7 @@
 
     /* Desktop layout */
     @media (min-width: 769px) {
-        .intro-section {
+        .intro-columns {
             display: flex;
             gap: 30px;
             align-items: flex-start;
@@ -186,6 +186,7 @@
         .intro-screenshot-desktop {
             display: block;
             flex: 0 0 400px;
+            margin-top: 16px;
         }
 
         .intro-screenshot-desktop img {
@@ -209,48 +210,51 @@
 {% block content %}
 <div class="container">
     <div class="main-content">
+
         <div class="intro-section">
-            <div class="intro-content">
-                <div class="intro-title">What is sponsoredissues.org?</div>
-                <div class="intro-text">
-                    <strong>sponsoredissues.org</strong> lets <a href="https://github.com/sponsors">GitHub Sponsors</a> assign their donations to specific GitHub issues, in order to vote for which features and fixes get prioritized.
+            <div class="intro-title">What is sponsoredissues.org?</div>
+            <div class="intro-columns">
+                <div class="intro-content">
+                    <div class="intro-text">
+                        <strong>sponsoredissues.org</strong> lets <a href="https://github.com/sponsors">GitHub Sponsors</a> assign their donations to specific GitHub issues, in order to vote for which features and fixes get prioritized.
+                    </div>
+
+                    <!-- Screenshot appears here on mobile only -->
+                    <div class="intro-screenshot-mobile">
+                        <a href="{% static 'images/issues-page-mockup.png' %}">
+                            <img src="{% static 'images/issues-page-mockup.png' %}" alt="SponsoredIssues issues page mockup showing funded GitHub issues">
+                        </a>
+                    </div>
+
+                    <div class="intro-text">
+                        The ability to assign donations to specific GitHub issues has two benefits:
+                    </div>
+                    <div class="intro-text">
+                        <ol>
+                            <li>It gives FOSS users an additional incentive to donate, because it gives them voting power.</li>
+                            <li>It helps FOSS maintainers understand which issues are most important to their users.</li>
+                        </ol>
+                    </div>
+                    <div class="intro-text">
+                        For more detailed info about how the site works, please see the <a href="/faq">FAQ</a>.
+                    </div>
+                    <div class="intro-text">
+                        For help getting started as a FOSS maintainer, see: <a href="/faq#get-started">How do I get started as a maintainer?</a>
+                    </div>
+                    <div class="intro-text">
+                        For help getting started as a FOSS user/donor, see: <a href="/faq#how-vote">How do I vote for issues on sponsoredissues.org?</a>
+                    </div>
+                    <div class="intro-text">
+                        This website is free to use, and the source code is published on GitHub with an Aferro GPL license. If  want to support the site, or if you want to vote for future features/fixes, consider <a href="https://github.com/sponsors/benvvalk">donating to me on GitHub Sponsors</a>.
+                    </div>
                 </div>
 
-                <!-- Screenshot appears here on mobile only -->
-                <div class="intro-screenshot-mobile">
+                <!-- Screenshot appears here on desktop only -->
+                <div class="intro-screenshot-desktop">
                     <a href="{% static 'images/issues-page-mockup.png' %}">
                         <img src="{% static 'images/issues-page-mockup.png' %}" alt="SponsoredIssues issues page mockup showing funded GitHub issues">
                     </a>
                 </div>
-
-                <div class="intro-text">
-                    The ability to assign donations to specific GitHub issues has two benefits:
-                </div>
-                <div class="intro-text">
-                    <ol>
-                        <li>It gives FOSS users an additional incentive to donate, because it gives them voting power.</li>
-                        <li>It helps FOSS maintainers understand which issues are most important to their users.</li>
-                    </ol>
-                </div>
-                <div class="intro-text">
-                    For more detailed info about how the site works, please see the <a href="/faq">FAQ</a>.
-                </div>
-                <div class="intro-text">
-                    For help getting started as a FOSS maintainer, see: <a href="/faq#get-started">How do I get started as a maintainer?</a>
-                </div>
-                <div class="intro-text">
-                    For help getting started as a FOSS user/donor, see: <a href="/faq#how-vote">How do I vote for issues on sponsoredissues.org?</a>
-                </div>
-                <div class="intro-text">
-                    This website is free to use, and the source code is published on GitHub with an Aferro GPL license. If  want to support the site, or if you want to vote for future features/fixes, consider <a href="https://github.com/sponsors/benvvalk">donating to me on GitHub Sponsors</a>.
-                </div>
-            </div>
-
-            <!-- Screenshot appears here on desktop only -->
-            <div class="intro-screenshot-desktop">
-                <a href="{% static 'images/issues-page-mockup.png' %}">
-                    <img src="{% static 'images/issues-page-mockup.png' %}" alt="SponsoredIssues issues page mockup showing funded GitHub issues">
-                </a>
             </div>
         </div>
 
