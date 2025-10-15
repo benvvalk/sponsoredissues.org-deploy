@@ -6,9 +6,89 @@ from django.contrib.auth.decorators import login_required
 from django.core.exceptions import BadRequest
 from django.db.models import Sum, Count
 from django.views.decorators.http import require_POST
+from django.utils import timezone
+from datetime import timedelta
 from .models import GitHubIssue, SponsorAmount
 from .github_service import GitHubSponsorService
 import json
+
+def calculate_trending_issues(limit=10):
+    """
+    Calculate trending issues using a hybrid approach that considers:
+    1. Recent funding amount (last 14 days)
+    2. Number of unique sponsors (last 14 days)
+    3. Recency of last donation
+    4. Only open issues
+
+    Returns a list of trending issues with their details and trending score.
+    """
+    now = timezone.now()
+    two_weeks_ago = now - timedelta(days=14)
+
+    # Get all open issues with funding
+    open_issues = GitHubIssue.objects.filter(
+        data__state='open',
+        sponsor_amounts__isnull=False
+    ).distinct()
+
+    trending_issues = []
+
+    for issue in open_issues:
+        # Get recent donations (last 14 days)
+        recent_donations = issue.sponsor_amounts.filter(
+            created_at__gte=two_weeks_ago
+        )
+
+        # Calculate recent funding amount and unique sponsor count
+        recent_stats = recent_donations.aggregate(
+            total_cents=Sum('cents_usd'),
+            unique_sponsors=Count('sponsor_user', distinct=True)
+        )
+
+        recent_funding_cents = recent_stats['total_cents'] or 0
+        unique_sponsor_count = recent_stats['unique_sponsors'] or 0
+
+        # Get the most recent donation date for this issue
+        latest_donation = issue.sponsor_amounts.order_by('-created_at').first()
+        if latest_donation:
+            days_since_last_donation = (now - latest_donation.created_at).days
+        else:
+            continue  # Skip if no donations
+
+        # Calculate trending score
+        # Formula: (recent_funding_cents * 1.0) + (unique_sponsors * 50) - (days_since_last_donation * 10)
+        trending_score = (
+            recent_funding_cents * 1.0 +
+            unique_sponsor_count * 50 -
+            days_since_last_donation * 10
+        )
+
+        # Get total all-time funding for display
+        total_stats = issue.sponsor_amounts.aggregate(
+            total_cents=Sum('cents_usd'),
+            total_sponsors=Count('sponsor_user', distinct=True)
+        )
+
+        try:
+            issue_data = issue.data
+            trending_issues.append({
+                'issue': issue,
+                'title': issue_data.get('title', 'No title'),
+                'number': issue_data.get('number', 0),
+                'url': issue.url,
+                'trending_score': trending_score,
+                'recent_funding_cents': recent_funding_cents,
+                'unique_sponsor_count': unique_sponsor_count,
+                'total_funding_cents': total_stats['total_cents'] or 0,
+                'total_sponsors': total_stats['total_sponsors'] or 0,
+                'days_since_last_donation': days_since_last_donation,
+            })
+        except (json.JSONDecodeError, AttributeError):
+            continue
+
+    # Sort by trending score (descending) and limit to top N
+    trending_issues.sort(key=lambda x: x['trending_score'], reverse=True)
+    return trending_issues[:limit]
 
 def index(request):
     # Calculate total funded amount across all issues
@@ -50,11 +130,15 @@ def index(request):
     else:
         avg_resolved_cents = 0
 
+    # Get trending issues
+    trending_issues = calculate_trending_issues(limit=10)
+
     context = {
         'total_funded_cents': total_funded_cents,
         'num_funded_repos': num_funded_repos,
         'num_resolved_issues': num_resolved_issues,
         'avg_resolved_cents': avg_resolved_cents,
+        'trending_issues': trending_issues,
     }
 
     return render(request, 'index.html', context)

@@ -176,6 +176,73 @@
         text-decoration: underline;
     }
 
+    .issue-item {
+        padding: 12px;
+        border-bottom: 1px solid #e6e6df;
+        display: flex;
+        gap: 12px;
+    }
+
+    .issue-item:last-child {
+        border-bottom: none;
+    }
+
+    .issue-item:hover {
+        background: #f8f9fa;
+    }
+
+    .issue-rank {
+        font-weight: bold;
+        color: #666;
+        min-width: 20px;
+        flex-shrink: 0;
+    }
+
+    .issue-content {
+        flex: 1;
+    }
+
+    .issue-title {
+        font-weight: bold;
+        color: #1e3a8a;
+        margin-bottom: 6px;
+    }
+
+    .issue-title a {
+        color: #1e3a8a;
+        text-decoration: none;
+    }
+
+    .issue-title a:hover {
+        text-decoration: underline;
+    }
+
+    .issue-stats {
+        display: flex;
+        gap: 15px;
+        font-size: 9pt;
+        color: #666;
+        flex-wrap: wrap;
+    }
+
+    .issue-stat {
+        display: flex;
+        align-items: center;
+        gap: 4px;
+    }
+
+    .issue-stat-value {
+        font-weight: bold;
+        color: #059669;
+    }
+
+    .no-trending {
+        padding: 20px;
+        text-align: center;
+        color: #666;
+        font-style: italic;
+    }
+
     /* Desktop layout */
     @media (min-width: 769px) {
         .intro-columns {
@@ -274,9 +341,40 @@
 
         <div class="featured-section">
             <div class="section-header">Trending Issues</div>
-            <div style="padding: 20px; text-align: center; color: #666; font-style: italic;">
-                No trending issues yet.
-            </div>
+            {% if trending_issues %}
+                {% for issue in trending_issues %}
+                <div class="issue-item">
+                    <div class="issue-rank">{{ forloop.counter }}.</div>
+                    <div class="issue-content">
+                        <div class="issue-title">
+                            <a href="{{ issue.url }}" target="_blank">{{ issue.title }}</a>
+                        </div>
+                        <div class="issue-stats">
+                            <div class="issue-stat">
+                                <span>Total:</span>
+                                <span class="issue-stat-value">{{ issue.total_funding_cents|cents_to_dollars }} USD</span>
+                            </div>
+                            <div class="issue-stat">
+                                <span>Recent (14d):</span>
+                                <span class="issue-stat-value">{{ issue.recent_funding_cents|cents_to_dollars }} USD</span>
+                            </div>
+                            <div class="issue-stat">
+                                <span>Sponsors:</span>
+                                <span class="issue-stat-value">{{ issue.total_sponsors }}</span>
+                            </div>
+                            <div class="issue-stat">
+                                <span>Last donation:</span>
+                                <span>{{ issue.days_since_last_donation }}d ago</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            {% else %}
+                <div class="no-trending">
+                    No trending issues yet.
+                </div>
+            {% endif %}
         </div>
     </div>
 
