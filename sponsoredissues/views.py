@@ -11,7 +11,53 @@ from .github_service import GitHubSponsorService
 import json
 
 def index(request):
-    return render(request, 'index.html')
+    # Calculate total funded amount across all issues
+    total_funded_cents = SponsorAmount.objects.aggregate(
+        total=Sum('cents_usd')
+    )['total'] or 0
+
+    # Get all issues that have been funded (have at least one SponsorAmount)
+    funded_issues = GitHubIssue.objects.filter(
+        sponsor_amounts__isnull=False
+    ).distinct()
+
+    # Count unique repositories that have received funding
+    # Extract repo from URL pattern: https://github.com/{owner}/{repo}/issues/{number}
+    funded_repos = set()
+    for issue in funded_issues:
+        url_parts = issue.url.split('/')
+        if len(url_parts) >= 5:
+            owner = url_parts[3]
+            repo = url_parts[4]
+            funded_repos.add(f"{owner}/{repo}")
+
+    num_funded_repos = len(funded_repos)
+
+    # Calculate resolved issues statistics
+    # An issue is "resolved" if it's closed and has funding
+    resolved_issues = funded_issues.filter(data__state='closed')
+    num_resolved_issues = resolved_issues.count()
+
+    # Calculate average funding for resolved issues
+    if num_resolved_issues > 0:
+        resolved_total_cents = 0
+        for issue in resolved_issues:
+            issue_total = issue.sponsor_amounts.aggregate(
+                total=Sum('cents_usd')
+            )['total'] or 0
+            resolved_total_cents += issue_total
+        avg_resolved_cents = resolved_total_cents // num_resolved_issues
+    else:
+        avg_resolved_cents = 0
+
+    context = {
+        'total_funded_cents': total_funded_cents,
+        'num_funded_repos': num_funded_repos,
+        'num_resolved_issues': num_resolved_issues,
+        'avg_resolved_cents': avg_resolved_cents,
+    }
+
+    return render(request, 'index.html', context)
 
 def faq(request):
     return render(request, 'faq.html')

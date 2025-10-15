@@ -1,5 +1,6 @@
 {% extends 'base.html' %}
 {% load static %}
+{% load cents_to_dollars %}
 
 {% block title %}SponsoredIssues - Crowdfund GitHub Issues{% endblock %}
 
@@ -261,13 +262,13 @@
         <div class="stats-section">
             <div class="stat-box">
                 <div class="stat-title">Total Funded</div>
-                <div class="stat-value">0.00 USD</div>
-                <div class="stat-desc">across 0 repositories</div>
+                <div class="stat-value">{{ total_funded_cents|cents_to_dollars }} USD</div>
+                <div class="stat-desc">across {{ num_funded_repos }} repositor{% if num_funded_repos == 1 %}y{% else %}ies{% endif %}</div>
             </div>
             <div class="stat-box">
                 <div class="stat-title">Issues Resolved</div>
-                <div class="stat-value">0</div>
-                <div class="stat-desc">with an average funding of 0.00 USD</div>
+                <div class="stat-value">{{ num_resolved_issues }}</div>
+                <div class="stat-desc">with an average funding of {{ avg_resolved_cents|cents_to_dollars }} USD</div>
             </div>
         </div>
 
