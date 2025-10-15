@@ -62,6 +62,55 @@
         margin: 12px 0px 0px 0px;
     }
 
+    /* Compact stats bar */
+    .sponsor-stats-bar {
+        background: linear-gradient(to right, #f8fafc, #f1f5f9);
+        border: 1px solid #e2e8f0;
+        border-radius: 8px;
+        padding: 12px 16px;
+        display: flex;
+        align-items: center;
+        gap: 24px;
+        flex-wrap: wrap;
+    }
+
+    .stat-item {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+
+    .stat-icon {
+        font-size: 1.1rem;
+        filter: grayscale(0.3);
+    }
+
+    .stat-content {
+        display: flex;
+        flex-direction: column;
+        gap: 2px;
+    }
+
+    .stat-label {
+        font-size: 0.75rem;
+        color: #64748b;
+        font-weight: 500;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+
+    .stat-value {
+        font-size: 1.1rem;
+        font-weight: 700;
+        color: #1e3a8a;
+    }
+
+    .stat-separator {
+        width: 1px;
+        height: 32px;
+        background: #cbd5e1;
+    }
+
     .sponsor-stat.message {
         font-style: italic;
     }
@@ -89,14 +138,6 @@
 
     .sponsor-stat.message .link-btn:hover {
         text-decoration: underline;
-    }
-
-    .sponsor-stat .dollars-value {
-        color: #1e3a8a;
-        font-weight: 700;
-        background: #f3f4f6;
-        padding: 4px 8px;
-        border-radius: 6px;
     }
 
     .github_username {
@@ -389,6 +430,16 @@
             width: auto;
             text-align: left;
         }
+
+        .sponsor-stats-bar {
+            flex-direction: column;
+            align-items: flex-start;
+            gap: 16px;
+        }
+
+        .stat-separator {
+            display: none;
+        }
     }
 </style>
 {% endblock %}
@@ -423,17 +474,34 @@
         </div>
         {% else %}
         <div class="sponsor-stats">
-            <div class="sponsor-stat">
-                <span>💸</span>
-                <span>You've donated to <span class="github_username">@{{owner}}</span>: <span class="dollars-value">{{ total_sponsor_cents|cents_to_dollars }} USD</span></span>
-            </div>
-            <div class="sponsor-stat">
-                <span>💸</span>
-                <span>Assigned to issues: <span class="dollars-value">{{ allocated_sponsor_cents|cents_to_dollars }} USD</span></span>
-            </div>
-            <div class="sponsor-stat">
-                <span>💸</span>
-                <span>Remaining: <span class="dollars-value">{{ unallocated_sponsor_cents|cents_to_dollars }} USD</span></span>
+            <div class="sponsor-stats-bar">
+                <div class="stat-item">
+                    <span class="stat-icon">💰</span>
+                    <div class="stat-content">
+                        <span class="stat-label">Total Donated</span>
+                        <span class="stat-value">{{ total_sponsor_cents|cents_to_dollars }} USD</span>
+                    </div>
+                </div>
+
+                <div class="stat-separator"></div>
+
+                <div class="stat-item">
+                    <span class="stat-icon">📌</span>
+                    <div class="stat-content">
+                        <span class="stat-label">Assigned</span>
+                        <span class="stat-value">{{ allocated_sponsor_cents|cents_to_dollars }} USD</span>
+                    </div>
+                </div>
+
+                <div class="stat-separator"></div>
+
+                <div class="stat-item">
+                    <span class="stat-icon">💸</span>
+                    <div class="stat-content">
+                        <span class="stat-label">Remaining</span>
+                        <span class="stat-value">{{ unallocated_sponsor_cents|cents_to_dollars }} USD</span>
+                    </div>
+                </div>
             </div>
         </div>
         {% endif %}
