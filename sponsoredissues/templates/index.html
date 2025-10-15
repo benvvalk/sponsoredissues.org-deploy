@@ -13,7 +13,7 @@
     }
 
     .container {
-        max-width: 1200px;
+        max-width: 1024px;
         margin: 0 auto;
         padding: 20px 15px;
     }
@@ -28,9 +28,6 @@
         margin-bottom: 30px;
         border-bottom: 1px solid #e6e6df;
         padding-bottom: 20px;
-        display: flex;
-        gap: 30px;
-        align-items: flex-start;
     }
 
     .intro-content {
@@ -59,15 +56,26 @@
         margin: 8px 0px 8px 0px;
     }
 
-    .intro-screenshot {
-        flex: 0 0 400px;
+    .intro-screenshot-mobile {
+        margin: 20px 0;
     }
 
-    .intro-screenshot img {
+    .intro-screenshot-mobile img,
+    .intro-screenshot-desktop img {
         width: 100%;
+        max-width: 300px;
         height: auto;
         border: 1px solid #e6e6df;
         border-radius: 4px;
+    }
+
+    /* Mobile: show inline screenshot, hide desktop screenshot */
+    .intro-screenshot-desktop {
+        display: none;
+    }
+
+    .intro-screenshot-mobile {
+        display: block;
     }
 
     .intro-text .sponsoredissues-label {
@@ -177,16 +185,30 @@
         text-decoration: underline;
     }
 
-    @media (max-width: 768px) {
+    /* Desktop layout */
+    @media (min-width: 769px) {
         .intro-section {
-            flex-direction: column;
+            display: flex;
+            gap: 30px;
+            align-items: flex-start;
         }
 
-        .intro-screenshot {
-            flex: none;
-            order: 2;
+        .intro-screenshot-desktop {
+            display: block;
+            flex: 0 0 400px;
         }
 
+        .intro-screenshot-desktop img {
+            max-width: 400px;
+        }
+
+        /* Hide mobile screenshot on desktop */
+        .intro-screenshot-mobile {
+            display: none;
+        }
+    }
+
+    @media (max-width: 768px) {
         .stats-section {
             grid-template-columns: 1fr;
         }
@@ -203,6 +225,14 @@
                 <div class="intro-text">
                     <strong>sponsoredissues.org</strong> lets <a href="https://github.com/sponsors">GitHub Sponsors</a> assign their donations to specific GitHub issues, in order to vote for which features and fixes get prioritized.
                 </div>
+
+                <!-- Screenshot appears here on mobile only -->
+                <div class="intro-screenshot-mobile">
+                    <a href="{% static 'images/issues-page-mockup.png' %}">
+                        <img src="{% static 'images/issues-page-mockup.png' %}" alt="SponsoredIssues issues page mockup showing funded GitHub issues">
+                    </a>
+                </div>
+
                 <div class="intro-text">
                     The ability to assign donations to specific GitHub issues has two benefits:
                 </div>
@@ -225,7 +255,9 @@
                     This website is free to use, and the source code is published on GitHub with an Aferro GPL license. If  want to support the site, or if you want to vote for future features/fixes, consider <a href="https://github.com/sponsors/benvvalk">donating to me on GitHub Sponsors</a>.
                 </div>
             </div>
-            <div class="intro-screenshot">
+
+            <!-- Screenshot appears here on desktop only -->
+            <div class="intro-screenshot-desktop">
                 <a href="{% static 'images/issues-page-mockup.png' %}">
                     <img src="{% static 'images/issues-page-mockup.png' %}" alt="SponsoredIssues issues page mockup showing funded GitHub issues">
                 </a>
