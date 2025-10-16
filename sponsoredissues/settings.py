@@ -88,9 +88,24 @@ GITHUB_APP_PRIVATE_KEY = env.str('GITHUB_APP_PRIVATE_KEY', default=None)
 # GitHub Personal Access Token for GraphQL API access
 GITHUB_ACCESS_TOKEN = env.str('GITHUB_ACCESS_TOKEN', default=None)
 
+# GitHub login whitelist for development
+# If set, only these GitHub usernames will be allowed to log in.
+# All other users will see the custom message defined in GITHUB_LOGIN_DISABLED_MESSAGE.
+# Example: ALLOWED_GITHUB_USERS=user1,user2,user3
+ALLOWED_GITHUB_USERS = env.list('ALLOWED_GITHUB_USERS', default=[])
+
+# Custom message shown to users who are not in the whitelist
+GITHUB_LOGIN_DISABLED_MESSAGE = env.str(
+    'GITHUB_LOGIN_DISABLED_MESSAGE',
+    default='Sorry, logins on sponsoredissues.org are currently disabled, because the site is still under development. Please come back in a few weeks!'
+)
+
 # Disable login with local Django accounts. Only allow "Login with GitHub".
 SOCIALACCOUNT_ONLY = True
 ACCOUNT_EMAIL_VERIFICATION = "none" # required for `SOCIALACCOUNT_ONLY = True`
+
+# Custom adapter to restrict GitHub logins during development
+SOCIALACCOUNT_ADAPTER = 'sponsoredissues.adapters.GitHubAccountAdapter'
 
 # Save user's OAuth access token and refresh token to the database.
 #
