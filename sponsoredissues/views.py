@@ -237,6 +237,10 @@ def repo_issues(request, owner, repo):
 def donate_to_issue(request, owner, repo, issue_number):
     donation_dollars_str = request.POST['donation_dollars']
 
+    # Block the repo owner from donating to themselves.
+    if request.user.username == owner:
+        raise BadRequest("You can't donate to your own repo/issues")
+
     # Convert dollar value as string to cents as integer.  Use
     # "Banker's Rounding" if the dollar value has more than two
     # decimal places.

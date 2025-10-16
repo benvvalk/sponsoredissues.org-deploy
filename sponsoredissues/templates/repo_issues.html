@@ -487,44 +487,46 @@
                 </form> to add or remove funds to issues.
             </div>
         </div>
-        {% elif total_sponsor_cents == 0 %}
-        <div class="sponsor-stats">
-            <div class="sponsor-stat message">
-                You haven't made any donations to <span class="github_username">@{{ owner }}</span> yet. To add funds to issues, <a href="https://github.com/sponsors/{{ owner }}" target="_blank">send @{{ owner }} a donation on GitHub Sponsors</a>.
-            </div>
-        </div>
-        {% else %}
-        <div class="sponsor-stats">
-            <div class="sponsor-stats-bar">
-                <div class="stat-item">
-                    <span class="stat-icon">💰</span>
-                    <div class="stat-content">
-                        <span class="stat-label">Total Donated</span>
-                        <span class="stat-value">{{ total_sponsor_cents|cents_to_dollars }} USD</span>
-                    </div>
-                </div>
-
-                <div class="stat-separator"></div>
-
-                <div class="stat-item">
-                    <span class="stat-icon">📌</span>
-                    <div class="stat-content">
-                        <span class="stat-label">Assigned</span>
-                        <span class="stat-value">{{ allocated_sponsor_cents|cents_to_dollars }} USD</span>
-                    </div>
-                </div>
-
-                <div class="stat-separator"></div>
-
-                <div class="stat-item">
-                    <span class="stat-icon">💸</span>
-                    <div class="stat-content">
-                        <span class="stat-label">Remaining</span>
-                        <span class="stat-value">{{ unallocated_sponsor_cents|cents_to_dollars }} USD</span>
-                    </div>
+        {% elif user.username != owner %}
+            {% if total_sponsor_cents == 0 %}
+            <div class="sponsor-stats">
+                <div class="sponsor-stat message">
+                    You haven't made any donations to <span class="github_username">@{{ owner }}</span> yet. To add funds to issues, <a href="https://github.com/sponsors/{{ owner }}" target="_blank">send @{{ owner }} a donation on GitHub Sponsors</a>.
                 </div>
             </div>
-        </div>
+            {% else %}
+            <div class="sponsor-stats">
+                <div class="sponsor-stats-bar">
+                    <div class="stat-item">
+                        <span class="stat-icon">💰</span>
+                        <div class="stat-content">
+                            <span class="stat-label">Total Donated</span>
+                            <span class="stat-value">{{ total_sponsor_cents|cents_to_dollars }} USD</span>
+                        </div>
+                    </div>
+
+                    <div class="stat-separator"></div>
+
+                    <div class="stat-item">
+                        <span class="stat-icon">📌</span>
+                        <div class="stat-content">
+                            <span class="stat-label">Assigned</span>
+                            <span class="stat-value">{{ allocated_sponsor_cents|cents_to_dollars }} USD</span>
+                        </div>
+                    </div>
+
+                    <div class="stat-separator"></div>
+
+                    <div class="stat-item">
+                        <span class="stat-icon">💸</span>
+                        <div class="stat-content">
+                            <span class="stat-label">Remaining</span>
+                            <span class="stat-value">{{ unallocated_sponsor_cents|cents_to_dollars }} USD</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {% endif %}
         {% endif %}
     </div>
 </div>
@@ -551,10 +553,12 @@
             <div class="donation-section">
                 <div class="donation-amount">{{ issue.donation_total_cents|cents_to_dollars }} USD</div>
                 <div class="num-sponsors">{{ issue.num_sponsors }} sponsors</div>
+                {% if user.is_authenticated and user.username != owner %}
                 <div class="your-amount">You: {{ issue.user_donation_cents|cents_to_dollars }} USD</div>
+                {% endif %}
             </div>
             <div class="action-section">
-                <button class="donate-btn" onclick="openModal({{ issue }})" {% if not user.is_authenticated or total_sponsor_cents == 0 %}disabled{% endif %}>Add or Remove Funds</button>
+                <button class="donate-btn" onclick="openModal({{ issue }})" {% if not user.is_authenticated or total_sponsor_cents == 0 or user.username == owner %}disabled{% endif %}>Add or Remove Funds</button>
             </div>
         </div>
         {% endfor %}
