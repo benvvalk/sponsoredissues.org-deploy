@@ -169,6 +169,20 @@
         background: #f8fafc;
     }
 
+    .issue-item:target {
+        background: #f1f5f9;
+        animation: highlight-fade 0.3s ease-out;
+    }
+
+    @keyframes highlight-fade {
+        0% {
+            background: #e2e8f0;
+        }
+        100% {
+            background: #f1f5f9;
+        }
+    }
+
     .rank-section {
         flex-shrink: 0;
         width: 60px;
