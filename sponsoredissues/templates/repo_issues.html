@@ -512,7 +512,7 @@
 <div class="issues-list">
     {% if issues %}
         {% for issue in issues %}
-        <div class="issue-item">
+        <div class="issue-item" id="issue-{{ issue.number }}">
             <div class="rank-section">
                 <div class="rank">#{{ issue.rank }}</div>
             </div>
