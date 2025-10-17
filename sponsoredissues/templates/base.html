@@ -1,4 +1,5 @@
 {% load static %}
+{% load socialaccount %}
 
 <!DOCTYPE html>
 <html lang="en">
@@ -260,7 +261,7 @@
                             <span class="dropdown-username">{{ user.username }}</span>
                         </div>
                         <div class="dropdown-divider"></div>
-                        <form method="post" action="/accounts/logout/">
+                        <form method="post" action="{% url 'account_logout' %}">
                             {% csrf_token %}
                             <!--
                                 Note: The `next` param tells
@@ -279,7 +280,7 @@
                     </div>
                 </div>
                 {% else %}
-                <form method="post" action="/accounts/github/login/" style="display: inline;">
+                <form method="post" action="{% provider_login_url 'github' process='login' %}" style="display: inline;">
                     {% csrf_token %}
                     <!--
                         Note: The `next` param tells

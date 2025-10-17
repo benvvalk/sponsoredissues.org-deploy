@@ -74,18 +74,16 @@ def calculate_trending_issues(limit=10):
 
             # Extract owner/repo from URL (e.g., "benvvalk/qutebrowser")
             url_parts = issue.url.split('/')
-            repo_name = ''
             if len(url_parts) >= 5:
                 owner = url_parts[3]
                 repo = url_parts[4]
-                repo_name = f"{owner}/{repo}"
 
             trending_issues.append({
-                'issue': issue,
+                'owner': owner,
+                'repo': repo,
                 'title': issue_data.get('title', 'No title'),
                 'number': issue_data.get('number', 0),
                 'url': issue.url,
-                'repo_name': repo_name,
                 'trending_score': trending_score,
                 'recent_funding_cents': recent_funding_cents,
                 'unique_sponsor_count': unique_sponsor_count,
@@ -156,10 +154,16 @@ def index(request):
 def faq(request):
     return render(request, 'faq.html')
 
-def repo_issues(request, owner, repo):
+def repo_issues(request, owner, repo, issue_number=None):
     # Filter issues for this repository
     repo_url_pattern = f"https://github.com/{owner}/{repo}"
     issues = GitHubIssue.objects.filter(url__contains=repo_url_pattern)
+
+    if issue_number:
+        issue_url_pattern = f"https://github.com/{owner}/{repo}/issues/{issue_number}"
+        exists = GitHubIssue.objects.filter(url=issue_url_pattern, data__state='open').exists()
+        if not exists:
+            messages.error(request, f"{owner}/{repo}#{issue_number} is not a \"sponsorable\" issue. Either the issue does not exist, it has been closed, or it does not have the \"sponsoredissues.org\" label on GitHub.")
 
     # Parse issue data
     parsed_issues = []
@@ -182,13 +186,16 @@ def repo_issues(request, owner, repo):
                     total=Sum('cents_usd')
                 )['total'] or 0
 
+            this_issue_number = issue_data.get('number')
+
             # Note: `or 0` is needed below because `Sum('cents_usd')`
             # returns `None` when there are no `SponsorAmount` records for
             # the GitHub issue.
             parsed_issue = {
+                'is_selected': issue_number and this_issue_number == issue_number,
                 'rank': len(parsed_issues) + 1,  # Simple ranking by order
                 'title': issue_data.get('title', 'No title'),
-                'number': issue_data.get('number', 0),
+                'number': this_issue_number,
                 'state': issue_data.get('state', 'open'),
                 'labels': issue_data.get('labels', []),
                 'url': issue.url,

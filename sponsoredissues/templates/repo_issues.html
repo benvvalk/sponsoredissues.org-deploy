@@ -169,7 +169,7 @@
         background: #f8fafc;
     }
 
-    .issue-item:target {
+    .issue-item.is_selected {
         background: #f1f5f9;
         animation: highlight-fade 0.3s ease-out;
     }
@@ -535,7 +535,7 @@
 <div class="issues-list">
     {% if issues %}
         {% for issue in issues %}
-        <div class="issue-item" id="issue-{{ issue.number }}">
+        <div class="issue-item {% if issue.is_selected %}is_selected{% endif %}" id="issue-{{ issue.number }}" >
             <div class="rank-section">
                 <div class="rank">#{{ issue.rank }}</div>
             </div>
@@ -615,8 +615,8 @@
         donationInput.value = cents_to_dollars(currentIssue.user_donation_cents);
         donationInput.max = cents_to_dollars(currentIssue.user_donation_cents + {{ unallocated_sponsor_cents }})
 
-        const donateForm = document.getElementById('donateForm')
-        donateForm.action = `/gh/{{ owner }}/{{ repo }}/issue/${currentIssue.number}/donate`;
+        const donateForm = document.getElementById('donateForm');
+        donateForm.action = "{% url 'donate_to_issue' owner repo 1 %}".replace('1', currentIssue.number.toString());
 
         document.getElementById('donateModal').style.display = 'block';
 
