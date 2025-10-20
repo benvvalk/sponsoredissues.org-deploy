@@ -171,6 +171,11 @@ def repo_issues(request, owner, repo, issue_number=None):
         try:
             issue_data = issue.data
 
+            # Only show open issues for now
+            state = issue_data['state']
+            if state != 'open':
+                continue
+
             # Calculate donation amount and contributors for this issue
             donation_stats = issue.sponsor_amounts.aggregate(
                 total_cents=Sum('cents_usd'),
