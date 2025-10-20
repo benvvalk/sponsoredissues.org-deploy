@@ -12,6 +12,7 @@ https://docs.djangoproject.com/en/5.2/ref/settings/
 
 from django.core.management.utils import get_random_secret_key
 from pathlib import Path
+import dj_database_url
 import environ
 import os
 
@@ -136,16 +137,26 @@ TEMPLATES = [
 WSGI_APPLICATION = 'sponsoredissues.wsgi.application'
 
 
-# Database
-# https://docs.djangoproject.com/en/5.2/ref/settings/#databases
+# Database settings.
+#
+# The `dj-database-url` package [1] reads the database connection URL
+# from the `DATABASE_URL` environment variable. If `DATABASE_URL` is
+# not set, we fallback to using sqlite3 with a `db.sqlite3` file in
+# the project root directory. (Django will automatically create the
+# `db.sqlite3` file if it doesn't exist.)
+#
+# Without the `dj-database-url` package, I would need to specify the
+# database connection parameters using separate
+# `NAME`/`USER`/`PASSWORD`/`HOST`/`PORT` variables, which is rather
+# tedious and error-prone.
+#
+# [1]: https://pypi.org/project/dj-database-url
 
 DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
-    }
+    'default': dj_database_url.config(
+        default=f'sqlite:///{BASE_DIR / "db.sqlite3"}'
+    ),
 }
-
 
 # Password validation
 # https://docs.djangoproject.com/en/5.2/ref/settings/#auth-password-validators
