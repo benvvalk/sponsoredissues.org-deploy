@@ -3,7 +3,7 @@ Custom django-allauth adapters for GitHub authentication.
 """
 
 from allauth.socialaccount.adapter import DefaultSocialAccountAdapter
-from allauth.exceptions import ImmediateHttpResponse
+from allauth.core.exceptions import ImmediateHttpResponse
 from django.contrib import messages
 from django.shortcuts import redirect
 from django.conf import settings
