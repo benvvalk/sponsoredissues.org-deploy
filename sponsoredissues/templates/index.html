@@ -349,7 +349,7 @@
                     <div class="issue-rank">{{ forloop.counter }}.</div>
                     <div class="issue-content">
                         <div class="issue-title">
-                            <a href="{% url 'repo_issues' issue.owner issue.repo %}" target="_blank">{{ issue.owner }}/{{ issue.repo }}</a>: <a href="{% url 'repo_issues' issue.owner issue.repo issue.number %}" target="_blank">{{ issue.title }}</a>
+                            <a href="{% url 'owner_issues' issue.owner issue.repo %}" target="_blank">{{ issue.owner }}/{{ issue.repo }}</a>: <a href="{% url 'owner_issues' issue.owner issue.repo issue.number %}" target="_blank">{{ issue.title }}</a>
                         </div>
                         <div class="issue-stats">
                             <div class="issue-stat">

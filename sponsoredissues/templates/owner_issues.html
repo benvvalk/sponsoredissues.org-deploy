@@ -1,7 +1,7 @@
 {% extends 'base.html' %}
 {% load cents_to_dollars %}
 
-{% block title %}sponsoredissues.org - {{ owner }}/{{ repo }}{% endblock %}
+{% block title %}sponsoredissues.org - {{ owner }}{% endblock %}
 
 {% block head %}
 <style>
@@ -547,7 +547,7 @@
                         <span class="label" data-label-color="{{ label.color }}">{{ label.name }}</span>
                         {% endfor %}
                     </div>
-                    <div class="issue-number">{{ owner }}/{{ repo }}#{{ issue.number }} {% if issue.state == 'open' %}(open){% else %}(closed){% endif %}</div>
+                    <div class="issue-number">{{ owner }}/{{ issue.repo }}#{{ issue.number }} {% if issue.state == 'open' %}(open){% else %}(closed){% endif %}</div>
                 </div>
             </div>
             <div class="donation-section">
@@ -601,8 +601,15 @@
 <script>
     let currentIssue = null;
 
-    function openModal(issue) {
-        currentIssue = issue;
+    function openModal(button) {
+        currentIssue = {
+            repo: button.dataset.issueRepo,
+            number: parseInt(button.dataset.issueNumber),
+            title: button.dataset.issueTitle,
+            url: button.dataset.issueUrl,
+            user_donation_cents: parseInt(button.dataset.userDonation),
+            donation_total_cents: parseInt(button.dataset.totalDonation)
+        };
 
         const titleElement = document.getElementById('modalTitle');
         titleElement.innerHTML = currentIssue.title;
@@ -616,7 +623,9 @@
         donationInput.max = cents_to_dollars(currentIssue.user_donation_cents + {{ unallocated_sponsor_cents }})
 
         const donateForm = document.getElementById('donateForm');
-        donateForm.action = "{% url 'donate_to_issue' owner repo 1 %}".replace('1', currentIssue.number.toString());
+        donateForm.action = "{% url 'donate_to_issue' owner '__REPO__' 1 %}"
+            .replace('__REPO__', currentIssue.repo)
+            .replace('1', currentIssue.number.toString());
 
         document.getElementById('donateModal').style.display = 'block';
 

@@ -21,7 +21,9 @@ urlpatterns = [
     path('', views.index, name='index'),
     path('site/accounts/', include('allauth.urls')),
     path('site/faq', views.faq, name='faq'),
-    path('<str:owner>/<str:repo>/issues', views.repo_issues, name='repo_issues'),
-    path('<str:owner>/<str:repo>/issues/<int:issue_number>', views.repo_issues, name='repo_issues'),
+    path('<str:owner>', views.owner_issues, name='owner_issues'),
+    path('<str:owner>/<str:repo>', views.owner_issues, name='owner_issues'),
+    path('<str:owner>/<str:repo>/issues', views.owner_issues, name='owner_issues'),
+    path('<str:owner>/<str:repo>/issues/<int:issue_number>', views.owner_issues, name='owner_issues'),
     path('<str:owner>/<str:repo>/issues/<int:issue_number>/donate', views.donate_to_issue, name='donate_to_issue'),
 ]

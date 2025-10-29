@@ -154,12 +154,13 @@ def index(request):
 def faq(request):
     return render(request, 'faq.html')
 
-def repo_issues(request, owner, repo, issue_number=None):
-    # Filter issues for this repository
-    repo_url_pattern = f"https://github.com/{owner}/{repo}"
-    issues = GitHubIssue.objects.filter(url__contains=repo_url_pattern)
+def owner_issues(request, owner, repo=None, issue_number=None):
+    # Filter issues for this owner (across all repos)
+    owner_url_pattern = f"https://github.com/{owner}/"
+    issues = GitHubIssue.objects.filter(url__startswith=owner_url_pattern)
 
-    if issue_number:
+    # If repo and issue_number are provided, check if the issue exists
+    if repo and issue_number:
         issue_url_pattern = f"https://github.com/{owner}/{repo}/issues/{issue_number}"
         exists = GitHubIssue.objects.filter(url=issue_url_pattern, data__state='open').exists()
         if not exists:
@@ -175,6 +176,14 @@ def repo_issues(request, owner, repo, issue_number=None):
             state = issue_data['state']
             if state != 'open':
                 continue
+
+            # Extract owner/repo from URL (e.g., https://github.com/benvvalk/qutebrowser/issues/123)
+            url_parts = issue.url.split('/')
+            if len(url_parts) >= 5:
+                issue_owner = url_parts[3]
+                issue_repo = url_parts[4]
+            else:
+                continue  # Skip malformed URLs
 
             # Calculate donation amount and contributors for this issue
             donation_stats = issue.sponsor_amounts.aggregate(
@@ -193,12 +202,23 @@ def repo_issues(request, owner, repo, issue_number=None):
 
             this_issue_number = issue_data.get('number')
 
+            # Determine if this issue should be highlighted:
+            # - If repo and issue_number are both provided, highlight only that specific issue
+            # - If only repo is provided, highlight all issues from that repo
+            is_selected = False
+            if repo and issue_number:
+                is_selected = (issue_repo == repo and this_issue_number == issue_number)
+            elif repo:
+                is_selected = (issue_repo == repo)
+
             # Note: `or 0` is needed below because `Sum('cents_usd')`
             # returns `None` when there are no `SponsorAmount` records for
             # the GitHub issue.
             parsed_issue = {
-                'is_selected': issue_number and this_issue_number == issue_number,
+                'is_selected': is_selected,
                 'rank': len(parsed_issues) + 1,  # Simple ranking by order
+                'owner': issue_owner,
+                'repo': issue_repo,
                 'title': issue_data.get('title', 'No title'),
                 'number': this_issue_number,
                 'state': issue_data.get('state', 'open'),
@@ -242,7 +262,7 @@ def repo_issues(request, owner, repo, issue_number=None):
         'unallocated_sponsor_cents': unallocated_sponsor_cents,
     }
 
-    return render(request, 'repo_issues.html', context)
+    return render(request, 'owner_issues.html', context)
 
 @login_required
 @require_POST
@@ -309,4 +329,4 @@ def donate_to_issue(request, owner, repo, issue_number):
         )
         messages.success(request, f"Updated your amount for {owner}/{repo}#{issue_number} to {donation_dollars} USD.")
 
-    return redirect('repo_issues', owner, repo)
+    return redirect('owner_issues', owner, repo, issue_number)
