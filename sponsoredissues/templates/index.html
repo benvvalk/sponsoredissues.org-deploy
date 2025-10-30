@@ -287,8 +287,11 @@
 
                     <!-- Screenshot appears here on mobile only -->
                     <div class="intro-screenshot-mobile">
-                        <a href="{% static 'images/issues-page-mockup.png' %}">
-                            <img src="{% static 'images/issues-page-mockup.png' %}" alt="SponsoredIssues issues page mockup showing funded GitHub issues">
+                        <a href="{% static 'images/sponsoredissues.png' %}">
+                            <picture>
+                                <source srcset="{% static 'images/sponsoredissues.webp' %}" type="image/webp">
+                                <img src="{% static 'images/sponsoredissues.png' %}" alt="SponsoredIssues issues page mockup showing funded GitHub issues">
+                            </picture>
                         </a>
                     </div>
 
@@ -320,8 +323,11 @@
 
                 <!-- Screenshot appears here on desktop only -->
                 <div class="intro-screenshot-desktop">
-                    <a href="{% static 'images/issues-page-mockup.png' %}">
-                        <img src="{% static 'images/issues-page-mockup.png' %}" alt="SponsoredIssues issues page mockup showing funded GitHub issues">
+                    <a href="{% static 'images/sponsoredissues.png' %}">
+                        <picture>
+                            <source srcset="{% static 'images/sponsoredissues.webp' %}" type="image/webp">
+                            <img src="{% static 'images/sponsoredissues.png' %}" alt="SponsoredIssues issues page mockup showing funded GitHub issues">
+                        </picture>
                     </a>
                 </div>
             </div>

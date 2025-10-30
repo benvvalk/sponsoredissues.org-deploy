@@ -6,7 +6,7 @@ This repo contains the source code for <https://sponsoredissues.org>.
 
 The example screenshot below should give you an idea about how the site works. If you would like to know more details, please read the [introduction on the homepage](https://sponsoredissues.org) and have a look at the [FAQ](https://sponsoredissues.org/faq).
 
-![SponsoredIssues website screenshot](static/images/issues-page-mockup.png)
+<img src="static/images/sponsoredissues.png" width="250" alt="screenshot of sponsoredissues.org website">
 
 # Support sponsoredissues.org and vote for improvements
 
