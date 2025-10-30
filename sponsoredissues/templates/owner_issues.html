@@ -228,6 +228,17 @@
         text-decoration: underline;
     }
 
+    .repo-prefix {
+        color: #6b7280 !important;
+        font-weight: 700;
+        text-decoration: none;
+    }
+
+    .repo-prefix:hover {
+        color: #6b7280 !important;
+        text-decoration: underline;
+    }
+
     .issue-meta {
         display: flex;
         flex-direction: column;
@@ -548,7 +559,7 @@
                 <div class="rank">#{{ issue.rank }}</div>
             </div>
             <div class="issue-main">
-                <div class="issue-title"><a href="https://github.com/{{ owner }}/{{ repo }}/issues/{{ issue.number }}" target="_blank">{{ issue.title }}</a></div>
+                <div class="issue-title"><a href="https://github.com/{{ owner }}/{{ issue.repo }}" class="repo-prefix" target="_blank">{{ owner }}/{{ issue.repo }}</a>: <a href="https://github.com/{{ owner }}/{{ repo }}/issues/{{ issue.number }}" target="_blank">{{ issue.title }}</a></div>
                 <div class="issue-meta">
                     <div class="labels">
                         {% for label in issue.labels %}
