@@ -566,7 +566,15 @@
                 {% endif %}
             </div>
             <div class="action-section">
-                <button class="donate-btn" onclick="openModal({{ issue }})" {% if not user.is_authenticated or total_sponsor_cents == 0 or user.username == owner %}disabled{% endif %}>Add or Remove Funds</button>
+                <button class="donate-btn"
+                    data-issue-repo="{{ issue.repo }}"
+                    data-issue-number="{{ issue.number }}"
+                    data-issue-title="{{ issue.title|escapejs }}"
+                    data-issue-url="{{ issue.url }}"
+                    data-user-donation="{{ issue.user_donation_cents }}"
+                    data-total-donation="{{ issue.donation_total_cents }}"
+                    onclick="openModal(this)"
+                    {% if not user.is_authenticated or total_sponsor_cents == 0 or user.username == owner %}disabled{% endif %}>Add or Remove Funds</button>
             </div>
         </div>
         {% endfor %}
