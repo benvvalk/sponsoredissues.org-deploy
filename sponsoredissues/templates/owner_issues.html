@@ -273,6 +273,16 @@
         font-size: 0.875rem;
     }
 
+    .issue-number a {
+        color: #6b7280;
+        text-decoration: none;
+    }
+
+    .issue-number a:hover {
+        color: #6b7280;
+        text-decoration: underline;
+    }
+
     .donation-section {
         flex-shrink: 0;
         text-align: right;
@@ -577,7 +587,7 @@
                         <span class="label" data-label-color="{{ label.color }}">{{ label.name }}</span>
                         {% endfor %}
                     </div>
-                    <div class="issue-number">{{ owner }}/{{ issue.repo }}#{{ issue.number }} {% if issue.state == 'open' %}(open){% else %}(closed){% endif %}</div>
+                    <div class="issue-number"><a href="https://github.com/{{ owner }}/{{ issue.repo }}/issues/{{ issue.number }}" target="_blank">{{ owner }}/{{ issue.repo }}#{{ issue.number }}</a> {% if issue.state == 'open' %}(open){% else %}(closed){% endif %}</div>
                 </div>
             </div>
             <div class="donation-section">
