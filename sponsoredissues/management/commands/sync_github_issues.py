@@ -7,9 +7,9 @@ from sponsoredissues.models import GitHubIssue
 from sponsoredissues.github_auth import GitHubAppAuth
 
 # Rate limiting configuration
-REQUEST_DELAY_MIN = 1.0  # Minimum delay between requests (seconds)
-REQUEST_DELAY_MAX = 5.0  # Maximum delay between requests (seconds)
-RETRY_DELAY = 5.0        # Delay before retrying failed requests (seconds)
+REQUEST_DELAY_MIN = 2.0  # Minimum delay between requests (seconds)
+REQUEST_DELAY_MAX = 10.0 # Maximum delay between requests (seconds)
+RETRY_DELAY = 60.0       # Delay before retrying failed requests (seconds)
 
 class Command(BaseCommand):
     help = 'Sync GitHub issues with "sponsoredissues.org" label using GraphQL API'
