@@ -35,27 +35,66 @@ class Command(BaseCommand):
             default=100,
             help='Maximum number of repositories to query per installation (default: 100)',
         )
+        parser.add_argument(
+            '--loop',
+            action='store_true',
+            help='Run sync in an infinite loop',
+        )
+        parser.add_argument(
+            '--loop-delay',
+            type=int,
+            default=0,
+            help='Delay in seconds between sync iterations when using --loop (default: 0)',
+        )
 
     def handle(self, *args, **options):
         dry_run = options['dry_run']
         target_installation_id = options.get('installation_id')
         repo_limit = options['limit']
+        loop_mode = options['loop']
+        loop_delay = options['loop_delay']
 
-        self.stdout.write(f'Starting GitHub issues sync (dry_run={dry_run})')
+        self.stdout.write(f'Starting GitHub issues sync (dry_run={dry_run}, loop={loop_mode})')
 
         if dry_run:
             self.stdout.write(self.style.WARNING('DRY RUN MODE - No changes will be made'))
+
+        if loop_mode:
+            self.stdout.write(f'Loop mode enabled with {loop_delay}s delay between iterations')
+
+        cycle = 0
+
+        try:
+            while True:
+                cycle += 1
+
+                if loop_mode:
+                    from datetime import datetime
+                    timestamp = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+                    self.stdout.write(f'\n{"="*60}')
+                    self.stdout.write(f'Sync cycle {cycle} starting at {timestamp}')
+                    self.stdout.write(f'{"="*60}')
 
         # Get GitHub App installations
         try:
             installations = self.github_app_auth.get_app_installations(target_installation_id)
         except Exception as e:
             self.stdout.write(self.style.ERROR(f'Failed to get GitHub App installations: {e}'))
+                    if not loop_mode:
             return
+                    else:
+                        self.stdout.write(f'Waiting {loop_delay}s before next cycle...')
+                        time.sleep(loop_delay)
+                        continue
 
         if not installations:
             self.stdout.write(self.style.WARNING('No GitHub App installations found'))
+                    if not loop_mode:
             return
+                    else:
+                        self.stdout.write(f'Waiting {loop_delay}s before next cycle...')
+                        time.sleep(loop_delay)
+                        continue
 
         self.stdout.write(f'Found {len(installations)} GitHub App installations to sync')
 
@@ -99,6 +138,19 @@ class Command(BaseCommand):
             self.stdout.write(self.style.WARNING('DRY RUN - No actual changes made'))
         else:
             self.stdout.write(self.style.SUCCESS('Sync completed'))
+
+                # Exit if not in loop mode
+                if not loop_mode:
+                    break
+
+                # Wait before next cycle
+                if loop_delay > 0:
+                    self.stdout.write(f'\nWaiting {loop_delay}s before next cycle...')
+                    time.sleep(loop_delay)
+
+        except KeyboardInterrupt:
+            self.stdout.write(f'\n\nSync interrupted by user after {cycle} cycle(s)')
+            self.stdout.write(self.style.WARNING('Exiting gracefully...'))
 
 
 
