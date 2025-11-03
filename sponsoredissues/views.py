@@ -6,11 +6,18 @@ from django.contrib.auth.decorators import login_required
 from django.core.exceptions import BadRequest
 from django.db.models import Sum, Count
 from django.views.decorators.http import require_POST
+from django.views.decorators.csrf import csrf_exempt
+from django.http import HttpResponse, HttpResponseBadRequest, HttpResponseForbidden
 from django.utils import timezone
 from datetime import timedelta
 from .models import GitHubIssue, SponsorAmount
 from .github_service import GitHubSponsorService
 import json
+import hmac
+import hashlib
+import logging
+
+logger = logging.getLogger(__name__)
 
 def calculate_trending_issues(limit=10):
     """
@@ -330,3 +337,146 @@ def donate_to_issue(request, owner, repo, issue_number):
         messages.success(request, f"Updated your amount for {owner}/{repo}#{issue_number} to {donation_dollars} USD.")
 
     return redirect('owner_issues', owner, repo, issue_number)
+
+def _verify_github_signature(request):
+    """
+    Verify that the webhook request is from GitHub by validating the signature.
+    Returns True if signature is valid, False otherwise.
+    """
+    webhook_secret = getattr(settings, 'GITHUB_WEBHOOK_SECRET', None)
+
+    # If no webhook secret is configured, skip verification (for development)
+    if not webhook_secret:
+        logger.warning("GITHUB_WEBHOOK_SECRET not configured - skipping webhook signature verification")
+        return True
+
+    # Get the signature from the request headers
+    signature_header = request.headers.get('X-Hub-Signature-256')
+    if not signature_header:
+        logger.error("Missing X-Hub-Signature-256 header")
+        return False
+
+    # Calculate the expected signature
+    expected_signature = 'sha256=' + hmac.new(
+        webhook_secret.encode('utf-8'),
+        request.body,
+        hashlib.sha256
+    ).hexdigest()
+
+    # Compare signatures using constant-time comparison to prevent timing attacks
+    if not hmac.compare_digest(signature_header, expected_signature):
+        logger.error("Invalid webhook signature")
+        return False
+
+    return True
+
+def _has_sponsoredissues_label(issue_data):
+    """
+    Check if the issue has the 'sponsoredissues.org' label.
+    """
+    labels = issue_data.get('labels', [])
+    for label in labels:
+        if label.get('name') == 'sponsoredissues.org':
+            return True
+    return False
+
+def _sync_github_issue(issue_data):
+    """
+    Sync a GitHub issue to the database.
+    Creates or updates the GitHubIssue record based on the issue data.
+    Only processes issues with the 'sponsoredissues.org' label and open state.
+    """
+    issue_url = issue_data.get('html_url')
+    issue_state = issue_data.get('state')
+
+    if not issue_url:
+        logger.error("Issue data missing html_url")
+        return
+
+    # Check if issue has the sponsoredissues.org label
+    has_label = _has_sponsoredissues_label(issue_data)
+
+    # Check if issue exists in database
+    try:
+        github_issue = GitHubIssue.objects.get(url=issue_url)
+        issue_exists = True
+    except GitHubIssue.DoesNotExist:
+        github_issue = None
+        issue_exists = False
+
+    # Decision logic:
+    # - If issue is open AND has label: create/update in database
+    # - If issue is closed OR missing label: remove from database
+    should_exist = (issue_state == 'open' and has_label)
+
+    if should_exist and not issue_exists:
+        # Create new issue
+        GitHubIssue.objects.create(
+            url=issue_url,
+            data=issue_data
+        )
+        logger.info(f"Created GitHubIssue: {issue_url}")
+    elif should_exist and issue_exists:
+        # Update existing issue
+        github_issue.data = issue_data
+        github_issue.save()
+        logger.info(f"Updated GitHubIssue: {issue_url}")
+    elif not should_exist and issue_exists:
+        # Delete issue (closed or label removed)
+        github_issue.delete()
+        logger.info(f"Deleted GitHubIssue: {issue_url} (closed or label removed)")
+
+@csrf_exempt
+@require_POST
+def github_webhook(request):
+    """
+    Handle GitHub webhook events for issues.
+
+    Supported events:
+    - issues: opened, closed, reopened, labeled, unlabeled, edited
+    - ping: webhook test event
+
+    The webhook should be configured in GitHub to send issue events with
+    the 'sponsoredissues.org' label.
+    """
+    # Verify the webhook signature
+    if not _verify_github_signature(request):
+        return HttpResponseForbidden("Invalid signature")
+
+    # Get the event type from headers
+    event_type = request.headers.get('X-GitHub-Event')
+    if not event_type:
+        return HttpResponseBadRequest("Missing X-GitHub-Event header")
+
+    # Parse the JSON payload
+    try:
+        payload = json.loads(request.body)
+    except json.JSONDecodeError:
+        return HttpResponseBadRequest("Invalid JSON payload")
+
+    # Handle ping event (webhook test)
+    if event_type == 'ping':
+        logger.info("Received ping event from GitHub webhook")
+        return HttpResponse("pong", status=200)
+
+    # Handle issue events
+    if event_type == 'issues':
+        action = payload.get('action')
+        issue_data = payload.get('issue')
+
+        if not issue_data:
+            return HttpResponseBadRequest("Missing issue data in payload")
+
+        logger.info(f"Received issues webhook: action={action}, issue={issue_data.get('html_url')}")
+
+        # Handle different issue actions
+        if action in ['opened', 'reopened', 'closed', 'labeled', 'unlabeled', 'edited']:
+            _sync_github_issue(issue_data)
+            return HttpResponse(f"Processed {action} event", status=200)
+        else:
+            logger.info(f"Ignoring unsupported action: {action}")
+            return HttpResponse(f"Ignored action: {action}", status=200)
+
+    # Ignore other event types
+    logger.info(f"Ignoring unsupported event type: {event_type}")
+    return HttpResponse(f"Ignored event type: {event_type}", status=200)

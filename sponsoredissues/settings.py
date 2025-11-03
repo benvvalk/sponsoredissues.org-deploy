@@ -89,6 +89,9 @@ GITHUB_APP_PRIVATE_KEY = env.str('GITHUB_APP_PRIVATE_KEY', default=None)
 # GitHub Personal Access Token for GraphQL API access
 GITHUB_ACCESS_TOKEN = env.str('GITHUB_ACCESS_TOKEN', default=None)
 
+# GitHub Webhook Secret for validating webhook requests
+GITHUB_WEBHOOK_SECRET = env.str('GITHUB_WEBHOOK_SECRET', default=None)
+
 # GitHub login whitelist for development
 # If set, only these GitHub usernames will be allowed to log in.
 # All other users will see the custom message defined in GITHUB_LOGIN_DISABLED_MESSAGE.

@@ -21,6 +21,7 @@ urlpatterns = [
     path('', views.index, name='index'),
     path('site/accounts/', include('allauth.urls')),
     path('site/faq', views.faq, name='faq'),
+    path('site/webhook/github', views.github_webhook, name='github_webhook'),
     path('<str:owner>', views.owner_issues, name='owner_issues'),
     path('<str:owner>/<str:repo>', views.owner_issues, name='owner_issues'),
     path('<str:owner>/<str:repo>/issues', views.owner_issues, name='owner_issues'),
