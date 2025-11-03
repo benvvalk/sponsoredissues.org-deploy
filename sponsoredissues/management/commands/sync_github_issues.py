@@ -49,8 +49,6 @@ class Command(BaseCommand):
 
     def handle(self, *args, **options):
         dry_run = options['dry_run']
-        target_installation_id = options.get('installation_id')
-        repo_limit = options['limit']
         loop_mode = options['loop']
         loop_delay = options['loop_delay']
 
@@ -75,26 +73,41 @@ class Command(BaseCommand):
                     self.stdout.write(f'Sync cycle {cycle} starting at {timestamp}')
                     self.stdout.write(f'{"="*60}')
 
-        # Get GitHub App installations
-        try:
-            installations = self.github_app_auth.get_app_installations(target_installation_id)
-        except Exception as e:
-            self.stdout.write(self.style.ERROR(f'Failed to get GitHub App installations: {e}'))
+                try:
+                    self._sync_installations(options)
+                except Exception as e:
+                    import traceback
+                    self.stdout.write(f'Error: {e}\n{traceback.format_exc()}')
                     if not loop_mode:
-            return
+                        return
                     else:
                         self.stdout.write(f'Waiting {loop_delay}s before next cycle...')
                         time.sleep(loop_delay)
                         continue
 
+                # Exit if not in loop mode
+                if not loop_mode:
+                    break
+
+                # Wait before next cycle
+                if loop_delay > 0:
+                    self.stdout.write(f'\nWaiting {loop_delay}s before next cycle...')
+                    time.sleep(loop_delay)
+
+        except KeyboardInterrupt:
+            self.stdout.write(f'\n\nSync interrupted by user after {cycle} cycle(s)')
+            self.stdout.write(self.style.WARNING('Exiting gracefully...'))
+
+    def _sync_installations(self, options):
+        # Get GitHub App installations
+        target_installation_id = options.get('installation_id')
+        try:
+            installations = self.github_app_auth.get_app_installations(target_installation_id)
+        except Exception as e:
+            raise RuntimeError(f'Failed to get GitHub App installations: {e}') from e
+
         if not installations:
-            self.stdout.write(self.style.WARNING('No GitHub App installations found'))
-                    if not loop_mode:
-            return
-                    else:
-                        self.stdout.write(f'Waiting {loop_delay}s before next cycle...')
-                        time.sleep(loop_delay)
-                        continue
+            raise RuntimeError(f'No GitHub App installations found')
 
         self.stdout.write(f'Found {len(installations)} GitHub App installations to sync')
 
@@ -109,6 +122,8 @@ class Command(BaseCommand):
             self.stdout.write(f'\n--- Syncing installation: {account_login} (ID: {installation_id}) ---')
 
             try:
+                repo_limit = options['limit']
+                dry_run = options['dry_run']
                 added, updated, removed = self._sync_installation_issues(installation, repo_limit, dry_run)
                 total_added += added
                 total_updated += updated
@@ -138,22 +153,6 @@ class Command(BaseCommand):
             self.stdout.write(self.style.WARNING('DRY RUN - No actual changes made'))
         else:
             self.stdout.write(self.style.SUCCESS('Sync completed'))
-
-                # Exit if not in loop mode
-                if not loop_mode:
-                    break
-
-                # Wait before next cycle
-                if loop_delay > 0:
-                    self.stdout.write(f'\nWaiting {loop_delay}s before next cycle...')
-                    time.sleep(loop_delay)
-
-        except KeyboardInterrupt:
-            self.stdout.write(f'\n\nSync interrupted by user after {cycle} cycle(s)')
-            self.stdout.write(self.style.WARNING('Exiting gracefully...'))
-
-
-
 
     def _sync_installation_issues(self, installation, repo_limit, dry_run):
         """Sync issues for a single GitHub App installation"""
