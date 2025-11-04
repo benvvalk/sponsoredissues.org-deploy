@@ -86,10 +86,7 @@ SOCIALACCOUNT_PROVIDERS = {
 GITHUB_APP_ID = env.str('GITHUB_APP_ID', default=None)
 GITHUB_APP_PRIVATE_KEY = env.str('GITHUB_APP_PRIVATE_KEY', default=None)
 
-# GitHub Personal Access Token for GraphQL API access
-GITHUB_ACCESS_TOKEN = env.str('GITHUB_ACCESS_TOKEN', default=None)
-
-# GitHub Webhook Secret for validating webhook requests
+# For authenticating webhook notifications from GitHub
 GITHUB_WEBHOOK_SECRET = env.str('GITHUB_WEBHOOK_SECRET', default=None)
 
 # GitHub login whitelist for development
