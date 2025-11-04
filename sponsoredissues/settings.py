@@ -211,3 +211,27 @@ STORAGES = {
 # https://docs.djangoproject.com/en/5.2/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+
+# Logging configuration
+
+LOGGING = {
+    "version": 1,
+    "disable_existing_loggers": False,
+    "formatters": {
+        "sponsoredissues.formatter": {
+            "format": "[{asctime}] [{levelname}] {message}",
+            "datefmt": "%d/%b/%Y %H:%M:%S", # same `datefmt` as `django` logger
+            "style": "{",
+        },
+    },
+    "handlers": {
+        "sponsoredissues.handler": {
+            "class": "logging.StreamHandler",
+            "formatter": "sponsoredissues.formatter",
+        },
+    },
+    "root": {
+        "handlers": ["sponsoredissues.handler"],
+        "level": "INFO",
+    },
+}
