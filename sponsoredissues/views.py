@@ -7,11 +7,12 @@ from django.core.exceptions import BadRequest
 from django.db.models import Sum, Count
 from django.views.decorators.http import require_POST
 from django.views.decorators.csrf import csrf_exempt
-from django.http import HttpResponse, HttpResponseBadRequest, HttpResponseForbidden
+from django.http import HttpResponse, HttpResponseBadRequest, HttpResponseForbidden, Http404
 from django.utils import timezone
 from datetime import timedelta
 from .models import GitHubIssue, SponsorAmount
 from .github_service import GitHubSponsorService
+from .github_validation_service import GitHubValidationService
 import json
 import hmac
 import hashlib
@@ -162,16 +163,31 @@ def faq(request):
     return render(request, 'faq.html')
 
 def owner_issues(request, owner, repo=None, issue_number=None):
+    # Validate that the GitHub resources exist before showing content
+    validation_service = GitHubValidationService()
+
+    # Step 1: Validate the owner (GitHub user) exists
+    if not validation_service.validate_user_exists(owner):
+        raise Http404(f"GitHub user '{owner}' not found")
+
+    # Step 2: If repo specified, validate it exists
+    if repo and not validation_service.validate_repo_exists(owner, repo):
+        raise Http404(f"Repository '{owner}/{repo}' not found on GitHub")
+
+    # Step 3: If issue specified, validate it exists
+    if issue_number and not validation_service.validate_issue_exists(owner, repo, issue_number):
+        raise Http404(f"Issue #{issue_number} not found in {owner}/{repo}")
+
     # Filter issues for this owner (across all repos)
     owner_url_pattern = f"https://github.com/{owner}/"
     issues = GitHubIssue.objects.filter(url__startswith=owner_url_pattern)
 
-    # If repo and issue_number are provided, check if the issue exists
+    # If repo and issue_number are provided, check if the issue exists in our database
     if repo and issue_number:
         issue_url_pattern = f"https://github.com/{owner}/{repo}/issues/{issue_number}"
         exists = GitHubIssue.objects.filter(url=issue_url_pattern, data__state='open').exists()
         if not exists:
-            messages.error(request, f"{owner}/{repo}#{issue_number} is not a \"sponsorable\" issue. Either the issue does not exist, it has been closed, or it does not have the \"sponsoredissues.org\" label on GitHub.")
+            messages.error(request, f"{owner}/{repo}#{issue_number} is not a \"sponsorable\" issue. Either the issue has been closed or it does not have the \"sponsoredissues.org\" label on GitHub.")
 
     # Parse issue data
     parsed_issues = []
