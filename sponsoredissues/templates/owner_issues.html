@@ -612,8 +612,10 @@
         {% endfor %}
     {% else %}
         <div class="no-issues">
-            <h3>No issues found</h3>
-            <p>This repository doesn't have any issues yet.</p>
+            <h3>No sponsored issues found</h3>
+            <p>This GitHub user has not created any sponsored issues.</p>
+            <p>You can invite them to try <strong>sponsoredissues.org</strong>
+               by submitting an issue to <a href="https://github.com/{{ owner }}" target="_blank">one of their GitHub repos</a>.</p>
         </div>
     {% endif %}
 </div>
