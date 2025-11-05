@@ -158,6 +158,16 @@ DATABASES = {
     ),
 }
 
+# Cache configuration
+# Using database backend for persistent caching across server restarts
+# Run `python manage.py createcachetable` to create the cache table
+CACHES = {
+    'default': {
+        'BACKEND': 'django.core.cache.backends.db.DatabaseCache',
+        'LOCATION': 'django_cache_table',
+    }
+}
+
 # Password validation
 # https://docs.djangoproject.com/en/5.2/ref/settings/#auth-password-validators
 
