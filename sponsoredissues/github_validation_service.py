@@ -23,27 +23,7 @@ class GitHubValidationService:
 
     def __init__(self):
         self.github_auth = GitHubAppAuth()
-        self.access_token = self._get_access_token()
-
-    def _get_access_token(self) -> Optional[str]:
-        """
-        Get GitHub App access token for API calls.
-
-        Attempts to get token from any available installation.
-        Returns None if no installations are available.
-        """
-        installations = self.github_auth.get_app_installations()
-        if not installations:
-            logger.warning("No GitHub App installations available for validation")
-            return None
-
-        # Use the first available installation
-        access_token = self.github_auth.get_installation_access_token(installations[0]['id'])
-        if not access_token:
-            logger.warning("Failed to get GitHub App access token for validation")
-            return None
-
-        return access_token
+        self.access_token = self.github_auth.get_any_installation_access_token()
 
     def validate_user_exists(self, username: str) -> bool:
         """

@@ -96,6 +96,26 @@ class GitHubAppAuth:
             logger.error(f'Failed to get installation access token for {installation_id}: {e}')
             return None
 
+    def get_any_installation_access_token(self):
+        """
+        Get GitHub App access token for API calls.
+
+        Attempts to get token from any available installation.
+        Returns None if no installations are available.
+        """
+        installations = self.get_app_installations()
+        if not installations:
+            logger.warning("No GitHub App installations available")
+            return None
+
+        # Use the first available installation
+        access_token = self.get_installation_access_token(installations[0]['id'])
+        if not access_token:
+            logger.warning("Failed to get GitHub App access token")
+            return None
+
+        return access_token
+
     def find_installation_by_account(self, account_login: str) -> Optional[Dict]:
         """Find GitHub App installation by account login"""
         installations = self.get_app_installations()
