@@ -221,6 +221,11 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 # Logging configuration
 
+if DEBUG:
+    LOG_LEVEL = "DEBUG"
+else:
+    LOG_LEVEL = "INFO"
+
 LOGGING = {
     "version": 1,
     "disable_existing_loggers": False,
@@ -239,6 +244,6 @@ LOGGING = {
     },
     "root": {
         "handlers": ["sponsoredissues.handler"],
-        "level": "INFO",
+        "level": LOG_LEVEL,
     },
 }
