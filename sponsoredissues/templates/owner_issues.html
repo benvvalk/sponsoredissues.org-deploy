@@ -795,10 +795,6 @@
 
         const new_total_cents = currentIssue.donation_total_cents + donation_delta;
         totalElement.textContent = cents_to_dollars(new_total_cents) + ' USD';
-
-        const dollars_remaining = document.getElementById('dollars_remaining');
-        const cents_remaining = {{ unallocated_sponsor_cents }} - donation_delta;
-        dollars_remaining.textContent = cents_to_dollars(cents_remaining);
     }
 
     // Convert a dollars USD value given as a string
