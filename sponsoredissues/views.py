@@ -178,10 +178,6 @@ def owner_issues(request, owner, repo=None, issue_number=None):
     if issue_number and not validation_service.validate_issue_exists(owner, repo, issue_number):
         raise Http404(f"Issue #{issue_number} not found in {owner}/{repo}")
 
-    # Filter issues for this owner (across all repos)
-    owner_url_pattern = f"https://github.com/{owner}/"
-    issues = GitHubIssue.objects.filter(url__startswith=owner_url_pattern)
-
     # If repo and issue_number are provided, check if the issue exists in our database
     if repo and issue_number:
         issue_url_pattern = f"https://github.com/{owner}/{repo}/issues/{issue_number}"
@@ -194,6 +190,10 @@ def owner_issues(request, owner, repo=None, issue_number=None):
     # of the web page).
     github_service = GitHubSponsorService()
     has_sponsors_profile = github_service.has_sponsors_profile(owner)
+
+    # Filter issues for this owner (across all repos)
+    owner_url_pattern = f"https://github.com/{owner}/"
+    issues = GitHubIssue.objects.filter(url__startswith=owner_url_pattern)
 
     # Parse issue data
     parsed_issues = []
