@@ -714,7 +714,7 @@
         titleElement.innerHTML = currentIssue.title;
 
         const issueLinkElement = document.getElementById('modalIssueLink');
-        issueLinkElement.innerHTML = '{{ owner }}/{{ repo }}#' + currentIssue.number;
+        issueLinkElement.innerHTML = `{{ owner }}/${currentIssue.repo}#${currentIssue.number}`
         issueLinkElement.href = currentIssue.url;
 
         const donationInput = document.getElementById('donationAmount');
