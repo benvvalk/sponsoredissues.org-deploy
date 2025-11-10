@@ -264,7 +264,6 @@ def owner_issues(request, owner, repo=None, issue_number=None):
     # Sort issues by donation amount in descending order
     parsed_issues.sort(key=lambda issue: issue['donation_total_cents'], reverse=True)
 
-
     # Update ranks after sorting
     for i, issue in enumerate(parsed_issues):
         issue['rank'] = i + 1
