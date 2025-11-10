@@ -85,6 +85,43 @@
         color: white;
     }
 
+    .sponsor-btn.disabled {
+        background: #f1f5f9;
+        color: #94a3b8;
+        border: 1px solid #cbd5e1;
+        cursor: not-allowed;
+        pointer-events: none;
+    }
+
+    .sponsor-btn-wrapper {
+        position: relative;
+        display: inline-block;
+    }
+
+    .sponsor-btn-wrapper .tooltip {
+        visibility: hidden;
+        background-color: #1f2937;
+        color: white;
+        text-align: center;
+        border-radius: 6px;
+        padding: 8px 12px;
+        position: absolute;
+        z-index: 1;
+        bottom: 125%;
+        left: 50%;
+        transform: translateX(-50%);
+        white-space: nowrap;
+        opacity: 0;
+        transition: opacity 0.3s;
+        font-size: 0.85rem;
+        font-weight: 500;
+    }
+
+    .sponsor-btn-wrapper:hover .tooltip {
+        visibility: visible;
+        opacity: 1;
+    }
+
     .sponsor-stats {
         margin: 12px 0px 0px 0px;
     }
@@ -510,12 +547,24 @@
                 <img src="https://github.com/{{ owner }}.png" alt="{{ owner }}" class="owner-avatar">
             </a>
             <h1><a href="https://github.com/{{ owner }}" target="_blank">{{ owner }}</a>'s issues</h1>
+            {% if has_sponsors_profile %}
             <a href="https://github.com/sponsors/{{ owner }}" target="_blank" class="sponsor-btn">
                 <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
                     <path d="M4.25 2.5c-1.336 0-2.75 1.164-2.75 3 0 2.15 1.58 4.144 3.365 5.682A20.565 20.565 0 008 13.393a20.561 20.561 0 003.135-2.211C12.92 9.644 14.5 7.65 14.5 5.5c0-1.836-1.414-3-2.75-3-1.373 0-2.609.986-3.029 2.456a.75.75 0 01-1.442 0C6.859 3.486 5.623 2.5 4.25 2.5zM8 14.25l-.345.666-.002-.001-.006-.003-.018-.01a7.643 7.643 0 01-.31-.17 22.075 22.075 0 01-3.434-2.414C2.045 10.731 0 8.35 0 5.5 0 2.836 2.086 1 4.25 1 5.797 1 7.153 1.802 8 3.02 8.847 1.802 10.203 1 11.75 1 13.914 1 16 2.836 16 5.5c0 2.85-2.045 5.231-3.885 6.818a22.08 22.08 0 01-3.744 2.584l-.018.01-.006.003h-.002L8 14.25zm0 0l.345.666a.752.752 0 01-.69 0L8 14.25z"></path>
                 </svg>
                 Sponsor @{{ owner }}
             </a>
+            {% else %}
+            <div class="sponsor-btn-wrapper">
+                <span class="sponsor-btn disabled">
+                    <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
+                        <path d="M4.25 2.5c-1.336 0-2.75 1.164-2.75 3 0 2.15 1.58 4.144 3.365 5.682A20.565 20.565 0 008 13.393a20.561 20.561 0 003.135-2.211C12.92 9.644 14.5 7.65 14.5 5.5c0-1.836-1.414-3-2.75-3-1.373 0-2.609.986-3.029 2.456a.75.75 0 01-1.442 0C6.859 3.486 5.623 2.5 4.25 2.5zM8 14.25l-.345.666-.002-.001-.006-.003-.018-.01a7.643 7.643 0 01-.31-.17 22.075 22.075 0 01-3.434-2.414C2.045 10.731 0 8.35 0 5.5 0 2.836 2.086 1 4.25 1 5.797 1 7.153 1.802 8 3.02 8.847 1.802 10.203 1 11.75 1 13.914 1 16 2.836 16 5.5c0 2.85-2.045 5.231-3.885 6.818a22.08 22.08 0 01-3.744 2.584l-.018.01-.006.003h-.002L8 14.25zm0 0l.345.666a.752.752 0 01-.69 0L8 14.25z"></path>
+                    </svg>
+                    Sponsor @{{ owner }}
+                </span>
+                <span class="tooltip">This GitHub user does not have a GitHub Sponsors profile.</span>
+            </div>
+            {% endif %}
         </div>
         {% if not user.is_authenticated %}
         <div class="sponsor-stats">

@@ -189,6 +189,12 @@ def owner_issues(request, owner, repo=None, issue_number=None):
         if not exists:
             messages.error(request, f"{owner}/{repo}#{issue_number} is not a \"sponsorable\" issue. Either the issue has been closed or it does not have the \"sponsoredissues.org\" label on GitHub.")
 
+    # Check if the owner has a GitHub Sponsors profile (otherwise
+    # we disable the "Sponsor @{owner}" button in the header
+    # of the web page).
+    github_service = GitHubSponsorService()
+    has_sponsors_profile = github_service.has_sponsors_profile(owner)
+
     # Parse issue data
     parsed_issues = []
     for issue in issues:
@@ -272,7 +278,6 @@ def owner_issues(request, owner, repo=None, issue_number=None):
     allocated_sponsor_cents = 0
     unallocated_sponsor_cents = 0
     if request.user.is_authenticated:
-        github_service = GitHubSponsorService()
         (allocated_sponsor_cents, total_sponsor_cents) = github_service.calculate_allocated_sponsor_cents(request.user, owner)
         unallocated_sponsor_cents = total_sponsor_cents - allocated_sponsor_cents
 
@@ -283,6 +288,7 @@ def owner_issues(request, owner, repo=None, issue_number=None):
         'total_sponsor_cents': total_sponsor_cents,
         'allocated_sponsor_cents': allocated_sponsor_cents,
         'unallocated_sponsor_cents': unallocated_sponsor_cents,
+        'has_sponsors_profile': has_sponsors_profile,
     }
 
     return render(request, 'owner_issues.html', context)
