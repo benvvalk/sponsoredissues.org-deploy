@@ -115,22 +115,3 @@ class GitHubAppAuth:
             return None
 
         return access_token
-
-    def find_installation_by_account(self, account_login: str) -> Optional[Dict]:
-        """Find GitHub App installation by account login"""
-        installations = self.get_app_installations()
-
-        for installation in installations:
-            if installation['account']['login'].lower() == account_login.lower():
-                return installation
-
-        return None
-
-    def get_installation_token_for_account(self, account_login: str) -> Optional[str]:
-        """Get installation access token for a specific GitHub account"""
-        installation = self.find_installation_by_account(account_login)
-        if not installation:
-            logger.debug(f"No GitHub App installation found for account: {account_login}")
-            return None
-
-        return self.get_installation_access_token(installation['id'])
