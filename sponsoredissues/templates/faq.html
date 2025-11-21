@@ -191,7 +191,13 @@
                     • <a href="#which-issues">Which issues can be sponsored?</a><br>
                     • <a href="#creative-control">Would I be giving up creative control of my project to my donors?</a><br>
                     • <a href="#receive-donations">When do I receive the donations?</a><br>
-                    • <a href="#required-complete">Am I required to complete sponsored issues?</a>
+                    • <a href="#required-complete">Am I required to complete sponsored issues?</a><br>
+                    • <a href="#close-issue">What happens when I close an issue?</a><br>
+                    • <a href="#reopen-issue">Can I re-open a closed issue?</a><br>
+                    • <a href="#what-does-the-app-do">What does the <code>sponsoredissues-maintainer</code> GitHub App do?</a><br>
+                    • <a href="#app-uninstalled">What happens when I uninstall the <code>sponsoredissues-maintainer</code> GitHub App?</a><br>
+                    • <a href="#label-removed">What happens when I remove the <span class="sponsoredissues-label">sponsoredissues.org</span> label from an issue?</a><br>
+                    • <a href="#issue-deleted">What happens when I delete an issue on GitHub?</a><br>
                 </div>
             </div>
 
@@ -300,6 +306,54 @@
                 <div class="faq-question">Am I required to complete sponsored issues?</div>
                 <div class="faq-answer">
                     <p>No. All contributions on <strong>sponsoredissues.org</strong> are donations, not contracts or bounties. You have no formal obligation to resolve funded issues in any particular timeframe (or at all). The funding is only meant as user feedback, to help encourage and prioritize the work.</p>
+                </div>
+            </div>
+
+            <div class="faq-item" id="close-issue">
+                <div class="faq-question">What happens when I close an issue?</div>
+                <div class="faq-answer">
+                    <p>When you close an issue with the <span class="sponsoredissues-label">sponsoredissues.org</span> label, that issue will no longer appear on your sponsored issues page, and any funds assigned to the issue will be considered "spent". In other words, users will no longer be able to reassign those funds to other issues.</p>
+                    <p>You can re-open the issue on GitHub at any time, if you realize that the issue has not been properly resolved, and it will once again appear on your sponsored issues page.</p>
+                </div>
+            </div>
+
+            <div class="faq-item" id="reopen-issue">
+                <div class="faq-question">Can I re-open a closed issue?</div>
+                <div class="faq-answer">
+                    <p>Yes, closing an issue is an easily reversible operation. When you re-open a closed issue with the <span class="sponsoredissues-label">sponsoredissues.org</span> label, it will once again reappear on your sponsored issues page, with the same amount of funding it had when it was closed. Users will once again be able to add or remove funds from the issue.</p>
+                </div>
+            </div>
+
+            <div class="faq-item" id="what-does-the-app-do">
+                <div class="faq-question">What does the <code>sponsoredissues-maintainer</code> GitHub App do?</div>
+                <div class="faq-answer">
+                    <p>The <code>sponsoredissues.org</code> GitHub App continuously syncs GitHub issue data from <strong>github.com</strong> to <strong>sponsoredissues.org</strong>, such as issue open/closed states, issue creation/deletion events, and issue labeling/unlabeling.</p>
+                </div>
+            </div>
+
+            <div class="faq-item" id="app-uninstalled">
+                <div class="faq-question">What happens if I uninstall the <code>sponsoredissues-maintainer</code> GitHub App?</div>
+                <div class="faq-answer">
+                    <p>The <code>sponsoredissues.org</code> GitHub App needs to be installed and active to properly sync GitHub issue data from <strong>github.com</strong> to <strong>sponsoredissues.org</strong> (e.g. issue open/closed states).</p>
+                    <p>In general, it is a bad idea to uninstall or suspend the <code>sponsoredissues-maintainer</code> app on a repo where users are already funding one or more issues. If you do that, any funded issues from the repo will be put into a frozen state on your sponsored issues page, with the "Add or Remove Funds" button disabled. In addition,  the issue states may get out-of-sync with GitHub (e.g. open/closed state). On the other hand, issues without any funds assigned will simply be removed from your sponsored issues page, since those can be easily restored if/when you reinstall the app.</p>
+                    <p>Since the issue funding amounts are frozen when you uninstall/suspend the app, you can easily restore the frozen issues by just reinstalling/unsuspending the app on the repo in question. If you actually want to remove the issues from your sponsored issues page, you should do it by closing the issue(s) on GitHub instead.</p>
+                </div>
+            </div>
+
+            <div class="faq-item" id="label-removed">
+                <div class="faq-question">What happens when I remove the <span class="sponsoredissues-label">sponsoredissues.org</span> label from an issue?</div>
+                <div class="faq-answer">
+                    <p>In general, you should not remove the <span class="sponsoredissues-label">sponsoredissues.org</span> label from a GitHub issue once it has received funding on your sponsored issues page. If you do that, the issue will be put into a frozen state, with the "Add or Remove Funds" disabled. Removing the label from an issue without funding is not a problem, because the issue will simply be removed from your sponsored issues page.</p>
+                    <p>Since existing issue funding amounts are frozen when you remove the <span class="sponsoredissues-label">sponsoredissues.org</span> label, you can easily restore the state of the issue by re-adding the label on GitHub. If you actually want to remove issue from your sponsored issues page, you should close the issue on GitHub instead.</p>
+                </div>
+            </div>
+
+            <div class="faq-item" id="issue-deleted">
+                <div class="faq-question">What happens when I delete an issue on GitHub?</div>
+                <div class="faq-answer">
+                    <p>Firstly, please note that we are talking about <em>deleting</em> an issue on GitHub here, which is different from <em>closing</em> an issue. Deleting an issue on GitHub is a destructive and irreversible operation that is not commonly used.</p>
+                    <p>In general, it is a bad idea to delete an issue on GitHub if it already has funding on your sponsored issues page. If you do that, the issue will disappear from your sponsored issues page, and any funds that users assigned to the issue will be returned to them as "remaining" funds. That could easily confuse or anger your users, especially if they were emotionally/financially invested in the issue.</p>
+                    <p>If you want to remove an issue from your sponsored issues page, in most cases it is better to just close the issue on GitHub. That makes it possible to re-open the issue later if you change your mind.</p>
                 </div>
             </div>
         </div>
