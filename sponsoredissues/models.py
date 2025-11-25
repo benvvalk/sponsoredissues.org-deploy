@@ -27,6 +27,15 @@ class SponsorAmount(models.Model):
         ordering = ['-created_at']
         verbose_name = 'Sponsor Amount'
         verbose_name_plural = 'Sponsor Amounts'
+        # Don't allow zero amounts. We often want to get the subset
+        # of issues that have non-zero funding, and this constraint
+        # makes that query simpler and more efficient.
+        constraints = [
+            models.CheckConstraint(
+                check=models.Q(cents_usd__gt=0),
+                name='cents_usd_positive'
+            )
+        ]
 
     def __str__(self):
         return f"{self.cents_usd} from {self.sponsor_user.username} for {self.target_github_issue.url}"
