@@ -359,7 +359,7 @@ def donate_to_issue(request, owner, repo, issue_number):
 
     return redirect('owner_issues', owner, repo, issue_number)
 
-def _verify_github_signature(request):
+def _verify_webhook_signature(request):
     """
     Verify that the webhook request is from GitHub by validating the signature.
     Returns True if signature is valid, False otherwise.
@@ -461,7 +461,7 @@ def github_webhook(request):
     the 'sponsoredissues.org' label.
     """
     # Verify the webhook signature
-    if not _verify_github_signature(request):
+    if not _verify_webhook_signature(request):
         return HttpResponseForbidden("Invalid signature")
 
     # Get the event type from headers
