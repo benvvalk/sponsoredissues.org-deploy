@@ -207,8 +207,34 @@ class Command(BaseCommand):
         removed = 0
 
         for issue_url in issues_to_remove:
+            issue = GitHubIssue.objects.filter(url=issue_url).first()
+
+            if not issue:
+                continue
+
+            # We never delete funded issues, for several
+            # reasons:
+            #
+            # (1) It allows us to compute interesting historical
+            # stats, such as average funding amount for resolved
+            # issues, average time to resolve issues, etc.
+            #
+            # (2) If the maintainer reopens a closed issue, we need to
+            # restore the funding amount to the same value as when it
+            # was closed.
+            #
+            # (3) If the maintainer accidentally removes the
+            # `sponsoredissues.org` label from an issue with non-zero
+            # funding, we don't want to automatically return all the
+            # assigned funds to users. Instead, we continue to show
+            # the issue on the maintainer's sponsored issues page, but
+            # in a special frozen/error state with the "Add or Remove
+            # Funds" button disabled and an explanatory error message.
+            if issue.is_funded():
+                continue
+
             if not dry_run:
-                deleted_count, _ = GitHubIssue.objects.filter(url=issue_url).delete()
+                deleted_count, _ = issue.delete()
                 if deleted_count > 0:
                     removed += 1
                     self.stdout.write(f'Removed: {issue_url}')

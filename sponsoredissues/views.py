@@ -403,15 +403,14 @@ def _has_sponsoredissues_label(issue_data):
 
 def _sync_github_issue(issue_data):
     """
-    Sync a GitHub issue to the database.
-    Creates or updates the GitHubIssue record based on the issue data.
-    Only processes issues with the 'sponsoredissues.org' label and open state.
+    Create or update a GitHubIssue in the database, based on the
+    issue data from GitHub.
     """
     issue_url = issue_data.get('html_url')
     issue_state = issue_data.get('state')
 
-    if not issue_url:
-        logger.error("Issue data missing html_url")
+    if not issue_url or not issue_state:
+        logger.error("GitHub issue data is malformed")
         return
 
     # Check if issue has the sponsoredissues.org label
@@ -425,10 +424,31 @@ def _sync_github_issue(issue_data):
         github_issue = None
         issue_exists = False
 
-    # Decision logic:
-    # - If issue is open AND has label: create/update in database
-    # - If issue is closed OR missing label: remove from database
-    should_exist = (issue_state == 'open' and has_label)
+    # We need to create/update the issue in the database if either:
+    #
+    # (1) The issue is open AND has `sponsoredissues.org` label, *OR*
+    # (2) The issue has non-zero funding from users (regardless of
+    # its labels or open/closed state)
+    #
+    # Notes regarding (2):
+    #
+    # * We want to keep closed issues with non-zero funding
+    # because it allows us to compute interesting historical stats
+    # (average funding for resolved issues, average time to resolve
+    # issues, etc.).
+    #
+    # * It is possible for an issue to have non-zero funding but to no
+    # longer have the `sponsoredissues.org` label, if the maintainer
+    # accidentally removes the label after users have started funding
+    # the issue. In that case, we still show the issue on the
+    # maintainer's sponsored issues page, but we show it in a special
+    # "frozen" state, with a warning message and the "Add or Remove
+    # Funds" button disabled. See [1] from the FAQ for further
+    # explanation.
+    #
+    # [1]: https://sponsoredissues.org/site/faq#label-removed
+
+    should_exist = (issue_state == 'open' and has_label) | (issue_exists and github_issue.is_funded())
 
     if should_exist and not issue_exists:
         # Create new issue
@@ -445,7 +465,7 @@ def _sync_github_issue(issue_data):
     elif not should_exist and issue_exists:
         # Delete issue (closed or label removed)
         github_issue.delete()
-        logger.info(f"Deleted GitHubIssue: {issue_url} (closed or label removed)")
+        logger.info(f"Deleted GitHubIssue: {issue_url} (issue closed or label removed, and issue does not have existing funding)")
 
 @csrf_exempt
 @require_POST

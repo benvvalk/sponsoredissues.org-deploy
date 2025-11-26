@@ -15,6 +15,13 @@ class GitHubIssue(models.Model):
     def __str__(self):
         return self.url
 
+    def is_funded(self):
+        """
+        Return true if this issue has a non-zero amount of funding
+        from users.
+        """
+        return self.sponsor_amounts.exists()
+
 class SponsorAmount(models.Model):
     cents_usd = models.IntegerField()
     currency = models.CharField(max_length=3, default='USD')
