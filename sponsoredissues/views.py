@@ -17,6 +17,7 @@ import json
 import hmac
 import hashlib
 import logging
+import requests
 
 logger = logging.getLogger(__name__)
 
@@ -277,8 +278,12 @@ def owner_issues(request, owner, repo=None, issue_number=None):
     allocated_sponsor_cents = 0
     unallocated_sponsor_cents = 0
     if request.user.is_authenticated:
-        (allocated_sponsor_cents, total_sponsor_cents) = github_service.calculate_allocated_sponsor_cents(request.user, owner)
-        unallocated_sponsor_cents = total_sponsor_cents - allocated_sponsor_cents
+        try:
+            (allocated_sponsor_cents, total_sponsor_cents) = github_service.calculate_allocated_sponsor_cents(request.user, owner)
+            unallocated_sponsor_cents = total_sponsor_cents - allocated_sponsor_cents
+        except requests.RequestException as e:
+            logger.error(f'GraphQL request failed: {e}')
+            messages.error('Failed to query your sponsor data from GitHub (GitHub outage?)')
 
     context = {
         'owner': owner,

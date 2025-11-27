@@ -177,3 +177,43 @@ def github_api(endpoint, access_token=None, auto_paginate=True, max_pages=10, pe
     except requests.exceptions.RequestException as e:
         logger.error(f"GitHub API request failed: {e}")
         raise
+
+def github_graphql(query, access_token, variables=None, timeout=30):
+    """
+    Send a query to the GitHub GraphQL API.
+
+    Args:
+        query: A GraphQL query [required]
+        access_token:  GitHub user/app access token [required]
+        variables: Dictionary of GraphQL variable values [None]
+        timeout: Request timeout in seconds [30]
+
+    Returns:
+        data: The value of the `data` key in the response JSON
+    """
+    headers = {
+        'Authorization': f'Bearer {access_token}',
+        'Content-Type': 'application/json',
+    }
+
+    payload = {
+        'query': query,
+        'variables': variables
+    }
+
+    response = requests.post(
+        'https://api.github.com/graphql',
+        json=payload,
+        headers=headers,
+        timeout=timeout,
+    )
+
+    response.raise_for_status()
+
+    response_json = response.json()
+
+    graphql_errors = response_json.get('errors')
+    if graphql_errors:
+        logger.error(f'GraphQL errors: {graphql_errors}')
+
+    return response_json.get('data')

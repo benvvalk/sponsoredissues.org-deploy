@@ -4,6 +4,7 @@ import requests
 from django.core.management.base import BaseCommand, CommandError
 from django.conf import settings
 from sponsoredissues.models import GitHubIssue
+from sponsoredissues.github_api import github_graphql
 from sponsoredissues.github_auth import GitHubAppAuth
 
 # Rate limiting configuration
@@ -294,11 +295,6 @@ class Command(BaseCommand):
         }
         """
 
-        headers = {
-            'Authorization': f'Bearer {access_token}',
-            'Content-Type': 'application/json',
-        }
-
         variables = {
             'username': username,
             'repoFirst': min(repo_limit, 100),  # GraphQL max is 100
@@ -313,34 +309,16 @@ class Command(BaseCommand):
         while repos_processed < repo_limit:
             variables['cursor'] = cursor
 
-            payload = {
-                'query': query,
-                'variables': variables
-            }
-
             self.stdout.write(f'Querying repositories (processed: {repos_processed}/{repo_limit})...')
 
             try:
-                response = requests.post(
-                    'https://api.github.com/graphql',
-                    json=payload,
-                    headers=headers,
-                    timeout=30
-                )
-                response.raise_for_status()
-
+                data = github_graphql(query, access_token, variables=variables, timeout=30)
             except requests.RequestException as e:
                 self.stdout.write(self.style.ERROR(f'GraphQL request failed: {e}'))
                 time.sleep(RETRY_DELAY)
                 continue
 
-            data = response.json()
-
-            if 'errors' in data:
-                self.stdout.write(self.style.ERROR(f'GraphQL errors: {data["errors"]}'))
-                break
-
-            user_data = data.get('data', {}).get('user')
+            user_data = data.get('user')
             if not user_data:
                 break
 

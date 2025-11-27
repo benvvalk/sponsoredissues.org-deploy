@@ -6,6 +6,7 @@ from django.core.cache import cache
 from django.db.models import Sum
 from typing import Dict, List, Optional
 from decimal import Decimal
+from sponsoredissues.github_api import github_graphql
 
 logger = logging.getLogger(__name__)
 
@@ -24,39 +25,6 @@ class GitHubSponsorService:
         social_token = SocialToken.objects.get(account=github_account)
         return social_token.token
 
-    def _make_graphql_request(self, query: str, access_token: str, variables: Dict = None) -> Optional[Dict]:
-        """Make a GraphQL request to GitHub API"""
-        if not access_token:
-            return None
-
-        headers = {
-            'Authorization': f'Bearer {access_token}',
-            'Content-Type': 'application/json',
-        }
-
-        payload = {'query': query}
-        if variables:
-            payload['variables'] = variables
-
-        try:
-            response = requests.post(
-                self.GITHUB_GRAPHQL_URL,
-                json=payload,
-                headers=headers,
-                timeout=10
-            )
-            response.raise_for_status()
-
-            data = response.json()
-            if 'errors' in data:
-                logger.error(f"GitHub GraphQL API errors: {data['errors']}")
-                return None
-
-            return data.get('data')
-        except requests.exceptions.RequestException as e:
-            logger.error(f"GitHub API request failed: {e}")
-            return None
-
     def calculate_total_sponsor_cents_given(self, sponsor_user: User, recipient_github_username: str) -> Decimal:
         """
         Calculate total sponsor cents given by sponsor_user to recipient_github_username.
@@ -74,9 +42,9 @@ class GitHubSponsorService:
         """
 
         variables = {'recipient_github_username': recipient_github_username}
-        response = self._make_graphql_request(query, access_token, variables)
+        data = github_graphql(query, access_token, variables)
 
-        return response['viewer']['totalSponsorshipAmountAsSponsorInCents']
+        return data['viewer']['totalSponsorshipAmountAsSponsorInCents']
 
     def calculate_allocated_sponsor_cents(self, sponsor_user: User, recipient_github_username: str) -> (Decimal, Decimal):
         """
