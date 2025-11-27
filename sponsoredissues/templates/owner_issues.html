@@ -247,6 +247,39 @@
         }
     }
 
+    /*
+     * Styles for "frozen" issue state, which occurs when the
+     * maintainer accidentally removes the `sponsoredissues.org` label
+     * from an issue that has non-zero funding.
+     */
+
+    .issue-item.frozen {
+        background: #fff8f0;
+        border-left: 4px solid #f59e0b;
+    }
+
+    .issue-item.frozen:hover {
+        background: #fef3e7;
+    }
+
+    .issue-item.frozen .rank {
+        background: #fef3e7;
+        color: #d97706;
+    }
+
+    .issue-item.frozen .issue-title a {
+        color: #92400e;
+    }
+
+    .issue-item.frozen .donation-amount {
+        background: #fef3e7;
+        color: #d97706;
+    }
+
+    .issue-item.frozen .num-sponsors {
+        color: #d97706;
+    }
+
     .rank-section {
         flex-shrink: 0;
         width: 60px;
@@ -346,6 +379,24 @@
     .your-amount {
         font-size: 0.9rem;
         color: #6b7280;
+    }
+
+    .frozen-warning {
+        background: #fef3e7;
+        border: 1px solid #f59e0b;
+        border-radius: 6px;
+        padding: 8px 12px;
+        margin-top: 8px;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        font-size: 0.875rem;
+        color: #92400e;
+    }
+
+    .warning-icon {
+        font-size: 1.1rem;
+        flex-shrink: 0;
     }
 
     .action-section {
@@ -647,7 +698,7 @@
 <div class="issues-list">
     {% if issues %}
         {% for issue in issues %}
-        <div class="issue-item {% if issue.is_selected %}is_selected{% endif %}" id="issue-{{ issue.number }}" >
+        <div class="issue-item{% if issue.is_selected %} is_selected{% endif %}{% if not issue.has_sponsoredissues_label %} frozen{% endif %}" id="issue-{{ issue.number }}" >
             <div class="rank-section">
                 <div class="rank">#{{ issue.rank }}</div>
             </div>
@@ -660,6 +711,12 @@
                         {% endfor %}
                     </div>
                     <div class="issue-number"><a href="https://github.com/{{ owner }}/{{ issue.repo }}/issues/{{ issue.number }}" target="_blank">{{ owner }}/{{ issue.repo }}#{{ issue.number }}</a> {% if issue.state == 'open' %}(open){% else %}(closed){% endif %}</div>
+                    {% if not issue.has_sponsoredissues_label %}
+                    <div class="frozen-warning">
+                        <span class="warning-icon">⚠️</span>
+                        <span><strong>Funding frozen:</strong> The "sponsoredissues.org" label was removed from this issue. Funds cannot be modified until the label is restored.</span>
+                    </div>
+                    {% endif %}
                 </div>
             </div>
             <div class="donation-section">
@@ -678,7 +735,7 @@
                     data-user-donation="{{ issue.user_donation_cents }}"
                     data-total-donation="{{ issue.donation_total_cents }}"
                     onclick="openModal(this)"
-                    {% if not user.is_authenticated or total_sponsor_cents == 0 or user.username == owner %}disabled{% endif %}>Add or Remove Funds</button>
+                    {% if not user.is_authenticated or total_sponsor_cents == 0 or user.username == owner or not issue.has_sponsoredissues_label %}disabled{% endif %}>Add or Remove Funds</button>
             </div>
         </div>
         {% endfor %}

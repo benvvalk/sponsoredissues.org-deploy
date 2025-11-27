@@ -163,6 +163,16 @@ def index(request):
 def faq(request):
     return render(request, 'faq.html')
 
+def _has_sponsoredissues_label(issue_data):
+    """
+    Check if the issue has the 'sponsoredissues.org' label.
+    """
+    labels = issue_data.get('labels', [])
+    for label in labels:
+        if label.get('name') == 'sponsoredissues.org':
+            return True
+    return False
+
 def owner_issues(request, owner, repo=None, issue_number=None):
     # Validate that the GitHub resources exist before showing content
     validation_service = GitHubValidationService()
@@ -241,11 +251,18 @@ def owner_issues(request, owner, repo=None, issue_number=None):
             elif repo:
                 is_selected = (issue_repo == repo)
 
+            # Maintainer may have accidentally removed "sponsoredissues.org"
+            # label from an issue that has non-zero funding. In that
+            # case, we show the issue with a special "frozen" state
+            # with the "Add or Remove Funds" button disabled.
+            has_sponsoredissues_label = _has_sponsoredissues_label(issue_data)
+
             # Note: `or 0` is needed below because `Sum('cents_usd')`
             # returns `None` when there are no `SponsorAmount` records for
             # the GitHub issue.
             parsed_issue = {
                 'is_selected': is_selected,
+                'has_sponsoredissues_label': has_sponsoredissues_label,
                 'rank': len(parsed_issues) + 1,  # Simple ranking by order
                 'owner': issue_owner,
                 'repo': issue_repo,
@@ -395,16 +412,6 @@ def _verify_webhook_signature(request):
         return False
 
     return True
-
-def _has_sponsoredissues_label(issue_data):
-    """
-    Check if the issue has the 'sponsoredissues.org' label.
-    """
-    labels = issue_data.get('labels', [])
-    for label in labels:
-        if label.get('name') == 'sponsoredissues.org':
-            return True
-    return False
 
 def _sync_github_issue(issue_data):
     """
