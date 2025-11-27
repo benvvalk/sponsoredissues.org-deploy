@@ -11,7 +11,7 @@ from django.http import HttpResponse, HttpResponseBadRequest, HttpResponseForbid
 from django.utils import timezone
 from datetime import timedelta
 from .models import GitHubIssue, SponsorAmount
-from .github_service import GitHubSponsorService
+from .github_sponsors import GitHubSponsorService
 from .github_validation_service import GitHubValidationService
 import json
 import hmac
@@ -189,8 +189,8 @@ def owner_issues(request, owner, repo=None, issue_number=None):
     # Check if the owner has a GitHub Sponsors profile (otherwise
     # we disable the "Sponsor @{owner}" button in the header
     # of the web page).
-    github_service = GitHubSponsorService()
-    has_sponsors_profile = github_service.has_sponsors_profile(owner)
+    github_sponsors = GitHubSponsorService()
+    has_sponsors_profile = github_sponsors.has_sponsors_profile(owner)
 
     # Filter issues for this owner (across all repos)
     owner_url_pattern = f"https://github.com/{owner}/"
@@ -279,7 +279,7 @@ def owner_issues(request, owner, repo=None, issue_number=None):
     unallocated_sponsor_cents = 0
     if request.user.is_authenticated:
         try:
-            (allocated_sponsor_cents, total_sponsor_cents) = github_service.calculate_allocated_sponsor_cents(request.user, owner)
+            (allocated_sponsor_cents, total_sponsor_cents) = github_sponsors.calculate_allocated_sponsor_cents(request.user, owner)
             unallocated_sponsor_cents = total_sponsor_cents - allocated_sponsor_cents
         except requests.RequestException as e:
             logger.error(f'GraphQL request failed: {e}')
@@ -331,12 +331,12 @@ def donate_to_issue(request, owner, repo, issue_number):
     # Ensure that the user (sponsor) cannot spend more money than
     # they than they have donated on GitHub Sponsors.
     #
-    # Call `github_service.calculate_allocated_sponsor_cents` to
+    # Call `github_sponsors.calculate_allocated_sponsor_cents` to
     # determine the total amount that the user (sponsor) has donated
     # to the developer on GitHub Sponsors, and also how much of that
     # money has already been allocated to other GitHub issues.
-    github_service = GitHubSponsorService()
-    (allocated_sponsor_cents, total_sponsor_cents) = github_service.calculate_allocated_sponsor_cents(request.user, owner)
+    github_sponsors = GitHubSponsorService()
+    (allocated_sponsor_cents, total_sponsor_cents) = github_sponsors.calculate_allocated_sponsor_cents(request.user, owner)
     allocated_sponsor_cents -= donation_cents_old
     unallocated_sponsor_cents = total_sponsor_cents - allocated_sponsor_cents
 
