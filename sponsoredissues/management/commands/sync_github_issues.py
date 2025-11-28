@@ -3,9 +3,11 @@ import random
 import requests
 from django.core.management.base import BaseCommand, CommandError
 from django.conf import settings
+from itertools import islice
 from sponsoredissues.models import GitHubIssue
 from sponsoredissues.github_api import github_graphql
 from sponsoredissues.github_auth import GitHubAppAuth
+from urllib.parse import urlparse
 
 # Rate limiting configuration
 REQUEST_DELAY_MIN = 2.0  # Minimum delay between requests (seconds)
@@ -168,9 +170,9 @@ class Command(BaseCommand):
             return 0, 0, 0
 
         # Query repositories and issues using GraphQL
-        issues_with_label = self._query_installation_issues(account_login, access_token, repo_limit)
+        issues_data = self._query_installation_issues(account_login, access_token, repo_limit)
 
-        self.stdout.write(f'Found {len(issues_with_label)} issues with sponsoredissues.org label')
+        self.stdout.write(f'Found {len(issues_data)} issues with sponsoredissues.org label or funding')
 
         # Get current issues URLs for this installation's account
         current_issue_urls = set(
@@ -183,7 +185,7 @@ class Command(BaseCommand):
         added = updated = 0
         found_issue_urls = set()
 
-        for issue_data in issues_with_label:
+        for issue_data in issues_data:
             issue_url = issue_data['url']
             found_issue_urls.add(issue_url)
 
@@ -246,6 +248,33 @@ class Command(BaseCommand):
         return added, updated, removed
 
     def _query_installation_issues(self, username, access_token, repo_limit):
+        """
+        Retrieve the latest JSON issue data from the GitHub GraphQL
+        API, for all issues that are relevant to sponsoredissues.org.
+
+        An issue is relevant to sponsoredissues.org if either:
+
+        (1) It belongs to a repo with the "sponsoredissues-maintainer" GitHub
+        App installed *AND* it has the `sponsoredissues.org` label.
+        (2) It has a non-zero amount of funding on sponsoredissues.org.
+
+        Note that it is possible for any combination of (1) and (2) to
+        be true. For example, the maintainer might accidentally remove
+        the `sponsoredissues.org` label from an issue that already has
+        funding on their sponsored issues page. In that case, the
+        issue is shown in a special "frozen" state, with the "Add or
+        Remove Funds" button disabled.
+        """
+        issues_with_label = self._query_installation_issues_with_label(username, access_token, repo_limit)
+        issues_with_funding = self._query_installation_issues_with_funding(username, access_token)
+
+        # Merge lists.
+        issues_by_url = {issue['url']: issue for issue in issues_with_label}
+        issues_by_url.update({issue['url']: issue for issue in issues_with_funding})
+
+        return list(issues_by_url.values())
+
+    def _query_installation_issues_with_label(self, username, access_token, repo_limit):
         """Query user's public repositories and issues with sponsoredissues.org label"""
         query = """
         query($username: String!, $repoFirst: Int!, $issueFirst: Int!, $cursor: String) {
@@ -366,6 +395,133 @@ class Command(BaseCommand):
             else:
                 break
 
+            # Rate limiting between requests
+            delay = random.uniform(REQUEST_DELAY_MIN, REQUEST_DELAY_MAX)
+            time.sleep(delay)
+
+        return issues
+
+    def _build_issues_query(self, issue_urls):
+        """
+        Build a GitHub GraphQL query that gets the latest data for
+        given issue URLs.
+        """
+        # Build a dictionary that groups issues by repo.
+        repos = dict()
+        for issue_url in issue_urls:
+            url_path = urlparse(issue_url).path.strip('/')
+            repo_url = '/'.join(url_path.split('/')[:-2])
+            if repo_url not in repos:
+                repos[repo_url] = []
+            repos[repo_url].append(issue_url)
+
+        # Monotonically-increasing indices for GraphQL aliases.
+        repo_index = 0
+        issue_index = 0
+
+        query = """query {"""
+        for (repo_url, issue_urls) in repos.items():
+            path = urlparse(repo_url).path.strip('/')
+            owner = path.split('/')[-2]
+            repo_name = path.split('/')[-1]
+
+            query += f"""
+            repo{repo_index}: repository(owner: "{owner}", name: "{repo_name}") {{"""
+            repo_index += 1
+
+            for issue_url in issue_urls:
+                path = urlparse(issue_url).path.strip('/')
+                issue_number = path.split('/')[-1]
+
+                query += f"""
+                issue{issue_index}: issue(number: {issue_number}) {{"""
+                query += """
+                    number
+                    title
+                    body
+                    state
+                    url
+                    createdAt
+                    updatedAt
+                    labels(first: 30) {
+                        nodes {
+                            name
+                            color
+                        }
+                    }
+                    author {
+                        login
+                    }
+                }
+                """
+                issue_index += 1
+            query += """
+            }
+            """
+        query += """
+        }
+        """
+        return query
+
+    def _query_installation_issues_with_funding(self, username, access_token):
+        """
+        Get latest issue data queries for GitHub issues that have received
+        non-zero user funding on sponsoredissues.org.
+
+        These queries corresponds to case (2), in the comment at the
+        top of this function.
+        """
+
+        # Get issues with non-zero funding.
+        issue_urls = GitHubIssue.objects.filter(
+            url__startswith=f"https://github.com/{username}/",
+            sponsor_amounts__isnull=False
+        ).distinct().values_list('url', flat=True)
+
+        # Query in batches to avoid exceeding GitHub API limits.
+        queries = []
+        iterator = iter(issue_urls)
+        while True:
+            batch = list(islice(iterator, 100))
+            if not batch:
+                break
+            query = self._build_issues_query(batch)
+            queries.append(query)
+
+        issues = []
+        for query in queries:
+            try:
+                data = github_graphql(query, access_token, timeout=30)
+            except requests.RequestException as e:
+                self.stdout.write(self.style.ERROR(f'GraphQL request failed: {e}'))
+                time.sleep(RETRY_DELAY)
+                continue
+
+            for i in range(len(data)):
+                repo = data.get(f'repo{i}')
+                for j in range(len(repo)):
+                    issue = repo.get(f'issue{j}')
+                    # Convert GraphQL response to REST API format for compatibility
+                    issue_data = {
+                        'number': issue['number'],
+                        'title': issue['title'],
+                        'body': issue['body'],
+                        'state': issue['state'].lower(),
+                        'url': issue['url'],
+                        'created_at': issue['createdAt'],
+                        'updated_at': issue['updatedAt'],
+                        'labels': [
+                            {
+                                'name': label['name'],
+                                'color': label['color']
+                            }
+                            for label in issue.get('labels', {}).get('nodes', [])
+                        ],
+                        'user': {
+                            'login': issue.get('author', {}).get('login', '')
+                        }
+                    }
+                    issues.append(issue_data)
             # Rate limiting between requests
             delay = random.uniform(REQUEST_DELAY_MIN, REQUEST_DELAY_MAX)
             time.sleep(delay)
