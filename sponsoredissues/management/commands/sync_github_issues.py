@@ -1,6 +1,7 @@
 import time
 import random
 import requests
+import traceback
 from django.core.management.base import BaseCommand, CommandError
 from django.conf import settings
 from itertools import islice
@@ -73,7 +74,6 @@ class Command(BaseCommand):
                 try:
                     self._sync_installations(options)
                 except Exception as e:
-                    import traceback
                     self.stdout.write(f'Error: {e}\n{traceback.format_exc()}')
                     if not loop_mode:
                         return
@@ -131,7 +131,7 @@ class Command(BaseCommand):
 
             except Exception as e:
                 self.stdout.write(
-                    self.style.ERROR(f'Error syncing installation {account_login}: {e}')
+                    self.style.ERROR(f'Error syncing installation {account_login}: {e}\n{traceback.format_exc()}')
                 )
                 continue
 
