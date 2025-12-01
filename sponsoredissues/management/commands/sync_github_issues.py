@@ -33,12 +33,6 @@ class Command(BaseCommand):
             help='Sync issues for specific GitHub App installation ID only',
         )
         parser.add_argument(
-            '--limit',
-            type=int,
-            default=100,
-            help='Maximum number of repositories to query per installation (default: 100)',
-        )
-        parser.add_argument(
             '--loop',
             action='store_true',
             help='Run sync in an infinite loop',
@@ -125,9 +119,8 @@ class Command(BaseCommand):
             self.stdout.write(f'\n--- Syncing installation: {account_login} (ID: {installation_id}) ---')
 
             try:
-                repo_limit = options['limit']
                 dry_run = options['dry_run']
-                added, updated, removed = self._sync_installation_issues(installation, repo_limit, dry_run)
+                added, updated, removed = self._sync_installation_issues(installation, dry_run)
                 total_added += added
                 total_updated += updated
                 total_removed += removed
@@ -157,7 +150,7 @@ class Command(BaseCommand):
         else:
             self.stdout.write(self.style.SUCCESS('Sync completed'))
 
-    def _sync_installation_issues(self, installation, repo_limit, dry_run):
+    def _sync_installation_issues(self, installation, dry_run):
         """Sync issues for a single GitHub App installation"""
         installation_id = installation['id']
         account_login = installation['account']['login']
@@ -170,7 +163,7 @@ class Command(BaseCommand):
             return 0, 0, 0
 
         # Query repositories and issues using GraphQL
-        issues_data = self._query_installation_issues(account_login, access_token, repo_limit)
+        issues_data = self._query_installation_issues(account_login, access_token)
 
         self.stdout.write(f'Found {len(issues_data)} issues with sponsoredissues.org label or funding')
 
@@ -247,7 +240,7 @@ class Command(BaseCommand):
 
         return added, updated, removed
 
-    def _query_installation_issues(self, username, access_token, repo_limit):
+    def _query_installation_issues(self, username, access_token):
         """
         Retrieve the latest JSON issue data from the GitHub GraphQL
         API, for all issues that are relevant to sponsoredissues.org.
@@ -265,7 +258,7 @@ class Command(BaseCommand):
         issue is shown in a special "frozen" state, with the "Add or
         Remove Funds" button disabled.
         """
-        issues_with_label = self._query_installation_issues_with_label(username, access_token, repo_limit)
+        issues_with_label = self._query_installation_issues_with_label(username, access_token)
         issues_with_funding = self._query_installation_issues_with_funding(username, access_token)
 
         # Merge lists.
@@ -274,13 +267,13 @@ class Command(BaseCommand):
 
         return list(issues_by_url.values())
 
-    def _query_installation_issues_with_label(self, username, access_token, repo_limit):
+    def _query_installation_issues_with_label(self, username, access_token):
         """Query user's public repositories and issues with sponsoredissues.org label"""
         query = """
-        query($username: String!, $repoFirst: Int!, $issueFirst: Int!, $cursor: String) {
+        query($username: String!, $issueFirst: Int!, $cursor: String) {
             user(login: $username) {
                 repositories(
-                    first: $repoFirst
+                    first: 30
                     after: $cursor
                     privacy: PUBLIC
                     orderBy: {field: UPDATED_AT, direction: DESC}
@@ -326,7 +319,6 @@ class Command(BaseCommand):
 
         variables = {
             'username': username,
-            'repoFirst': min(repo_limit, 100),  # GraphQL max is 100
             'issueFirst': 100,  # Get up to 100 issues per repo
             'cursor': None
         }
