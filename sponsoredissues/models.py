@@ -1,9 +1,67 @@
 from django.db import models
 from django.contrib.auth.models import User
 
+class GitHubRepo(models.Model):
+    """
+    GitHub repos where the `sponsoredissues-maintainer` GitHub App is
+    currently installed and active (i.e. not suspended).
+
+    We only show sponsored issues (i.e. issues with the
+    "sponsoredissues.org" label) from repos where the app is currently
+    installed and active.
+    """
+    url = models.URLField(primary_key=True, max_length=500)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
 class GitHubIssue(models.Model):
+    """
+    GitHub issues that are currently shown on the maintainer's
+    sponsored issue page (e.g. https://sponsoredissues.org/benvvalk),
+    or issues that previously received funding but are now closed.
+
+    A GitHub issue is only shown on a maintainer's sponsored issue
+    page if all of the following are true:
+
+    (1) The issue is open on GitHub.
+    (2) The `sponsoredissues-maintainer` GitHub App is installed
+    and active (not suspended) on the associated repo.
+    (3) The issue has the `sponsoredissues.org` label on GitHub.
+
+    We determine if (1), (2), and (3) are true by examining
+    various fields in this model:
+
+    (1) If the issue is open, the `state` field will be equal to
+    `open` within `data`, where `data` is the JSON issue data
+    retrieved from the GitHub API.
+    (2) If the app is installed and active on the repo, the `repo`
+    field will be non-null.
+    (3) If the issue has the `sponsoredissues.org` label,
+    `sponsoredissues.org` will be present in the `labels` array within
+    `data`.
+
+    When an issue is closed (i.e. (1) becomes false), the record for
+    the issue is kept in this table if it has non-zero funding. This
+    allows us to keep historical data about how much funding issues
+    received, how long they took to resolve, etc..
+
+    If the issue is open (i.e. (1) is true), but either (2) or
+    (3) becomes false (usually due to maintainer error), the issue is
+    put into a "frozen" state on the maintainer's sponsored issue
+    page. In the frozen state, the "Add or Remove Funds" button is
+    disabled and a warning message is displayed, explaining that the
+    issue may have become out-of-sync with GitHub (e.g. mismatched
+    open/closed state). The maintainer can easily fix the frozen state
+    by reinstalling/unsuspending the app and/or re-adding the
+    `sponsoredissues.org` label to the GitHub issue, as explained
+    by [1] and [2] from the FAQ.
+
+    [1]: http://sponsoredissues.org/site/faq#app-uninstalled
+    [2]: http://sponsoredissues.org/site/faq#label-removed
+    """
     url = models.URLField(primary_key=True, max_length=500)
     data = models.JSONField()
+    repo = models.ForeignKey(GitHubRepo, null=True, on_delete=models.SET_NULL, related_name="issues")
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 

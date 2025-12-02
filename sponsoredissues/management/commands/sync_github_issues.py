@@ -4,9 +4,10 @@ import requests
 import traceback
 from django.core.management.base import BaseCommand, CommandError
 from django.conf import settings
+from django.utils import timezone
 from itertools import islice
-from sponsoredissues.models import GitHubIssue
-from sponsoredissues.github_api import github_graphql
+from sponsoredissues.models import GitHubIssue, GitHubRepo
+from sponsoredissues.github_api import github_api, github_graphql
 from sponsoredissues.github_auth import GitHubAppAuth
 from urllib.parse import urlparse
 
@@ -108,9 +109,13 @@ class Command(BaseCommand):
 
         self.stdout.write(f'Found {len(installations)} GitHub App installations to sync')
 
-        total_added = 0
-        total_updated = 0
-        total_removed = 0
+        total_repos_added = 0
+        total_repos_updated = 0
+        total_repos_removed = 0
+
+        total_issues_added = 0
+        total_issues_updated = 0
+        total_issues_removed = 0
 
         for installation in installations:
             account_login = installation['account']['login']
@@ -120,13 +125,22 @@ class Command(BaseCommand):
 
             try:
                 dry_run = options['dry_run']
-                added, updated, removed = self._sync_installation_issues(installation, dry_run)
-                total_added += added
-                total_updated += updated
-                total_removed += removed
+
+                repos_added, repos_updated, repos_removed = self._sync_installation_repos(installation, dry_run)
+                total_repos_added += repos_added
+                total_repos_updated += repos_updated
+                total_repos_removed += repos_removed
+
+                issues_added, issues_updated, issues_removed = self._sync_installation_issues(installation, dry_run)
+                total_issues_added += issues_added
+                total_issues_updated += issues_updated
+                total_issues_removed += issues_removed
 
                 self.stdout.write(
-                    f'Installation {account_login}: +{added} ~{updated} -{removed} issues'
+                    f'Installation {account_login}: +{repos_added} ~{repos_updated} -{repos_removed} repos'
+                )
+                self.stdout.write(
+                    f'Installation {account_login}: +{issues_added} ~{issues_updated} -{issues_removed} issues'
                 )
 
             except Exception as e:
@@ -141,14 +155,85 @@ class Command(BaseCommand):
 
         # Final summary
         self.stdout.write(f'\n=== SYNC SUMMARY ===')
-        self.stdout.write(f'Total added: {total_added}')
-        self.stdout.write(f'Total updated: {total_updated}')
-        self.stdout.write(f'Total removed: {total_removed}')
+        self.stdout.write(f'Total repos added: {total_repos_added}')
+        self.stdout.write(f'Total repos updated: {total_repos_updated}')
+        self.stdout.write(f'Total repos removed: {total_repos_removed}')
+        self.stdout.write(f'---\n')
+        self.stdout.write(f'Total issues added: {total_issues_added}')
+        self.stdout.write(f'Total issues updated: {total_issues_updated}')
+        self.stdout.write(f'Total issues removed: {total_issues_removed}')
 
         if dry_run:
             self.stdout.write(self.style.WARNING('DRY RUN - No actual changes made'))
         else:
             self.stdout.write(self.style.SUCCESS('Sync completed'))
+
+    def _sync_installation_repos(self, installation, dry_run):
+        """Sync repos for a single GitHub App installation"""
+        installation_id = installation['id']
+        account_login = installation['account']['login']
+
+        # Get installation access token
+        try:
+            access_token = self.github_app_auth.get_installation_access_token(installation_id)
+        except Exception as e:
+            self.stdout.write(f'Failed to get GitHub App access token for installation {installation_id}: {e}')
+            return 0, 0, 0
+
+        # Query repositories and issues using GraphQL
+        repos = self._query_installation_repos(access_token)
+
+        self.stdout.write(f'`Installation {account_login}: found {len(repos)} repos')
+
+        # Get current repo URLs for this installation's account
+        owner_url = f'https://github.com/{account_login}'
+        current_repo_urls = set(
+            GitHubRepo.objects.filter(
+                url__startswith=f'{owner_url}/'
+            ).values_list('url', flat=True)
+        )
+
+        # Process found repos
+        added = updated = 0
+        found_repo_urls = set()
+
+        for repo in repos:
+            repo_url = repo['html_url']
+            found_repo_urls.add(repo_url)
+
+            if repo['private']:
+                self.stdout.write(f'Skipped: {repo_url} (private repo)')
+                continue
+
+            if repo_url in current_repo_urls:
+                # Update existing repo
+                if not dry_run:
+                    GitHubRepo.objects.filter(url=repo_url).update(updated_at=timezone.now())
+                updated += 1
+                self.stdout.write(f'Updated: {repo_url}')
+            else:
+                # Add new repo
+                if not dry_run:
+                    GitHubRepo.objects.update_or_create(url=repo_url)
+                added += 1
+                self.stdout.write(f'Added: {repo_url}')
+
+        # Remove repos that the `sponsoredissues-maintainer` GitHub App
+        # can no longer access
+        repos_to_remove = current_repo_urls - found_repo_urls
+        removed = 0
+
+        for repo_url in repos_to_remove:
+            if not dry_run:
+                deleted_count, _ = GitHubRepo.objects.filter(url=repo_url).delete()
+                if deleted_count > 0:
+                    removed += 1
+                    self.stdout.write(f'Removed: {repo_url}')
+            else:
+                removed += 1
+                self.stdout.write(f'Removed: {repo_url}')
+
+        return added, updated, removed
 
     def _sync_installation_issues(self, installation, dry_run):
         """Sync issues for a single GitHub App installation"""
@@ -167,11 +252,45 @@ class Command(BaseCommand):
 
         self.stdout.write(f'Found {len(issues_data)} issues with sponsoredissues.org label or funding')
 
+        # Get current repo URLs for this installation's account
+        current_repo_urls = set(
+            GitHubRepo.objects.filter(
+                url__startswith=f'https://github.com/{account_login}/'
+            ).values_list('url', flat=True)
+        )
+
         # Get current issues URLs for this installation's account
-        current_issue_urls = set(
+        current_issues = dict(
             GitHubIssue.objects.filter(
                 url__contains=f'github.com/{account_login}/'
-            ).values_list('url', flat=True)
+            ).values_list('url', 'data')
+        )
+
+        # The set of issues that currently have non-zero user funding,
+        # (a subset of `current_issues` above).
+        #
+        # We should never delete funded issues, for several reasons:
+        #
+        # (1) It allows us to compute interesting historical stats for
+        # closed issues, such as average funding amount for close
+        # issues, average time to close issues, etc.
+        #
+        # (2) We want the maintainer to be able to reopen closed
+        # issues, in which case we need to restore the funding totals
+        # of the issues to the same values as when they were closed.
+        #
+        # (3) If the maintainer accidentally removes the
+        # `sponsoredissues.org` label from an issue with non-zero
+        # funding, we display the issue in a special "frozen" state,
+        # with the "Add or Remove Funds" button disabled and an
+        # explanatory error message. This is much better than
+        # immediately just the issue because it doesn't undo users'
+        # funding allocations.
+        funded_issue_urls = set(
+            GitHubIssue.objects.filter(
+                url__contains=f'github.com/{account_login}/',
+                sponsor_amounts__isnull=False,
+            ).distinct().values_list('url', flat=True)
         )
 
         # Process found issues
@@ -180,12 +299,25 @@ class Command(BaseCommand):
 
         for issue_data in issues_data:
             issue_url = issue_data['url']
-            found_issue_urls.add(issue_url)
+            repo_url = '/'.join(issue_url.split('/')[:-2])
 
-            if issue_url in current_issue_urls:
+            # Mark issue for deletion if both are true:
+            # (1) The `sponsoredissues-maintainer` GitHub App is no
+            # longer installed/active on the repo that contains the
+            # issue.
+            # (2) The issue has zero funding from users. (See notes
+            # above about always keeping funded issues.)
+            if not repo_url in current_repo_urls and not issue_url in funded_issue_urls:
+                self.stdout.write(f'Will remove: {issue_url}, because `sponsoredissues-maintainer` app is no longer installed/active on {repo_url}')
+                continue
+
+            found_issue_urls.add(issue_url)
+            repo = GitHubRepo.objects.get(url=repo_url)
+
+            if issue_url in current_issues:
                 # Update existing issue
                 if not dry_run:
-                    GitHubIssue.objects.filter(url=issue_url).update(data=issue_data)
+                    GitHubIssue.objects.filter(url=issue_url).update(data=issue_data, repo=repo, updated_at=timezone.now())
                 updated += 1
                 self.stdout.write(f'Updated: {issue_url}')
             else:
@@ -193,40 +325,22 @@ class Command(BaseCommand):
                 if not dry_run:
                     GitHubIssue.objects.update_or_create(
                         url=issue_url,
-                        defaults={'data': issue_data}
+                        defaults={
+                            'data': issue_data,
+                            'repo': repo,
+                        }
                     )
                 added += 1
                 self.stdout.write(f'Added: {issue_url}')
 
         # Remove issues that no longer have the label
+        current_issue_urls = current_issues.keys()
         issues_to_remove = current_issue_urls - found_issue_urls
         removed = 0
 
         for issue_url in issues_to_remove:
             issue = GitHubIssue.objects.filter(url=issue_url).first()
-
             if not issue:
-                continue
-
-            # We never delete funded issues, for several
-            # reasons:
-            #
-            # (1) It allows us to compute interesting historical
-            # stats, such as average funding amount for resolved
-            # issues, average time to resolve issues, etc.
-            #
-            # (2) If the maintainer reopens a closed issue, we need to
-            # restore the funding amount to the same value as when it
-            # was closed.
-            #
-            # (3) If the maintainer accidentally removes the
-            # `sponsoredissues.org` label from an issue with non-zero
-            # funding, we don't want to automatically return all the
-            # assigned funds to users. Instead, we continue to show
-            # the issue on the maintainer's sponsored issues page, but
-            # in a special frozen/error state with the "Add or Remove
-            # Funds" button disabled and an explanatory error message.
-            if issue.is_funded():
                 continue
 
             if not dry_run:
@@ -239,6 +353,14 @@ class Command(BaseCommand):
                 self.stdout.write(f'Removed: {issue_url}')
 
         return added, updated, removed
+
+    def _query_installation_repos(self, access_token):
+        status_code, data = github_api(f'/installation/repositories', access_token)
+
+        if status_code != 200:
+            raise Exception(f"GitHub API request failed with status {status_code}: {data}")
+
+        return data['repositories']
 
     def _query_installation_issues(self, username, access_token):
         """
@@ -325,12 +447,12 @@ class Command(BaseCommand):
 
         issues = []
         repos_processed = 0
-        cursor = None
+        page_info = {'hasNextPage': True, 'endCursor': None}
 
-        while repos_processed < repo_limit:
-            variables['cursor'] = cursor
+        while page_info.get('hasNextPage'):
+            variables['cursor'] = page_info.get('endCursor')
 
-            self.stdout.write(f'Querying repositories (processed: {repos_processed}/{repo_limit})...')
+            self.stdout.write(f'Querying repos (processed {repos_processed} repos so far)...')
 
             try:
                 data = github_graphql(query, access_token, variables=variables, timeout=30)
@@ -380,12 +502,8 @@ class Command(BaseCommand):
 
             repos_processed += len(repos)
 
-            # Check if there are more repositories to fetch
-            page_info = repositories.get('pageInfo', {})
-            if page_info.get('hasNextPage') and repos_processed < repo_limit:
-                cursor = page_info.get('endCursor')
-            else:
-                break
+            # Update info about next page of query results (if any)
+            page_info = repositories.get('pageInfo')
 
             # Rate limiting between requests
             delay = random.uniform(REQUEST_DELAY_MIN, REQUEST_DELAY_MAX)
