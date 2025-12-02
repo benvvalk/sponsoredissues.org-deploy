@@ -121,6 +121,12 @@ class Command(BaseCommand):
             account_login = installation['account']['login']
             installation_id = installation['id']
 
+            if 'suspended_at' in installation:
+                self.stdout.write(f'Installation {account_login}: installation is suspended')
+                deleted_count = self._delete_repos_for_installation(installation)
+                total_repos_removed += deleted_count
+                continue
+
             self.stdout.write(f'\n--- Syncing installation: {account_login} (ID: {installation_id}) ---')
 
             try:
@@ -167,6 +173,15 @@ class Command(BaseCommand):
             self.stdout.write(self.style.WARNING('DRY RUN - No actual changes made'))
         else:
             self.stdout.write(self.style.SUCCESS('Sync completed'))
+
+    def _delete_repos_for_installation(self, installation):
+        # Delete any repos for the account that was suspended.
+        repo_url_prefix = installation['account']['html_url'] + '/'
+        deleted_count, _ = GithubRepo.objects.filter(
+            urls__startswith=f'{repo_url_prefix}/'
+        ).delete()
+        self.stdout.write(f'Removed: {deleted_count} repos starting with "{repo_url_prefix}/"')
+        return deleted_count
 
     def _sync_installation_repos(self, installation, dry_run):
         """Sync repos for a single GitHub App installation"""
