@@ -596,3 +596,148 @@ class SyncInstallationIssuesTest(TestCase):
         self.assertEqual(added, 0)
         self.assertEqual(updated, 1)
         self.assertEqual(removed, 0)
+
+
+class SuspendedInstallationTest(TestCase):
+    """Tests for handling suspended GitHub App installations."""
+
+    def setUp(self):
+        """Set up test fixtures."""
+        self.command = Command()
+        self.command.stdout = StringIO()
+
+        # Create test user for funded issues
+        self.user = User.objects.create_user(username='testuser', email='test@example.com')
+
+    @patch.object(Command, '_sync_installation_repos')
+    @patch.object(Command, '_sync_installation_issues')
+    def test_suspended_installation_removes_unfunded_content(self, mock_sync_issues, mock_sync_repos):
+        """Test that suspended installations remove repos and unfunded issues."""
+        # Create repos and issues for the suspended account
+        repo1 = GitHubRepo.objects.create(url='https://github.com/suspended-user/repo1')
+        repo2 = GitHubRepo.objects.create(url='https://github.com/suspended-user/repo2')
+
+        # Create an unfunded issue
+        unfunded_issue_data = {
+            'number': 1,
+            'title': 'Unfunded Issue',
+            'state': 'open',
+            'url': 'https://github.com/suspended-user/repo1/issues/1',
+            'labels': [{'name': 'sponsoredissues.org', 'color': '000000'}],
+        }
+        unfunded_issue = GitHubIssue.objects.create(
+            url='https://github.com/suspended-user/repo1/issues/1',
+            data=unfunded_issue_data,
+            repo=repo1
+        )
+
+        # Create a funded issue (should be kept)
+        funded_issue_data = {
+            'number': 2,
+            'title': 'Funded Issue',
+            'state': 'open',
+            'url': 'https://github.com/suspended-user/repo1/issues/2',
+            'labels': [{'name': 'sponsoredissues.org', 'color': '000000'}],
+        }
+        funded_issue = GitHubIssue.objects.create(
+            url='https://github.com/suspended-user/repo1/issues/2',
+            data=funded_issue_data,
+            repo=repo1
+        )
+        # Add funding to the issue
+        SponsorAmount.objects.create(
+            cents_usd=1000,
+            sponsor_user=self.user,
+            target_github_issue=funded_issue
+        )
+
+        # Mock installation with suspended_at field
+        suspended_installation = {
+            'id': 99999,
+            'account': {
+                'login': 'suspended-user',
+                'html_url': 'https://github.com/suspended-user'
+            },
+            'suspended_at': '2024-01-01T00:00:00Z'
+        }
+
+        # Mock get_app_installations to return the suspended installation
+        with patch.object(self.command.github_app_auth, 'get_app_installations') as mock_installations:
+            mock_installations.return_value = [suspended_installation]
+
+            # Call _sync_installations
+            self.command._sync_installations({'dry_run': False})
+
+        # Verify repos were removed
+        self.assertEqual(GitHubRepo.objects.filter(url__startswith='https://github.com/suspended-user/').count(), 0)
+
+        # Verify unfunded issue was removed
+        self.assertFalse(GitHubIssue.objects.filter(url=unfunded_issue.url).exists())
+
+        # Verify funded issue was kept (has non-null repo reference initially, but repo was deleted)
+        self.assertTrue(GitHubIssue.objects.filter(url=funded_issue.url).exists())
+        remaining_issue = GitHubIssue.objects.get(url=funded_issue.url)
+        self.assertIsNone(remaining_issue.repo)  # Repo should be null due to SET_NULL
+
+        # Verify _sync_installation_repos and _sync_installation_issues were NOT called for suspended installation
+        mock_sync_repos.assert_not_called()
+        mock_sync_issues.assert_not_called()
+
+    @patch.object(Command, '_sync_installation_repos')
+    @patch.object(Command, '_sync_installation_issues')
+    def test_mix_of_suspended_and_active_installations(self, mock_sync_issues, mock_sync_repos):
+        """Test that mix of suspended and active installations are handled correctly."""
+        # Create content for suspended account
+        suspended_repo = GitHubRepo.objects.create(url='https://github.com/suspended-user/repo1')
+        suspended_issue_data = {
+            'number': 1,
+            'title': 'Issue in suspended repo',
+            'state': 'open',
+            'url': 'https://github.com/suspended-user/repo1/issues/1',
+        }
+        GitHubIssue.objects.create(
+            url='https://github.com/suspended-user/repo1/issues/1',
+            data=suspended_issue_data,
+            repo=suspended_repo
+        )
+
+        # Create content for active account
+        active_repo = GitHubRepo.objects.create(url='https://github.com/active-user/repo1')
+
+        # Mock installations: one suspended, one active
+        suspended_installation = {
+            'id': 11111,
+            'account': {
+                'login': 'suspended-user',
+                'html_url': 'https://github.com/suspended-user'
+            },
+            'suspended_at': '2024-01-01T00:00:00Z'
+        }
+        active_installation = {
+            'id': 22222,
+            'account': {
+                'login': 'active-user',
+                'html_url': 'https://github.com/active-user'
+            }
+        }
+
+        # Mock sync methods to return counts
+        mock_sync_repos.return_value = (0, 1, 0)  # added, updated, removed
+        mock_sync_issues.return_value = (0, 0, 0)
+
+        with patch.object(self.command.github_app_auth, 'get_app_installations') as mock_installations:
+            mock_installations.return_value = [suspended_installation, active_installation]
+
+            # Call _sync_installations
+            self.command._sync_installations({'dry_run': False})
+
+        # Verify suspended account content was removed
+        self.assertFalse(GitHubRepo.objects.filter(url__startswith='https://github.com/suspended-user/').exists())
+        self.assertFalse(GitHubIssue.objects.filter(url__startswith='https://github.com/suspended-user/').exists())
+
+        # Verify active account content still exists
+        self.assertTrue(GitHubRepo.objects.filter(url__startswith='https://github.com/active-user/').exists())
+
+        # Verify _sync_installation_repos and _sync_installation_issues were called ONLY for active installation
+        self.assertEqual(mock_sync_repos.call_count, 1)
+        self.assertEqual(mock_sync_issues.call_count, 1)
