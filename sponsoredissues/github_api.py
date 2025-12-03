@@ -217,3 +217,17 @@ def github_graphql(query, access_token, variables=None, timeout=30):
         logger.error(f'GraphQL errors: {graphql_errors}')
 
     return response_json.get('data')
+
+def github_issue_has_sponsoredissues_label(issue_data):
+    """
+    Return true if the given issue has the 'sponsoredissues.org' label.
+
+    Args:
+        issue_data: The JSON data for the issue, as returned by the
+                    GitHub API.
+    """
+    labels = issue_data.get('labels', [])
+    for label in labels:
+        if label.get('name') == 'sponsoredissues.org':
+            return True
+    return False

@@ -11,6 +11,7 @@ from django.http import HttpResponse, HttpResponseBadRequest, HttpResponseForbid
 from django.utils import timezone
 from datetime import timedelta
 from .models import GitHubIssue, SponsorAmount
+from .github_api import github_issue_has_sponsoredissues_label
 from .github_sponsors import GitHubSponsorService
 from .github_validation_service import GitHubValidationService
 import json
@@ -163,16 +164,6 @@ def index(request):
 def faq(request):
     return render(request, 'faq.html')
 
-def _has_sponsoredissues_label(issue_data):
-    """
-    Check if the issue has the 'sponsoredissues.org' label.
-    """
-    labels = issue_data.get('labels', [])
-    for label in labels:
-        if label.get('name') == 'sponsoredissues.org':
-            return True
-    return False
-
 def owner_issues(request, owner, repo=None, issue_number=None):
     # Validate that the GitHub resources exist before showing content
     validation_service = GitHubValidationService()
@@ -255,7 +246,7 @@ def owner_issues(request, owner, repo=None, issue_number=None):
             # label from an issue that has non-zero funding. In that
             # case, we show the issue with a special "frozen" state
             # with the "Add or Remove Funds" button disabled.
-            has_sponsoredissues_label = _has_sponsoredissues_label(issue_data)
+            has_sponsoredissues_label = github_issue_has_sponsoredissues_label(issue_data)
 
             # Note: `or 0` is needed below because `Sum('cents_usd')`
             # returns `None` when there are no `SponsorAmount` records for

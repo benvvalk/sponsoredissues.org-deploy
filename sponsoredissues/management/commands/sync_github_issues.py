@@ -7,7 +7,7 @@ from django.conf import settings
 from django.utils import timezone
 from itertools import islice
 from sponsoredissues.models import GitHubIssue, GitHubRepo
-from sponsoredissues.github_api import github_api, github_graphql
+from sponsoredissues.github_api import github_api, github_issue_has_sponsoredissues_label, github_graphql
 from sponsoredissues.github_auth import GitHubAppAuth
 from urllib.parse import urlparse
 
@@ -308,23 +308,52 @@ class Command(BaseCommand):
             ).distinct().values_list('url', flat=True)
         )
 
-        # Process found issues
-        added = updated = 0
+        # Issues that we should not delete from our database, because
+        # all of the following are true:
+        #
+        # (1) The issue still exists on GitHub, *AND*
+        # (2) The `sponsoredissues-maintainer` GitHub App
+        # is still installed and active on the repo, *AND*
+        # (3) The issue still has the `sponsoredissues.org`
+        # label on GitHub.
         found_issue_urls = set()
+
+        # Stats about new/updated issues (returned from this method).
+        added = updated = 0
+
+        # Unfunded issues that we should delete from our database,
+        # because the `sponsoredissues-maintainer` GitHub App has been
+        # uninstalled/suspended on the repo.
+        repo_disabled_issue_urls = set()
+
+        # Unfunded issues that we should delete from our database,
+        # because the `sponsoredissues.org` GitHub App has been
+        # uninstalled/suspended on the repo.
+        label_removed_issue_urls = set()
 
         for issue_data in issues_data:
             issue_url = issue_data['url']
             repo_url = '/'.join(issue_url.split('/')[:-2])
 
-            # Mark issue for deletion if both are true:
+            # Unfunded issues will be deleted if either:
+            #
             # (1) The `sponsoredissues-maintainer` GitHub App is no
             # longer installed/active on the repo that contains the
             # issue.
-            # (2) The issue has zero funding from users. (See notes
-            # above about always keeping funded issues.)
-            if not repo_url in current_repo_urls and not issue_url in funded_issue_urls:
-                self.stdout.write(f'Will remove: {issue_url}, because `sponsoredissues-maintainer` app is no longer installed/active on {repo_url}')
-                continue
+            # (2) The `sponsoredissues.org` label was removed
+            # from the issue.
+            #
+            # Note our detection of (1) and (2) is mutually exclusive;
+            # We will not be able to retrieve the current labels for
+            # an issue after the app is uninstalled/suspended.
+
+            if not issue_url in funded_issue_urls:
+                if not repo_url in current_repo_urls:
+                    repo_disabled_issue_urls.add(issue_url)
+                    continue
+                elif not github_issue_has_sponsoredissues_label(issue_data):
+                    label_removed_issue_urls.add(issue_url)
+                    continue
 
             found_issue_urls.add(issue_url)
             repo = GitHubRepo.objects.get(url=repo_url)
@@ -354,18 +383,23 @@ class Command(BaseCommand):
         removed = 0
 
         for issue_url in issues_to_remove:
-            issue = GitHubIssue.objects.filter(url=issue_url).first()
-            if not issue:
-                continue
+            issue = GitHubIssue.objects.filter(url=issue_url)
 
+            removed_old = removed
             if not dry_run:
                 deleted_count, _ = issue.delete()
                 if deleted_count > 0:
                     removed += 1
-                    self.stdout.write(f'Removed: {issue_url}')
             else:
                 removed += 1
-                self.stdout.write(f'Removed: {issue_url}')
+
+            if removed > removed_old:
+                if issue_url in repo_disabled_issue_urls:
+                    self.stdout.write(f'Removed: {issue_url} (GitHub App was disabled on repo)')
+                elif issue_url in label_removed_issue_urls:
+                    self.stdout.write(f'Removed: {issue_url} (`sponsoredissues.org` label was removed)')
+                else:
+                    self.stdout.write(f'Removed: {issue_url}')
 
         return added, updated, removed
 
