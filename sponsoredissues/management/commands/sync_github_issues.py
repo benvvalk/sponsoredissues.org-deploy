@@ -99,6 +99,8 @@ class Command(BaseCommand):
     def _sync_installations(self, options):
         # Get GitHub App installations
         target_installation_id = options.get('installation_id')
+        dry_run = options.get('dry_run', False)
+
         try:
             installations = self.github_app_auth.get_app_installations(target_installation_id)
         except Exception as e:
@@ -123,15 +125,14 @@ class Command(BaseCommand):
 
             if 'suspended_at' in installation:
                 self.stdout.write(f'Installation {account_login}: installation is suspended')
-                deleted_count = self._delete_repos_for_installation(installation)
-                total_repos_removed += deleted_count
+                repos_removed, issues_removed = self._remove_unfunded_issues(installation)
+                total_repos_removed += repos_removed
+                total_issues_removed += issues_removed
                 continue
 
             self.stdout.write(f'\n--- Syncing installation: {account_login} (ID: {installation_id}) ---')
 
             try:
-                dry_run = options['dry_run']
-
                 repos_added, repos_updated, repos_removed = self._sync_installation_repos(installation, dry_run)
                 total_repos_added += repos_added
                 total_repos_updated += repos_updated
@@ -174,14 +175,28 @@ class Command(BaseCommand):
         else:
             self.stdout.write(self.style.SUCCESS('Sync completed'))
 
-    def _delete_repos_for_installation(self, installation):
+    def _remove_unfunded_issues(self, installation):
+        github_account = installation['account']['login']
+
         # Delete any repos for the account that was suspended.
-        repo_url_prefix = installation['account']['html_url'] + '/'
-        deleted_count, _ = GithubRepo.objects.filter(
-            urls__startswith=f'{repo_url_prefix}/'
+        url_prefix = installation['account']['html_url'] + '/'
+        repos_removed, _ = GitHubRepo.objects.filter(
+            url__startswith=url_prefix
         ).delete()
-        self.stdout.write(f'Removed: {deleted_count} repos starting with "{repo_url_prefix}/"')
-        return deleted_count
+        self.stdout.write(f'Removed: {repos_removed} repos from installation "{github_account}"')
+
+        # Delete any unfunded issues from the repos.
+        # (Funded issues will be displayed in a special "frozen" state
+        # on the maintainer's sponsored issues page, so that existing
+        # user funding values are not lost.)
+        issues_removed, _ = GitHubIssue.objects.filter(
+            url__startswith=url_prefix,
+            repo__isnull=True,
+            sponsor_amounts__isnull=True,
+        ).delete()
+        self.stdout.write(f'Removed: {issues_removed} unfunded issues from installation "{github_account}"')
+
+        return repos_removed, issues_removed
 
     def _sync_installation_repos(self, installation, dry_run):
         """Sync repos for a single GitHub App installation"""
