@@ -15,3 +15,35 @@ The example screenshot below should give you a rough idea about how the site wor
 I use [sponsoredissues.org](https://sponsoredissues.org) to fund its own development ("dogfooding").
 
 If you want to support the project, or if you want to [vote for specific features/fixes](https://sponsoredissues.org/benvvalk), please [send me a donation on GitHub Sponsors](https://github.com/sponsors/benvvalk).
+
+## Local development setup
+
+First time setup:
+
+```bash
+# clone the repo
+cd ~/git
+git clone git@github.com:benvvalk/sponsoredissues.org
+cd sponsoredissues.org
+# create Python virtual environment
+python -m venv ~/python-venv/sponsoredissues
+# activate Python virtual environment
+source ~/python-venv/sponsoredissues/bin/activate
+# install Python dependencies (Django, etc.)
+pip install -r requirements.txt
+```
+
+Start the Django webserver:
+
+```bash
+# Remember to activate the Python environment before starting
+# the server.
+source ~/python-venv/sponsoredissues/bin/activate
+# start the server
+./manage.py makemigrations \
+    && ./manage.py migrate \
+    && ./manage.py createcachetable \
+    && ./manage.py collectstatic --no-input \
+    && ./manage.py runserver
+```
+
