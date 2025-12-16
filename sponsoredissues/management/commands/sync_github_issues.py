@@ -123,7 +123,10 @@ class Command(BaseCommand):
             account_login = installation['account']['login']
             installation_id = installation['id']
 
-            if 'suspended_at' in installation:
+            # Note: It is possible for `installation['suspended_at']`
+            # to exist but have a value of `None`, which means that
+            # the app installation is active.
+            if 'suspended_at' in installation and installation['suspended_at']:
                 self.stdout.write(f'Installation {account_login}: installation is suspended')
                 repos_removed, issues_removed = self._remove_unfunded_issues(installation)
                 total_repos_removed += repos_removed
