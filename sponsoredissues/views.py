@@ -253,6 +253,7 @@ def owner_issues(request, owner, repo=None, issue_number=None):
             # the GitHub issue.
             parsed_issue = {
                 'is_selected': is_selected,
+                'github_app_enabled_on_repo': issue.repo != None,
                 'has_sponsoredissues_label': has_sponsoredissues_label,
                 'rank': len(parsed_issues) + 1,  # Simple ranking by order
                 'owner': issue_owner,

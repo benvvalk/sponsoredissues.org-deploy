@@ -698,7 +698,7 @@
 <div class="issues-list">
     {% if issues %}
         {% for issue in issues %}
-        <div class="issue-item{% if issue.is_selected %} is_selected{% endif %}{% if not issue.has_sponsoredissues_label %} frozen{% endif %}" id="issue-{{ issue.number }}" >
+        <div class="issue-item{% if issue.is_selected %} is_selected{% endif %}{% if not issue.github_app_enabled_on_repo or not issue.has_sponsoredissues_label %} frozen{% endif %}" id="issue-{{ issue.number }}" >
             <div class="rank-section">
                 <div class="rank">#{{ issue.rank }}</div>
             </div>
@@ -711,10 +711,15 @@
                         {% endfor %}
                     </div>
                     <div class="issue-number"><a href="https://github.com/{{ owner }}/{{ issue.repo }}/issues/{{ issue.number }}" target="_blank">{{ owner }}/{{ issue.repo }}#{{ issue.number }}</a> {% if issue.state == 'open' %}(open){% else %}(closed){% endif %}</div>
-                    {% if not issue.has_sponsoredissues_label %}
+                    {% if not issue.github_app_enabled_on_repo %}
                     <div class="frozen-warning">
                         <span class="warning-icon">⚠️</span>
-                        <span><strong>Funding frozen:</strong> The "sponsoredissues.org" label was removed from this issue. Funds cannot be modified until the label is restored.</span>
+                        <span><strong>Funding frozen:</strong> The maintainer has uninstalled or suspended the "sponsoredissues-maintainer" GitHub App on the <strong>{{owner}}/{{issue.repo}}</strong> repo. Funds cannot be modified until the app is reinstalled/unsuspended.</span>
+                    </div>
+                    {% elif not issue.has_sponsoredissues_label %}
+                    <div class="frozen-warning">
+                        <span class="warning-icon">⚠️</span>
+                        <span><strong>Funding frozen:</strong> The "sponsoredissues.org" label was removed from this issue. Funds cannot be modified until the maintainer re-adds the label.</span>
                     </div>
                     {% endif %}
                 </div>
@@ -735,7 +740,7 @@
                     data-user-donation="{{ issue.user_donation_cents }}"
                     data-total-donation="{{ issue.donation_total_cents }}"
                     onclick="openModal(this)"
-                    {% if not user.is_authenticated or total_sponsor_cents == 0 or user.username == owner or not issue.has_sponsoredissues_label %}disabled{% endif %}>Add or Remove Funds</button>
+                    {% if not user.is_authenticated or total_sponsor_cents == 0 or user.username == owner or not issue.github_app_enabled_on_repo or not issue.has_sponsoredissues_label %}disabled{% endif %}>Add or Remove Funds</button>
             </div>
         </div>
         {% endfor %}
