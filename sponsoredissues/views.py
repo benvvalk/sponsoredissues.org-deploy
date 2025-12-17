@@ -436,10 +436,11 @@ def _sync_github_issue(issue_data):
     #
     # Notes regarding (2):
     #
-    # * We want to keep closed issues with non-zero funding
-    # because it allows us to compute interesting historical stats
-    # (average funding for resolved issues, average time to resolve
-    # issues, etc.).
+    # * We want to keep closed issues with non-zero funding because it
+    # allows us to compute interesting historical stats (average
+    # funding for resolved issues, average time to resolve issues,
+    # etc.). It also allows the maintainer to re-open the issue and
+    # resume funding.
     #
     # * It is possible for an issue to have non-zero funding but to no
     # longer have the `sponsoredissues.org` label, if the maintainer
