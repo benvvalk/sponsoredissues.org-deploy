@@ -418,7 +418,7 @@ def _sync_github_issue(issue_data):
         return
 
     # Check if issue has the sponsoredissues.org label
-    has_label = _has_sponsoredissues_label(issue_data)
+    has_label = github_issue_has_sponsoredissues_label(issue_data)
 
     # Check if issue exists in database
     try:
