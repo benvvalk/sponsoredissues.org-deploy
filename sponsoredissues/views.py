@@ -505,6 +505,66 @@ def github_webhook(request):
         logger.info("Received ping event from GitHub webhook")
         return HttpResponse("pong", status=200)
 
+    from pprint import pformat
+
+    # Handle app installation events.
+    #
+    # Notes:
+    #
+    # * All GitHub Apps receive `installation` and
+    #   `installation_repositories` events by default, and there is no
+    #   setting in GitHub web UI to turn them on/off. However the
+    #   `installation_target` event (triggered when a GitHub
+    #   user or organization is renamed) is a checkbox that needs to be
+    #   explicitly enabled in the GitHub App settings.
+    #
+    # * The `installation` event is triggered when the maintainer
+    #   installs/uninstalls/suspends/unsuspends the app on all repos
+    #   using the GitHub web UI, under User menu -> Settings ->
+    #   Applications.
+    #
+    # * The `installation_repositories` event is triggered when the
+    #   maintainer enables/disables the app on individual repos using
+    #   the GitHub web UI, under User menu -> Settings ->
+    #   Applications.
+    #
+    # * The `installation_target` event is triggered when the
+    #   maintainer changes their GitHub username or GitHub
+    #   organization name. See:
+    #   https://github.com/orgs/community/discussions/63389
+    #
+    # * There is no webhook notification triggered if I add new
+    #   permissions to the GitHub App (e.g. write access to GitHub
+    #   issues). So I may get permission-denied errors if try to do
+    #   something with the new permissions and the maintainer has not
+    #   yet approved the new permissions in the GitHub web UI (under
+    #   User menu -> Settings -> Applications). The currently-approved
+    #   permissions are included in the JSON data for each app
+    #   installation, e.g.:
+    #
+    #     'permissions': {'issues': 'read',
+    #                     'metadata': 'read',
+    #                     'pull_requests': 'read'},
+    #
+    #   There is also an a `installation` event with
+    #   `action=new_permissions_accepted`, when the maintainer
+    #   approves the new permissions.
+
+    if event_type == 'installation':
+        action = payload.get('action')
+        logger.info(f"Received '{event_type}' webhook: action={action}")
+        logger.info("Payload:\n%s", pformat(payload))
+
+    if event_type == 'installation_repositories':
+        action = payload.get('action')
+        logger.info(f"Received '{event_type}' webhook: action={action}")
+        logger.info("Payload:\n%s", pformat(payload))
+
+    if event_type == 'installation_target':
+        action = payload.get('action')
+        logger.info(f"Received '{event_type}' webhook: action={action}")
+        logger.info("Payload:\n%s", pformat(payload))
+
     # Handle issue events
     if event_type == 'issues':
         action = payload.get('action')

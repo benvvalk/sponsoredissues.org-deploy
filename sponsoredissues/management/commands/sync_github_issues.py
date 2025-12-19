@@ -120,38 +120,16 @@ class Command(BaseCommand):
         total_issues_removed = 0
 
         for installation in installations:
-            account_login = installation['account']['login']
-            installation_id = installation['id']
-
-            # Note: It is possible for `installation['suspended_at']`
-            # to exist but have a value of `None`, which means that
-            # the app installation is active.
-            if 'suspended_at' in installation and installation['suspended_at']:
-                self.stdout.write(f'Installation {account_login}: installation is suspended')
-                repos_removed, issues_removed = self._remove_unfunded_issues(installation)
-                total_repos_removed += repos_removed
-                total_issues_removed += issues_removed
-                continue
-
-            self.stdout.write(f'\n--- Syncing installation: {account_login} (ID: {installation_id}) ---')
-
             try:
-                repos_added, repos_updated, repos_removed = self._sync_installation_repos(installation, dry_run)
+                repos_added, repos_updated, repos_removed, issues_added, issues_updated, issues_removed = self._sync_installation(installation, dry_run)
+
                 total_repos_added += repos_added
                 total_repos_updated += repos_updated
                 total_repos_removed += repos_removed
 
-                issues_added, issues_updated, issues_removed = self._sync_installation_issues(installation, dry_run)
                 total_issues_added += issues_added
                 total_issues_updated += issues_updated
                 total_issues_removed += issues_removed
-
-                self.stdout.write(
-                    f'Installation {account_login}: +{repos_added} ~{repos_updated} -{repos_removed} repos'
-                )
-                self.stdout.write(
-                    f'Installation {account_login}: +{issues_added} ~{issues_updated} -{issues_removed} issues'
-                )
 
             except Exception as e:
                 self.stdout.write(
@@ -177,6 +155,40 @@ class Command(BaseCommand):
             self.stdout.write(self.style.WARNING('DRY RUN - No actual changes made'))
         else:
             self.stdout.write(self.style.SUCCESS('Sync completed'))
+
+    def _sync_installation(self, installation, dry_run):
+        account_login = installation['account']['login']
+        installation_id = installation['id']
+
+        self.stdout.write(f'\n--- Syncing installation: {account_login} (ID: {installation_id}) ---')
+
+        repos_added = 0
+        repos_updated = 0
+        repos_removed = 0
+
+        issues_added = 0
+        issues_updated = 0
+        issues_removed = 0
+
+        # Note: It is possible for `installation['suspended_at']`
+        # to exist but have a value of `None`, which means that
+        # the app installation is active.
+        if 'suspended_at' in installation and installation['suspended_at']:
+            self.stdout.write(f'Installation {account_login}: installation is suspended')
+            repos_removed, issues_removed = self._remove_unfunded_issues(installation)
+            return repos_added, repos_updated, repos_removed, issues_added, issues_updated, issues_removed
+
+        repos_added, repos_updated, repos_removed = self._sync_installation_repos(installation, dry_run)
+        issues_added, issues_updated, issues_removed = self._sync_installation_issues(installation, dry_run)
+
+        self.stdout.write(
+            f'Installation {account_login}: +{repos_added} ~{repos_updated} -{repos_removed} repos'
+        )
+        self.stdout.write(
+            f'Installation {account_login}: +{issues_added} ~{issues_updated} -{issues_removed} issues'
+        )
+
+        return repos_added, repos_updated, repos_removed, issues_added, issues_updated, issues_removed
 
     def _remove_unfunded_issues(self, installation):
         github_account = installation['account']['login']
