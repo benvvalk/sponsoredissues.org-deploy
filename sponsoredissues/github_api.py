@@ -231,3 +231,9 @@ def github_issue_has_sponsoredissues_label(issue_data):
         if label.get('name') == 'sponsoredissues.org':
             return True
     return False
+
+def github_app_installation_is_suspended(installation_data):
+    # Note: It is possible for `installation['suspended_at']`
+    # to exist but have a value of `None`, which means that
+    # the app installation is active.
+    return 'suspended_at' in installation_data and installation_data['suspended_at']

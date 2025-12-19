@@ -7,7 +7,7 @@ from django.conf import settings
 from django.utils import timezone
 from itertools import islice
 from sponsoredissues.models import GitHubIssue, GitHubRepo
-from sponsoredissues.github_api import github_api, github_issue_has_sponsoredissues_label, github_graphql
+from sponsoredissues.github_api import github_api, github_app_installation_is_suspended, github_issue_has_sponsoredissues_label, github_graphql
 from sponsoredissues.github_auth import GitHubAppAuth
 from urllib.parse import urlparse
 
@@ -179,10 +179,7 @@ class Command(BaseCommand):
 
         sync_stats = SyncStats()
 
-        # Note: It is possible for `installation['suspended_at']`
-        # to exist but have a value of `None`, which means that
-        # the app installation is active.
-        if 'suspended_at' in installation and installation['suspended_at']:
+        if github_app_installation_is_suspended(installation):
             self.stdout.write(f'Installation {account_login}: installation is suspended')
             sync_stats.repos_removed, sync_stats.issues_removed = self._remove_unfunded_issues(installation)
             return sync_stats
