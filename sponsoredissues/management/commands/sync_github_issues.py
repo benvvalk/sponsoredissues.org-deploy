@@ -125,9 +125,21 @@ class Command(BaseCommand):
 
         sync_stats = SyncStats()
 
+        # Rate limiting between queries
+        delay = random.uniform(REQUEST_DELAY_MIN, REQUEST_DELAY_MAX)
+
         for installation in installations:
+            installation_id = installation['id']
+            account_login = installation['account']['login']
             try:
-                _sync_stats = self._sync_installation(installation, dry_run)
+                access_token = self.github_app_auth.get_installation_access_token(installation_id)
+            except Exception as e:
+                self.stdout.write(f'Failed to get GitHub App access token for installation {installation_id}: {e}')
+                time.sleep(delay)
+                continue
+
+            try:
+                _sync_stats = self._sync_installation(installation, access_token, dry_run)
 
                 sync_stats.repos_added += _sync_stats.repos_added
                 sync_stats.repos_updated += _sync_stats.repos_updated
@@ -141,10 +153,7 @@ class Command(BaseCommand):
                 self.stdout.write(
                     self.style.ERROR(f'Error syncing installation {account_login}: {e}\n{traceback.format_exc()}')
                 )
-                continue
 
-            # Rate limiting between installations
-            delay = random.uniform(REQUEST_DELAY_MIN, REQUEST_DELAY_MAX)
             time.sleep(delay)
 
         # Final summary
@@ -162,7 +171,7 @@ class Command(BaseCommand):
         else:
             self.stdout.write(self.style.SUCCESS('Sync completed'))
 
-    def _sync_installation(self, installation, dry_run):
+    def _sync_installation(self, installation, access_token, dry_run):
         account_login = installation['account']['login']
         installation_id = installation['id']
 
@@ -178,8 +187,8 @@ class Command(BaseCommand):
             sync_stats.repos_removed, sync_stats.issues_removed = self._remove_unfunded_issues(installation)
             return sync_stats
 
-        sync_stats.repos_added, sync_stats.repos_updated, sync_stats.repos_removed = self._sync_installation_repos(installation, dry_run)
-        sync_stats.issues_added, sync_stats.issues_updated, sync_stats.issues_removed = self._sync_installation_issues(installation, dry_run)
+        sync_stats.repos_added, sync_stats.repos_updated, sync_stats.repos_removed = self._sync_installation_repos(installation, access_token, dry_run)
+        sync_stats.issues_added, sync_stats.issues_updated, sync_stats.issues_removed = self._sync_installation_issues(installation, access_token, dry_run)
 
         self.stdout.write(
             f'Installation {account_login}: +{sync_stats.repos_added} ~{sync_stats.repos_updated} -{sync_stats.repos_removed} repos'
@@ -213,17 +222,10 @@ class Command(BaseCommand):
 
         return repos_removed, issues_removed
 
-    def _sync_installation_repos(self, installation, dry_run):
+    def _sync_installation_repos(self, installation, access_token, dry_run):
         """Sync repos for a single GitHub App installation"""
         installation_id = installation['id']
         account_login = installation['account']['login']
-
-        # Get installation access token
-        try:
-            access_token = self.github_app_auth.get_installation_access_token(installation_id)
-        except Exception as e:
-            self.stdout.write(f'Failed to get GitHub App access token for installation {installation_id}: {e}')
-            return 0, 0, 0
 
         # Query repositories and issues using GraphQL
         repos = self._query_installation_repos(access_token)
@@ -280,17 +282,10 @@ class Command(BaseCommand):
 
         return added, updated, removed
 
-    def _sync_installation_issues(self, installation, dry_run):
+    def _sync_installation_issues(self, installation, access_token, dry_run):
         """Sync issues for a single GitHub App installation"""
         installation_id = installation['id']
         account_login = installation['account']['login']
-
-        # Get installation access token
-        try:
-            access_token = self.github_app_auth.get_installation_access_token(installation_id)
-        except Exception as e:
-            self.stdout.write(f'Failed to get GitHub App access token for installation {installation_id}: {e}')
-            return 0, 0, 0
 
         # Query repositories and issues using GraphQL
         issues_data = self._query_installation_issues(account_login, access_token)
