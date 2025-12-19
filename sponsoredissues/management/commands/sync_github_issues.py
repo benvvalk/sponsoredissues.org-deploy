@@ -16,6 +16,18 @@ REQUEST_DELAY_MIN = 2.0  # Minimum delay between requests (seconds)
 REQUEST_DELAY_MAX = 10.0 # Maximum delay between requests (seconds)
 RETRY_DELAY = 60.0       # Delay before retrying failed requests (seconds)
 
+class SyncStats:
+    """
+    Stats about what changed when syncing one or more GitHub App
+    installations.
+    """
+    repos_added = 0
+    repos_updated = 0
+    repos_removed = 0
+    issues_added = 0
+    issues_updated = 0
+    issues_removed = 0
+
 class Command(BaseCommand):
     help = 'Sync GitHub issues with "sponsoredissues.org" label using GraphQL API'
 
@@ -111,25 +123,19 @@ class Command(BaseCommand):
 
         self.stdout.write(f'Found {len(installations)} GitHub App installations to sync')
 
-        total_repos_added = 0
-        total_repos_updated = 0
-        total_repos_removed = 0
-
-        total_issues_added = 0
-        total_issues_updated = 0
-        total_issues_removed = 0
+        sync_stats = SyncStats()
 
         for installation in installations:
             try:
-                repos_added, repos_updated, repos_removed, issues_added, issues_updated, issues_removed = self._sync_installation(installation, dry_run)
+                _sync_stats = self._sync_installation(installation, dry_run)
 
-                total_repos_added += repos_added
-                total_repos_updated += repos_updated
-                total_repos_removed += repos_removed
+                sync_stats.repos_added += _sync_stats.repos_added
+                sync_stats.repos_updated += _sync_stats.repos_updated
+                sync_stats.repos_removed += _sync_stats.repos_removed
 
-                total_issues_added += issues_added
-                total_issues_updated += issues_updated
-                total_issues_removed += issues_removed
+                sync_stats.issues_added += _sync_stats.issues_added
+                sync_stats.issues_updated += _sync_stats.issues_updated
+                sync_stats.issues_removed += _sync_stats.issues_removed
 
             except Exception as e:
                 self.stdout.write(
@@ -143,13 +149,13 @@ class Command(BaseCommand):
 
         # Final summary
         self.stdout.write(f'\n=== SYNC SUMMARY ===')
-        self.stdout.write(f'Total repos added: {total_repos_added}')
-        self.stdout.write(f'Total repos updated: {total_repos_updated}')
-        self.stdout.write(f'Total repos removed: {total_repos_removed}')
+        self.stdout.write(f'Total repos added: {sync_stats.repos_added}')
+        self.stdout.write(f'Total repos updated: {sync_stats.repos_updated}')
+        self.stdout.write(f'Total repos removed: {sync_stats.repos_removed}')
         self.stdout.write(f'---\n')
-        self.stdout.write(f'Total issues added: {total_issues_added}')
-        self.stdout.write(f'Total issues updated: {total_issues_updated}')
-        self.stdout.write(f'Total issues removed: {total_issues_removed}')
+        self.stdout.write(f'Total issues added: {sync_stats.issues_added}')
+        self.stdout.write(f'Total issues updated: {sync_stats.issues_updated}')
+        self.stdout.write(f'Total issues removed: {sync_stats.issues_removed}')
 
         if dry_run:
             self.stdout.write(self.style.WARNING('DRY RUN - No actual changes made'))
@@ -162,33 +168,27 @@ class Command(BaseCommand):
 
         self.stdout.write(f'\n--- Syncing installation: {account_login} (ID: {installation_id}) ---')
 
-        repos_added = 0
-        repos_updated = 0
-        repos_removed = 0
-
-        issues_added = 0
-        issues_updated = 0
-        issues_removed = 0
+        sync_stats = SyncStats()
 
         # Note: It is possible for `installation['suspended_at']`
         # to exist but have a value of `None`, which means that
         # the app installation is active.
         if 'suspended_at' in installation and installation['suspended_at']:
             self.stdout.write(f'Installation {account_login}: installation is suspended')
-            repos_removed, issues_removed = self._remove_unfunded_issues(installation)
-            return repos_added, repos_updated, repos_removed, issues_added, issues_updated, issues_removed
+            sync_stats.repos_removed, sync_stats.issues_removed = self._remove_unfunded_issues(installation)
+            return sync_stats
 
-        repos_added, repos_updated, repos_removed = self._sync_installation_repos(installation, dry_run)
-        issues_added, issues_updated, issues_removed = self._sync_installation_issues(installation, dry_run)
+        sync_stats.repos_added, sync_stats.repos_updated, sync_stats.repos_removed = self._sync_installation_repos(installation, dry_run)
+        sync_stats.issues_added, sync_stats.issues_updated, sync_stats.issues_removed = self._sync_installation_issues(installation, dry_run)
 
         self.stdout.write(
-            f'Installation {account_login}: +{repos_added} ~{repos_updated} -{repos_removed} repos'
+            f'Installation {account_login}: +{sync_stats.repos_added} ~{sync_stats.repos_updated} -{sync_stats.repos_removed} repos'
         )
         self.stdout.write(
-            f'Installation {account_login}: +{issues_added} ~{issues_updated} -{issues_removed} issues'
+            f'Installation {account_login}: +{sync_stats.issues_added} ~{sync_stats.issues_updated} -{sync_stats.issues_removed} issues'
         )
 
-        return repos_added, repos_updated, repos_removed, issues_added, issues_updated, issues_removed
+        return sync_stats
 
     def _remove_unfunded_issues(self, installation):
         github_account = installation['account']['login']
