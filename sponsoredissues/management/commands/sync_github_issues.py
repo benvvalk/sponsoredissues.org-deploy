@@ -18,15 +18,11 @@ RETRY_DELAY = 60.0       # Delay before retrying failed requests (seconds)
 
 class SyncStats:
     """
-    Stats about what changed when syncing one or more GitHub App
-    installations.
+    Stats about what changed when syncing installations/repos/issues.
     """
-    repos_added = 0
-    repos_updated = 0
-    repos_removed = 0
-    issues_added = 0
-    issues_updated = 0
-    issues_removed = 0
+    added = 0
+    updated = 0
+    removed = 0
 
 class Command(BaseCommand):
     help = 'Sync GitHub issues with "sponsoredissues.org" label using GraphQL API'
@@ -123,7 +119,8 @@ class Command(BaseCommand):
 
         self.stdout.write(f'Found {len(installations)} GitHub App installations to sync')
 
-        sync_stats = SyncStats()
+        repo_stats = SyncStats()
+        issue_stats = SyncStats()
 
         # Rate limiting between queries
         delay = random.uniform(REQUEST_DELAY_MIN, REQUEST_DELAY_MAX)
@@ -139,15 +136,15 @@ class Command(BaseCommand):
                 continue
 
             try:
-                _sync_stats = self._sync_installation(installation, access_token, dry_run)
+                _repo_stats, _issue_stats = self._sync_installation(installation, access_token, dry_run)
 
-                sync_stats.repos_added += _sync_stats.repos_added
-                sync_stats.repos_updated += _sync_stats.repos_updated
-                sync_stats.repos_removed += _sync_stats.repos_removed
+                repo_stats.added += _repo_stats.added
+                repo_stats.updated += _repo_stats.updated
+                repo_stats.removed += _repo_stats.removed
 
-                sync_stats.issues_added += _sync_stats.issues_added
-                sync_stats.issues_updated += _sync_stats.issues_updated
-                sync_stats.issues_removed += _sync_stats.issues_removed
+                issue_stats.added += _issue_stats.added
+                issue_stats.updated += _issue_stats.updated
+                issue_stats.removed += _issue_stats.removed
 
             except Exception as e:
                 self.stdout.write(
@@ -158,13 +155,13 @@ class Command(BaseCommand):
 
         # Final summary
         self.stdout.write(f'\n=== SYNC SUMMARY ===')
-        self.stdout.write(f'Total repos added: {sync_stats.repos_added}')
-        self.stdout.write(f'Total repos updated: {sync_stats.repos_updated}')
-        self.stdout.write(f'Total repos removed: {sync_stats.repos_removed}')
+        self.stdout.write(f'Total repos added: {repo_stats.added}')
+        self.stdout.write(f'Total repos updated: {repo_stats.updated}')
+        self.stdout.write(f'Total repos removed: {repo_stats.removed}')
         self.stdout.write(f'---\n')
-        self.stdout.write(f'Total issues added: {sync_stats.issues_added}')
-        self.stdout.write(f'Total issues updated: {sync_stats.issues_updated}')
-        self.stdout.write(f'Total issues removed: {sync_stats.issues_removed}')
+        self.stdout.write(f'Total issues added: {issue_stats.added}')
+        self.stdout.write(f'Total issues updated: {issue_stats.updated}')
+        self.stdout.write(f'Total issues removed: {issue_stats.removed}')
 
         if dry_run:
             self.stdout.write(self.style.WARNING('DRY RUN - No actual changes made'))
@@ -177,24 +174,27 @@ class Command(BaseCommand):
 
         self.stdout.write(f'\n--- Syncing installation: {account_login} (ID: {installation_id}) ---')
 
-        sync_stats = SyncStats()
+        repo_stats = SyncStats()
+        issue_stats = SyncStats()
 
         if github_app_installation_is_suspended(installation):
             self.stdout.write(f'Installation {account_login}: installation is suspended')
-            sync_stats.repos_removed, sync_stats.issues_removed = self._remove_unfunded_issues(installation)
-            return sync_stats
+            repos_removed, issues_removed = self._remove_unfunded_issues(installation)
+            repo_stats.removed += repos_removed
+            issue_stats.removed += issues_removed
+            return repo_stats, issue_stats
 
-        sync_stats.repos_added, sync_stats.repos_updated, sync_stats.repos_removed = self._sync_installation_repos(installation, access_token, dry_run)
-        sync_stats.issues_added, sync_stats.issues_updated, sync_stats.issues_removed = self._sync_installation_issues(installation, access_token, dry_run)
+        repo_stats = self._sync_installation_repos(installation, access_token, dry_run)
+        issue_stats = self._sync_installation_issues(installation, access_token, dry_run)
 
         self.stdout.write(
-            f'Installation {account_login}: +{sync_stats.repos_added} ~{sync_stats.repos_updated} -{sync_stats.repos_removed} repos'
+            f'Installation {account_login}: +{repo_stats.added} ~{repo_stats.updated} -{repo_stats.removed} repos'
         )
         self.stdout.write(
-            f'Installation {account_login}: +{sync_stats.issues_added} ~{sync_stats.issues_updated} -{sync_stats.issues_removed} issues'
+            f'Installation {account_login}: +{issue_stats.added} ~{issue_stats.updated} -{issue_stats.removed} issues'
         )
 
-        return sync_stats
+        return repo_stats, issue_stats
 
     def _remove_unfunded_issues(self, installation):
         github_account = installation['account']['login']
@@ -238,7 +238,7 @@ class Command(BaseCommand):
         )
 
         # Process found repos
-        added = updated = 0
+        repo_stats = SyncStats()
         found_repo_urls = set()
 
         for repo in repos:
@@ -253,31 +253,30 @@ class Command(BaseCommand):
                 # Update existing repo
                 if not dry_run:
                     GitHubRepo.objects.filter(url=repo_url).update(updated_at=timezone.now())
-                updated += 1
+                repo_stats.updated += 1
                 self.stdout.write(f'Updated: {repo_url}')
             else:
                 # Add new repo
                 if not dry_run:
                     GitHubRepo.objects.update_or_create(url=repo_url)
-                added += 1
+                repo_stats.added += 1
                 self.stdout.write(f'Added: {repo_url}')
 
         # Remove repos that the `sponsoredissues-maintainer` GitHub App
         # can no longer access
         repos_to_remove = current_repo_urls - found_repo_urls
-        removed = 0
 
         for repo_url in repos_to_remove:
             if not dry_run:
                 deleted_count, _ = GitHubRepo.objects.filter(url=repo_url).delete()
                 if deleted_count > 0:
-                    removed += 1
+                    repo_stats.removed += 1
                     self.stdout.write(f'Removed: {repo_url}')
             else:
-                removed += 1
+                repo_stats.removed += 1
                 self.stdout.write(f'Removed: {repo_url}')
 
-        return added, updated, removed
+        return repo_stats
 
     def _sync_installation_issues(self, installation, access_token, dry_run):
         """Sync issues for a single GitHub App installation"""
@@ -341,7 +340,7 @@ class Command(BaseCommand):
         found_issue_urls = set()
 
         # Stats about new/updated issues (returned from this method).
-        added = updated = 0
+        issue_stats = SyncStats()
 
         # Unfunded issues that we should delete from our database,
         # because the `sponsoredissues-maintainer` GitHub App has been
@@ -384,7 +383,7 @@ class Command(BaseCommand):
                 # Update existing issue
                 if not dry_run:
                     GitHubIssue.objects.filter(url=issue_url).update(data=issue_data, repo=repo, updated_at=timezone.now())
-                updated += 1
+                issue_stats.updated += 1
                 self.stdout.write(f'Updated: {issue_url}')
             else:
                 # Add new issue
@@ -396,26 +395,25 @@ class Command(BaseCommand):
                             'repo': repo,
                         }
                     )
-                added += 1
+                issue_stats.added += 1
                 self.stdout.write(f'Added: {issue_url}')
 
         # Remove issues that no longer have the label
         current_issue_urls = current_issues.keys()
         issues_to_remove = current_issue_urls - found_issue_urls
-        removed = 0
 
         for issue_url in issues_to_remove:
             issue = GitHubIssue.objects.filter(url=issue_url)
 
-            removed_old = removed
+            removed_old = issue_stats.removed
             if not dry_run:
                 deleted_count, _ = issue.delete()
                 if deleted_count > 0:
-                    removed += 1
+                    issue_stats.removed += 1
             else:
-                removed += 1
+                issue_stats.removed += 1
 
-            if removed > removed_old:
+            if issue_stats.removed > removed_old:
                 if issue_url in repo_disabled_issue_urls:
                     self.stdout.write(f'Removed: {issue_url} (GitHub App was disabled on repo)')
                 elif issue_url in label_removed_issue_urls:
@@ -423,7 +421,7 @@ class Command(BaseCommand):
                 else:
                     self.stdout.write(f'Removed: {issue_url}')
 
-        return added, updated, removed
+        return issue_stats
 
     def _query_installation_repos(self, access_token):
         status_code, data = github_api(f'/installation/repositories', access_token)
