@@ -1,16 +1,32 @@
 from django.db import models
 from django.contrib.auth.models import User
 
+class GitHubAppInstallation(models.Model):
+    """
+    The set of installed and active installations for the
+    `sponsoredissues-maintainer` GitHub App.
+
+    We delete an app installation from this table if we learn
+    (during a sync or webhook) that the owning GitHub account has
+    uninstalled or suspended the app.
+    """
+    url = models.URLField(primary_key=True, max_length=500)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
 class GitHubRepo(models.Model):
     """
     GitHub repos where the `sponsoredissues-maintainer` GitHub App is
     currently installed and active (i.e. not suspended).
 
-    We only show sponsored issues (i.e. issues with the
-    "sponsoredissues.org" label) from repos where the app is currently
-    installed and active.
+    We delete a repo from this table if we learn (during a sync or
+    webhook) that the owning GitHub account has disabled the app on
+    the repo. If the app installation as a whole is uninstalled or
+    suspended, then all associated repos will automatically removed
+    from this table via `on_delete=models.CASCADE`.
     """
     url = models.URLField(primary_key=True, max_length=500)
+    app_installation = models.ForeignKey(GitHubAppInstallation, on_delete=models.CASCADE)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 

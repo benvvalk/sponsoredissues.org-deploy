@@ -71,6 +71,31 @@ class GitHubAppAuth:
             logger.error(f'Failed to get GitHub App installations: {e}')
             return []
 
+    def get_installation_for_github_account(self, github_account_name):
+        """Get app installation for GitHub account name (username or orgname)"""
+        app_token = self._get_github_app_token()
+        if not app_token:
+            return None
+
+        # TODO: Handle case where `github_account_name` is an orgname
+        # rather than a username. (We need to do a separate query for
+        # that.)
+
+        headers = {
+            'Authorization': f'Bearer {app_token}',
+            'Accept': 'application/vnd.github.v3+json',
+            'username': github_account_name,
+        }
+
+        response = requests.get(
+            f'https://api.github.com/users/{github_account_name}/installation',
+            headers=headers,
+            timeout=30
+        )
+        response.raise_for_status()
+
+        return response.json()
+
     def get_installation_access_token(self, installation_id: int) -> Optional[str]:
         """Get installation access token for GitHub App"""
         app_token = self._get_github_app_token()
