@@ -14,7 +14,8 @@ REQUEST_DELAY_MAX = 10
 
 def _parse_link_header(link_header):
     """
-    Parse GitHub's Link header to extract pagination URLs.
+    Extract pagination URLs from GitHub's `Link` HTTP header, which is
+    included in responses to GitHub's REST API queries.
 
     Args:
         link_header: The Link header value from GitHub API response
