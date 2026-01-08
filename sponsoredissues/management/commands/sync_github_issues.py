@@ -6,7 +6,7 @@ from django.core.management.base import BaseCommand, CommandError
 from django.conf import settings
 from django.utils import timezone
 from itertools import islice
-from sponsoredissues.models import GitHubIssue, GitHubRepo
+from sponsoredissues.models import GitHubAppInstallation, GitHubIssue, GitHubRepo
 from sponsoredissues.github_api import github_api, github_app_installation_is_suspended, github_issue_has_sponsoredissues_label, github_graphql
 from sponsoredissues.github_auth import GitHubAppAuth
 from urllib.parse import urlparse
@@ -119,15 +119,30 @@ class Command(BaseCommand):
 
         self.stdout.write(f'Found {len(installations)} GitHub App installations to sync')
 
+        installation_stats = SyncStats()
         repo_stats = SyncStats()
         issue_stats = SyncStats()
 
         # Rate limiting between queries
         delay = random.uniform(REQUEST_DELAY_MIN, REQUEST_DELAY_MAX)
 
+        # Compare the app installation URLs in our database to the
+        # installation URLs we retrieved from the GitHub API, to
+        # identify which installations have been newly
+        # installed/uninstalled.
+        current_installation_urls = set(
+            GitHubAppInstallation.objects.values_list('url', flat=True)
+        )
+        found_installation_urls = set()
+        suspended_installation_urls = set()
+
         for installation in installations:
+            installation_url = installation['html_url']
             installation_id = installation['id']
             account_login = installation['account']['login']
+
+            found_installation_urls.add(installation_url)
+
             try:
                 access_token = self.github_app_auth.get_installation_access_token(installation_id)
             except Exception as e:
@@ -136,7 +151,11 @@ class Command(BaseCommand):
                 continue
 
             try:
-                _repo_stats, _issue_stats = self._sync_installation(installation, access_token, dry_run)
+                _installation_stats, _repo_stats, _issue_stats = self._sync_installation(installation, access_token, dry_run)
+
+                installation_stats.added += _installation_stats.added
+                installation_stats.updated += _installation_stats.updated
+                installation_stats.removed += _installation_stats.removed
 
                 repo_stats.added += _repo_stats.added
                 repo_stats.updated += _repo_stats.updated
@@ -153,8 +172,25 @@ class Command(BaseCommand):
 
             time.sleep(delay)
 
+        # Delete any app installations in our database that weren't
+        # present in the latest list of app installations from the
+        # GitHub API. (These app installations must have been
+        # uninstalled by the maintainer.)
+        installation_urls_to_remove = current_installation_urls - found_installation_urls
+        for installation_url in installation_urls_to_remove:
+            if not dry_run:
+                repos_removed, issues_removed = self._remove_installation(installation_url)
+                repo_stats.removed += repos_removed
+                issue_stats.removed += issues_removed
+            installation_stats.removed += 1
+            self.stdout.write(f'Installation {account_login}: removed, because it was installed')
+
         # Final summary
         self.stdout.write(f'\n=== SYNC SUMMARY ===')
+        self.stdout.write(f'Total installations added: {installation_stats.added}')
+        self.stdout.write(f'Total installations updated: {installation_stats.updated}')
+        self.stdout.write(f'Total installations removed: {installation_stats.removed}')
+        self.stdout.write(f'---\n')
         self.stdout.write(f'Total repos added: {repo_stats.added}')
         self.stdout.write(f'Total repos updated: {repo_stats.updated}')
         self.stdout.write(f'Total repos removed: {repo_stats.removed}')
@@ -168,24 +204,34 @@ class Command(BaseCommand):
         else:
             self.stdout.write(self.style.SUCCESS('Sync completed'))
 
-    def _sync_installation(self, installation, access_token, dry_run):
-        account_login = installation['account']['login']
-        installation_id = installation['id']
+    def _sync_installation(self, installation_json, access_token, dry_run):
+        account_login = installation_json['account']['login']
+        installation_id = installation_json['id']
+        installation_url = installation_json['html_url']
 
         self.stdout.write(f'\n--- Syncing installation: {account_login} (ID: {installation_id}) ---')
 
+        installation_stats = SyncStats()
         repo_stats = SyncStats()
         issue_stats = SyncStats()
 
-        if github_app_installation_is_suspended(installation):
-            self.stdout.write(f'Installation {account_login}: installation is suspended')
-            repos_removed, issues_removed = self._remove_unfunded_issues(installation)
-            repo_stats.removed += repos_removed
-            issue_stats.removed += issues_removed
-            return repo_stats, issue_stats
+        installation = GitHubAppInstallation.objects.get(url=installation_url)
 
-        repo_stats = self._sync_installation_repos(installation, access_token, dry_run)
-        issue_stats = self._sync_installation_issues(installation, access_token, dry_run)
+        # check if maintainer has suspended the app installation
+        if github_app_installation_is_suspended(installation_json):
+            if installation:
+                if not dry_run:
+                    repos_removed, issues_removed = self._remove_installation(installation_json)
+                    repo_stats.removed += repos_removed
+                    issue_stats.removed += issues_removed
+                installation_stats.removed += 1
+                self.stdout.write(f'Removed: installation {account_login}, because it is suspended')
+            else:
+                self.stdout.write(f'Skipped: installation {account_login}, because it is suspended')
+            return installation_stats, repo_stats, issue_stats
+
+        repo_stats = self._sync_installation_repos(installation_json, access_token, dry_run)
+        issue_stats = self._sync_installation_issues(installation_json, access_token, dry_run)
 
         self.stdout.write(
             f'Installation {account_login}: +{repo_stats.added} ~{repo_stats.updated} -{repo_stats.removed} repos'
@@ -194,35 +240,85 @@ class Command(BaseCommand):
             f'Installation {account_login}: +{issue_stats.added} ~{issue_stats.updated} -{issue_stats.removed} issues'
         )
 
-        return repo_stats, issue_stats
+        # create/update record for app installation in database
+        if installation:
+            if not dry_run:
+                # call `save()` to set new value for `GitHubAppInstallation.updated_at`
+                installation.save()
+            installation_stats.updated += 1
+            self.stdout.write(f'Updated: installation {account_login}')
+        else:
+            if not dry_run:
+                GitHubAppInstallation.objects.update_or_create(url=installation_url)
+            installation_stats.added += 1
+            self.stdout.write(f'Added: installation {account_login}')
 
-    def _remove_unfunded_issues(self, installation):
-        github_account = installation['account']['login']
+        return installation_stats, repo_stats, issue_stats
 
-        # Delete any repos for the account that was suspended.
-        url_prefix = installation['account']['html_url'] + '/'
-        repos_removed, _ = GitHubRepo.objects.filter(
-            url__startswith=url_prefix
-        ).delete()
-        self.stdout.write(f'Removed: {repos_removed} repos from installation "{github_account}"')
+    def _remove_installation(self, installation_json):
+        """
+        Delete a GitHub App installation from the database.
 
-        # Delete any unfunded issues from the repos.
-        # (Funded issues will be displayed in a special "frozen" state
-        # on the maintainer's sponsored issues page, so that existing
-        # user funding values are not lost.)
+        Some important reminders from `models.py`:
+
+        * An app installation is only present in the
+        `GitHubAppInstallation` table while it is installed and
+        active. If we discover that an installation has been
+        uninstalled or suspended during a sync/webhook, we delete the
+        `GitHubAppInstallation` instance from the database.
+
+        * When we delete a `GitHubAppInstallation` instance, any repos
+        that belong to the installation are automatically deleted from
+        the `GitHubRepo` table via `on_delete=model.CASCADE`.
+
+        * `GitHubIssue`s that belong to the deleted installation/repos
+        are not automatically deleted; instead, their `repo` fields
+        are set to `None` via `on_delete=model.SET_NULL`. The reason
+        we don't auto-delete the issues is that we need to preserve
+        issues that already have funding from users. (See the long
+        comment in `_sync_installation_issues` for the reasons we
+        always keep funded issues.)
+
+        * If a `GitHubIssue` has a `repo` value of `None`, it
+        indicates that the issue will be displayed in a "frozen" state
+        on the maintainer's sponsored issues page, along with a
+        warning message explaining what the maintainer can do to fix
+        the issue state (e.g. unsuspend/reinstall the
+        "sponsoredissues-maintainer" GitHub App).
+
+        * It is safe to delete `GitHubIssue`s associated with a
+        deleted `GitHubAppInstallation` if they have zero any funding,
+        which we do with a separate query below.
+        """
+        installation_url = installation_json['html_url']
+        github_account = installation_json['account']['login']
+
+        _, result = GitHubAppInstallation.objects.get(url=installation_url).delete()
+        repos_removed = result['GitHubRepo'] if 'GitHubRepo' in result else 0
+
+        # Delete any affected issues that are unfunded.
+        # (Funded issues will be retained and displayed in a special
+        # "frozen" state on the maintainer's sponsored issues page.)
         issues_removed, _ = GitHubIssue.objects.filter(
-            url__startswith=url_prefix,
+            url__startswith=f'https://github.com/{github_account}/',
             repo__isnull=True,
             sponsor_amounts__isnull=True,
         ).delete()
-        self.stdout.write(f'Removed: {issues_removed} unfunded issues from installation "{github_account}"')
+
+        self.stdout.write(
+            f'Installation {account_login}: removed (-{repos_removed} repos, -{issues_removed} issues)'
+        )
 
         return repos_removed, issues_removed
 
-    def _sync_installation_repos(self, installation, access_token, dry_run):
+    def _sync_installation_repos(self, installation_json, access_token, dry_run):
         """Sync repos for a single GitHub App installation"""
-        installation_id = installation['id']
-        account_login = installation['account']['login']
+        installation_id = installation_json['id']
+        installation_url = installation_json['html_url']
+        account_login = installation_json['account']['login']
+
+        installation = GitHubAppInstallation.objects.get(url=installation_url)
+        assert installation
 
         # Query repositories and issues using GraphQL
         repos = self._query_installation_repos(access_token)
@@ -258,7 +354,7 @@ class Command(BaseCommand):
             else:
                 # Add new repo
                 if not dry_run:
-                    GitHubRepo.objects.update_or_create(url=repo_url)
+                    GitHubRepo.objects.update_or_create(url=repo_url, app_installation=installation)
                 repo_stats.added += 1
                 self.stdout.write(f'Added: {repo_url}')
 

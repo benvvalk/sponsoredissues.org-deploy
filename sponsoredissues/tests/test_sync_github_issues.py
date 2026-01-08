@@ -5,7 +5,7 @@ from io import StringIO
 import time
 
 from sponsoredissues.management.commands.sync_github_issues import Command
-from sponsoredissues.models import GitHubRepo, GitHubIssue, SponsorAmount
+from sponsoredissues.models import GitHubAppInstallation, GitHubRepo, GitHubIssue, SponsorAmount
 from django.contrib.auth.models import User
 
 
@@ -18,13 +18,16 @@ class SyncInstallationReposTest(TestCase):
         self.command.stdout = StringIO()
 
         # Mock installation data
-        self.installation = {
+        installation_url = 'https://github.com/installation/1234'
+        self.installation_json = {
             'id': 12345,
             'account': {
                 'login': 'testuser',
                 'html_url': 'https://github.com/testuser'
-            }
+            },
+            'html_url': installation_url
         }
+        self.installation = GitHubAppInstallation.objects.create(url=installation_url)
 
     @patch.object(Command, '_query_installation_repos')
     def test_add_new_public_repo(self, mock_query_repos):
@@ -39,8 +42,8 @@ class SyncInstallationReposTest(TestCase):
         ]
 
         # Call the method
-        added, updated, removed = self.command._sync_installation_repos(
-            self.installation,
+        stats = self.command._sync_installation_repos(
+            self.installation_json,
             'fake-access-token',
             dry_run=False
         )
@@ -51,16 +54,16 @@ class SyncInstallationReposTest(TestCase):
         self.assertEqual(repo.url, 'https://github.com/testuser/test-repo')
 
         # Verify correct counts
-        self.assertEqual(added, 1)
-        self.assertEqual(updated, 0)
-        self.assertEqual(removed, 0)
+        self.assertEqual(stats.added, 1)
+        self.assertEqual(stats.updated, 0)
+        self.assertEqual(stats.removed, 0)
 
     @patch.object(Command, '_query_installation_repos')
     def test_update_existing_repo(self, mock_query_repos):
         """Test updating an existing repository's timestamp."""
         # Create an existing repo in the database
         repo_url = 'https://github.com/testuser/existing-repo'
-        existing_repo = GitHubRepo.objects.create(url=repo_url)
+        existing_repo = GitHubRepo.objects.create(url=repo_url, app_installation=self.installation)
         original_updated_at = existing_repo.updated_at
 
         # Wait a moment to ensure timestamp will be different
@@ -76,8 +79,8 @@ class SyncInstallationReposTest(TestCase):
         ]
 
         # Call the method
-        added, updated, removed = self.command._sync_installation_repos(
-            self.installation,
+        stats = self.command._sync_installation_repos(
+            self.installation_json,
             'fake-access-token',
             dry_run=False
         )
@@ -88,23 +91,23 @@ class SyncInstallationReposTest(TestCase):
         self.assertGreater(repo.updated_at, original_updated_at)
 
         # Verify correct counts
-        self.assertEqual(added, 0)
-        self.assertEqual(updated, 1)
-        self.assertEqual(removed, 0)
+        self.assertEqual(stats.added, 0)
+        self.assertEqual(stats.updated, 1)
+        self.assertEqual(stats.removed, 0)
 
     @patch.object(Command, '_query_installation_repos')
     def test_remove_repo_no_longer_accessible(self, mock_query_repos):
         """Test removing a repository that is no longer accessible."""
         # Create an existing repo in the database
         repo_url = 'https://github.com/testuser/removed-repo'
-        GitHubRepo.objects.create(url=repo_url)
+        GitHubRepo.objects.create(url=repo_url, app_installation=self.installation)
 
         # Mock the API response with empty list (no repos accessible)
         mock_query_repos.return_value = []
 
         # Call the method
-        added, updated, removed = self.command._sync_installation_repos(
-            self.installation,
+        stats = self.command._sync_installation_repos(
+            self.installation_json,
             'fake-access-token',
             dry_run=False
         )
@@ -114,9 +117,9 @@ class SyncInstallationReposTest(TestCase):
         self.assertFalse(GitHubRepo.objects.filter(url=repo_url).exists())
 
         # Verify correct counts
-        self.assertEqual(added, 0)
-        self.assertEqual(updated, 0)
-        self.assertEqual(removed, 1)
+        self.assertEqual(stats.added, 0)
+        self.assertEqual(stats.updated, 0)
+        self.assertEqual(stats.removed, 1)
 
     @patch.object(Command, '_query_installation_repos')
     def test_skip_private_repos(self, mock_query_repos):
@@ -131,8 +134,8 @@ class SyncInstallationReposTest(TestCase):
         ]
 
         # Call the method
-        added, updated, removed = self.command._sync_installation_repos(
-            self.installation,
+        stats = self.command._sync_installation_repos(
+            self.installation_json,
             'fake-access-token',
             dry_run=False
         )
@@ -141,9 +144,9 @@ class SyncInstallationReposTest(TestCase):
         self.assertEqual(GitHubRepo.objects.count(), 0)
 
         # Verify correct counts (private repo should not be counted)
-        self.assertEqual(added, 0)
-        self.assertEqual(updated, 0)
-        self.assertEqual(removed, 0)
+        self.assertEqual(stats.added, 0)
+        self.assertEqual(stats.updated, 0)
+        self.assertEqual(stats.removed, 0)
 
 
 class SyncInstallationIssuesTest(TestCase):
@@ -155,17 +158,23 @@ class SyncInstallationIssuesTest(TestCase):
         self.command.stdout = StringIO()
 
         # Mock installation data
-        self.installation = {
+        installation_url = 'https:://github.com/installation/1234'
+        self.installation_json = {
             'id': 12345,
             'account': {
                 'login': 'testuser',
                 'html_url': 'https://github.com/testuser'
-            }
+            },
+            'html_url': installation_url
         }
+        self.installation = GitHubAppInstallation.objects.create(
+            url=installation_url
+        )
 
         # Create a repo for the issues to belong to
         self.repo = GitHubRepo.objects.create(
-            url='https://github.com/testuser/test-repo'
+            url='https://github.com/testuser/test-repo',
+            app_installation=self.installation,
         )
 
     @patch.object(Command, '_query_installation_issues')
@@ -188,8 +197,8 @@ class SyncInstallationIssuesTest(TestCase):
         mock_query_issues.return_value = [issue_data]
 
         # Call the method
-        added, updated, removed = self.command._sync_installation_issues(
-            self.installation,
+        stats = self.command._sync_installation_issues(
+            self.installation_json,
             'fake-access-token',
             dry_run=False
         )
@@ -202,9 +211,9 @@ class SyncInstallationIssuesTest(TestCase):
         self.assertEqual(issue.repo, self.repo)
 
         # Verify correct counts
-        self.assertEqual(added, 1)
-        self.assertEqual(updated, 0)
-        self.assertEqual(removed, 0)
+        self.assertEqual(stats.added, 1)
+        self.assertEqual(stats.updated, 0)
+        self.assertEqual(stats.removed, 0)
 
     @patch.object(Command, '_query_installation_issues')
     def test_update_existing_issue(self, mock_query_issues):
@@ -239,8 +248,8 @@ class SyncInstallationIssuesTest(TestCase):
         mock_query_issues.return_value = [updated_data]
 
         # Call the method
-        added, updated, removed = self.command._sync_installation_issues(
-            self.installation,
+        stats = self.command._sync_installation_issues(
+            self.installation_json,
             'fake-access-token',
             dry_run=False
         )
@@ -253,9 +262,9 @@ class SyncInstallationIssuesTest(TestCase):
         self.assertGreater(issue.updated_at, original_updated_at)
 
         # Verify correct counts
-        self.assertEqual(added, 0)
-        self.assertEqual(updated, 1)
-        self.assertEqual(removed, 0)
+        self.assertEqual(stats.added, 0)
+        self.assertEqual(stats.updated, 1)
+        self.assertEqual(stats.removed, 0)
 
     @patch.object(Command, '_query_installation_issues')
     def test_remove_unfunded_issue_when_label_removed(self, mock_query_issues):
@@ -285,8 +294,8 @@ class SyncInstallationIssuesTest(TestCase):
         mock_query_issues.return_value = [updated_data]
 
         # Call the method
-        added, updated, removed = self.command._sync_installation_issues(
-            self.installation,
+        stats = self.command._sync_installation_issues(
+            self.installation_json,
             'fake-access-token',
             dry_run=False
         )
@@ -296,16 +305,17 @@ class SyncInstallationIssuesTest(TestCase):
         self.assertFalse(GitHubIssue.objects.filter(url=issue_url).exists())
 
         # Verify correct counts
-        self.assertEqual(added, 0)
-        self.assertEqual(updated, 0)
-        self.assertEqual(removed, 1)
+        self.assertEqual(stats.added, 0)
+        self.assertEqual(stats.updated, 0)
+        self.assertEqual(stats.removed, 1)
 
     @patch.object(Command, '_query_installation_issues')
     def test_issue_assigned_to_correct_repo(self, mock_query_issues):
         """Test that issues are correctly assigned to their parent repository."""
         # Create a second repo
         repo2 = GitHubRepo.objects.create(
-            url='https://github.com/testuser/another-repo'
+            url='https://github.com/testuser/another-repo',
+            app_installation=self.installation
         )
 
         # Mock API response with issues from different repos
@@ -334,8 +344,8 @@ class SyncInstallationIssuesTest(TestCase):
         mock_query_issues.return_value = [issue1_data, issue2_data]
 
         # Call the method
-        added, updated, removed = self.command._sync_installation_issues(
-            self.installation,
+        stats = self.command._sync_installation_issues(
+            self.installation_json,
             'fake-access-token',
             dry_run=False
         )
@@ -348,9 +358,9 @@ class SyncInstallationIssuesTest(TestCase):
         self.assertEqual(issue2.repo, repo2)
 
         # Verify correct counts
-        self.assertEqual(added, 2)
-        self.assertEqual(updated, 0)
-        self.assertEqual(removed, 0)
+        self.assertEqual(stats.added, 2)
+        self.assertEqual(stats.updated, 0)
+        self.assertEqual(stats.removed, 0)
 
     @patch.object(Command, '_query_installation_issues')
     def test_mixed_add_update_remove_operations(self, mock_query_issues):
@@ -409,8 +419,8 @@ class SyncInstallationIssuesTest(TestCase):
         mock_query_issues.return_value = [updated_issue1_data, new_issue3_data]
 
         # Call the method
-        added, updated, removed = self.command._sync_installation_issues(
-            self.installation,
+        stats = self.command._sync_installation_issues(
+            self.installation_json,
             'fake-access-token',
             dry_run=False
         )
@@ -429,9 +439,9 @@ class SyncInstallationIssuesTest(TestCase):
         self.assertFalse(GitHubIssue.objects.filter(url=removed_issue_url).exists())
 
         # Verify correct counts
-        self.assertEqual(added, 1)
-        self.assertEqual(updated, 1)
-        self.assertEqual(removed, 1)
+        self.assertEqual(stats.added, 1)
+        self.assertEqual(stats.updated, 1)
+        self.assertEqual(stats.removed, 1)
 
     @patch.object(Command, '_query_installation_issues')
     def test_dry_run_mode_makes_no_changes(self, mock_query_issues):
@@ -472,8 +482,8 @@ class SyncInstallationIssuesTest(TestCase):
         mock_query_issues.return_value = [updated_issue_data, new_issue_data]
 
         # Call the method in DRY RUN mode
-        added, updated, removed = self.command._sync_installation_issues(
-            self.installation,
+        stats = self.command._sync_installation_issues(
+            self.installation_json,
             'fake-access-token',
             dry_run=True
         )
@@ -489,9 +499,9 @@ class SyncInstallationIssuesTest(TestCase):
         self.assertFalse(GitHubIssue.objects.filter(url='https://github.com/testuser/test-repo/issues/2').exists())
 
         # But counts should reflect what WOULD have happened
-        self.assertEqual(added, 1)
-        self.assertEqual(updated, 1)
-        self.assertEqual(removed, 0)
+        self.assertEqual(stats.added, 1)
+        self.assertEqual(stats.updated, 1)
+        self.assertEqual(stats.removed, 0)
 
     @patch.object(Command, '_query_installation_issues')
     def test_issue_state_change_open_to_closed(self, mock_query_issues):
@@ -522,8 +532,8 @@ class SyncInstallationIssuesTest(TestCase):
         mock_query_issues.return_value = [closed_issue_data]
 
         # Call the method
-        added, updated, removed = self.command._sync_installation_issues(
-            self.installation,
+        stats = self.command._sync_installation_issues(
+            self.installation_json,
             'fake-access-token',
             dry_run=False
         )
@@ -536,9 +546,9 @@ class SyncInstallationIssuesTest(TestCase):
         self.assertEqual(issue.data['state'], 'closed')
 
         # Verify correct counts (updated, not removed)
-        self.assertEqual(added, 0)
-        self.assertEqual(updated, 1)
-        self.assertEqual(removed, 0)
+        self.assertEqual(stats.added, 0)
+        self.assertEqual(stats.updated, 1)
+        self.assertEqual(stats.removed, 0)
 
 
 class SuspendedInstallationTest(TestCase):
@@ -556,9 +566,28 @@ class SuspendedInstallationTest(TestCase):
     @patch.object(Command, '_sync_installation_issues')
     def test_suspended_installation_removes_unfunded_content(self, mock_sync_issues, mock_sync_repos):
         """Test that suspended installations remove repos and unfunded issues."""
+        # Mock installation with suspended_at field
+        suspended_installation_url = 'https://github.com/suspended-installation'
+        suspended_installation_json = {
+            'id': 99999,
+            'account': {
+                'login': 'suspended-user',
+                'html_url': 'https://github.com/suspended-user'
+            },
+            'html_url': suspended_installation_url,
+            'suspended_at': '2024-01-01T00:00:00Z'
+        }
+        suspended_installation = GitHubAppInstallation.objects.create(url=suspended_installation_url)
+
         # Create repos and issues for the suspended account
-        repo1 = GitHubRepo.objects.create(url='https://github.com/suspended-user/repo1')
-        repo2 = GitHubRepo.objects.create(url='https://github.com/suspended-user/repo2')
+        repo1 = GitHubRepo.objects.create(
+            url='https://github.com/suspended-user/repo1',
+            app_installation=suspended_installation,
+        )
+        repo2 = GitHubRepo.objects.create(
+            url='https://github.com/suspended-user/repo2',
+            app_installation=suspended_installation,
+        )
 
         # Create an unfunded issue
         unfunded_issue_data = {
@@ -594,22 +623,15 @@ class SuspendedInstallationTest(TestCase):
             target_github_issue=funded_issue
         )
 
-        # Mock installation with suspended_at field
-        suspended_installation = {
-            'id': 99999,
-            'account': {
-                'login': 'suspended-user',
-                'html_url': 'https://github.com/suspended-user'
-            },
-            'suspended_at': '2024-01-01T00:00:00Z'
-        }
-
         with patch.object(self.command.github_app_auth, 'get_installation_access_token') as mock_token:
             mock_token.return_value = 'fake-token'
             with patch.object(self.command.github_app_auth, 'get_app_installations') as mock_installations:
-                mock_installations.return_value = [suspended_installation]
+                mock_installations.return_value = [suspended_installation_json]
                 # Call _sync_installations
                 self.command._sync_installations({'dry_run': False})
+
+        # Verify suspended installation was removed
+        self.assertFalse(GitHubAppInstallation.objects.filter(url=suspended_installation_url).exists())
 
         # Verify repos were removed
         self.assertEqual(GitHubRepo.objects.filter(url__startswith='https://github.com/suspended-user/').count(), 0)
@@ -630,8 +652,35 @@ class SuspendedInstallationTest(TestCase):
     @patch.object(Command, '_sync_installation_issues')
     def test_mix_of_suspended_and_active_installations(self, mock_sync_issues, mock_sync_repos):
         """Test that mix of suspended and active installations are handled correctly."""
+        # Mock installations: one suspended, one active
+        suspended_installation_url = 'https://github.com/suspended-installation'
+        suspended_installation_json = {
+            'id': 11111,
+            'account': {
+                'login': 'suspended-user',
+                'html_url': 'https://github.com/suspended-user'
+            },
+            'html_url': suspended_installation_url,
+            'suspended_at': '2024-01-01T00:00:00Z'
+        }
+        suspended_installation = GitHubAppInstallation.objects.create(url=suspended_installation_url)
+
+        active_installation_url = 'https://github.com/active-installation'
+        active_installation_json = {
+            'id': 22222,
+            'account': {
+                'login': 'active-user',
+                'html_url': 'https://github.com/active-user'
+            },
+            'html_url': active_installation_url
+        }
+        active_installation = GitHubAppInstallation.objects.create(url=active_installation_url)
+
         # Create content for suspended account
-        suspended_repo = GitHubRepo.objects.create(url='https://github.com/suspended-user/repo1')
+        suspended_repo = GitHubRepo.objects.create(
+            url='https://github.com/suspended-user/repo1',
+            app_installation=suspended_installation)
+
         suspended_issue_data = {
             'number': 1,
             'title': 'Issue in suspended repo',
@@ -645,24 +694,9 @@ class SuspendedInstallationTest(TestCase):
         )
 
         # Create content for active account
-        active_repo = GitHubRepo.objects.create(url='https://github.com/active-user/repo1')
-
-        # Mock installations: one suspended, one active
-        suspended_installation = {
-            'id': 11111,
-            'account': {
-                'login': 'suspended-user',
-                'html_url': 'https://github.com/suspended-user'
-            },
-            'suspended_at': '2024-01-01T00:00:00Z'
-        }
-        active_installation = {
-            'id': 22222,
-            'account': {
-                'login': 'active-user',
-                'html_url': 'https://github.com/active-user'
-            }
-        }
+        active_repo = GitHubRepo.objects.create(
+            url='https://github.com/active-user/repo1',
+            app_installation=active_installation)
 
         # Mock sync methods to return counts
         mock_sync_repos.return_value = (0, 1, 0)  # added, updated, removed
@@ -671,15 +705,21 @@ class SuspendedInstallationTest(TestCase):
         with patch.object(self.command.github_app_auth, 'get_installation_access_token') as mock_token:
             mock_token.return_value = 'fake-token'
             with patch.object(self.command.github_app_auth, 'get_app_installations') as mock_installations:
-                mock_installations.return_value = [suspended_installation, active_installation]
+                mock_installations.return_value = [suspended_installation_json, active_installation_json]
                 # Call _sync_installations
                 self.command._sync_installations({'dry_run': False})
 
-        # Verify suspended account content was removed
+        # Verify suspended installation was removed
+        self.assertFalse(GitHubAppInstallation.objects.filter(url=suspended_installation_url).exists())
+
+        # Verify repo and (unfunded) issue from suspended installation were removed
         self.assertFalse(GitHubRepo.objects.filter(url__startswith='https://github.com/suspended-user/').exists())
         self.assertFalse(GitHubIssue.objects.filter(url__startswith='https://github.com/suspended-user/').exists())
 
-        # Verify active account content still exists
+        # Verify active installation was not removed
+        self.assertTrue(GitHubAppInstallation.objects.filter(url=active_installation_url).exists())
+
+        # Verify repo from active installation was not removed
         self.assertTrue(GitHubRepo.objects.filter(url__startswith='https://github.com/active-user/').exists())
 
         # Verify _sync_installation_repos and _sync_installation_issues were called ONLY for active installation
