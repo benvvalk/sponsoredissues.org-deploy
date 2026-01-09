@@ -28,7 +28,7 @@ def init_app_installation_for_existing_repos(apps, schema_editor):
     make forward progress in case we need to run the migration
     multiple times (e.g. due to a spotty internet connection).
     """
-    from sponsoredissues.github_auth import GitHubApp
+    from sponsoredissues.github_app import GitHubApp
     from sponsoredissues.github_api import github_api
 
     # Import models

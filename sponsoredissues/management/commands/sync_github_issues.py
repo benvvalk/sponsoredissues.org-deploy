@@ -8,7 +8,7 @@ from django.utils import timezone
 from itertools import islice
 from sponsoredissues.models import GitHubAppInstallation, GitHubIssue, GitHubRepo
 from sponsoredissues.github_api import github_api, github_app_installation_is_suspended, github_issue_has_sponsoredissues_label, github_graphql
-from sponsoredissues.github_auth import GitHubApp
+from sponsoredissues.github_app import GitHubApp
 from urllib.parse import urlparse
 
 # Rate limiting configuration
@@ -29,7 +29,7 @@ class Command(BaseCommand):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.github_app_auth = GitHubApp()
+        self.github_app = GitHubApp()
 
     def add_arguments(self, parser):
         parser.add_argument(
@@ -110,7 +110,7 @@ class Command(BaseCommand):
         dry_run = options.get('dry_run', False)
 
         try:
-            installations = self.github_app_auth.get_app_installations(target_installation_id)
+            installations = self.github_app.get_app_installations(target_installation_id)
         except Exception as e:
             raise RuntimeError(f'Failed to get GitHub App installations: {e}') from e
 
@@ -144,7 +144,7 @@ class Command(BaseCommand):
             found_installation_urls.add(installation_url)
 
             try:
-                access_token = self.github_app_auth.get_installation_access_token(installation_id)
+                access_token = self.github_app.get_installation_access_token(installation_id)
             except Exception as e:
                 self.stdout.write(f'Failed to get GitHub App access token for installation {installation_id}: {e}')
                 time.sleep(delay)
