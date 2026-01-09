@@ -509,14 +509,7 @@ def github_webhook(request):
 
     # Handle app installation events.
     #
-    # Notes:
-    #
-    # * All GitHub Apps receive `installation` and
-    #   `installation_repositories` events by default, and there is no
-    #   setting in GitHub web UI to turn them on/off. However the
-    #   `installation_target` event (triggered when a GitHub
-    #   user or organization is renamed) is a checkbox that needs to be
-    #   explicitly enabled in the GitHub App settings.
+    # Types of installation events:
     #
     # * The `installation` event is triggered when the maintainer
     #   installs/uninstalls/suspends/unsuspends the app on all repos
@@ -533,14 +526,23 @@ def github_webhook(request):
     #   organization name. See:
     #   https://github.com/orgs/community/discussions/63389
     #
+    # Additional notes:
+    #
+    # * All GitHub Apps receive `installation` and
+    #   `installation_repositories` events by default, and there is no
+    #   setting in GitHub web UI to turn them on/off. However the
+    #   `installation_target` event (triggered when a GitHub
+    #   user or organization is renamed) is a checkbox that needs to be
+    #   explicitly enabled in the GitHub App settings.
+    #
     # * There is no webhook notification triggered if I add new
     #   permissions to the GitHub App (e.g. write access to GitHub
     #   issues). So I may get permission-denied errors if try to do
-    #   something with the new permissions and the maintainer has not
-    #   yet approved the new permissions in the GitHub web UI (under
-    #   User menu -> Settings -> Applications). The currently-approved
-    #   permissions are included in the JSON data for each app
-    #   installation, e.g.:
+    #   something that requires the new permissions and the maintainer
+    #   has not yet approved the new permissions request in the GitHub
+    #   web UI (under User menu -> Settings -> Applications). The
+    #   currently-approved permissions are included in the JSON data
+    #   for each app installation, e.g.:
     #
     #     'permissions': {'issues': 'read',
     #                     'metadata': 'read',
