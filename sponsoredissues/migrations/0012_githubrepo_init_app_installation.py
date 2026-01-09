@@ -28,7 +28,7 @@ def init_app_installation_for_existing_repos(apps, schema_editor):
     make forward progress in case we need to run the migration
     multiple times (e.g. due to a spotty internet connection).
     """
-    from sponsoredissues.github_auth import GitHubAppAuth
+    from sponsoredissues.github_auth import GitHubApp
     from sponsoredissues.github_api import github_api
 
     # Import models
@@ -47,7 +47,7 @@ def init_app_installation_for_existing_repos(apps, schema_editor):
     print(f"Found {unlinked_repos.count()} unlinked repos with `app_installation` == NULL")
 
     # Our own API for querying GitHub App installations.
-    app = GitHubAppAuth()
+    app = GitHubApp()
 
     # Cache of GitHub username/orgname -> `GitHubAppInstallation` mappings.
     account_to_installation_map = {}

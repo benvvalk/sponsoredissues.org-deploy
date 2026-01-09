@@ -7,7 +7,7 @@ from typing import Optional, Dict, List
 
 logger = logging.getLogger(__name__)
 
-class GitHubAppAuth:
+class GitHubApp:
     """Shared GitHub App authentication utilities"""
 
     def __init__(self):

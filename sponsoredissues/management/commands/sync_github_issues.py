@@ -8,7 +8,7 @@ from django.utils import timezone
 from itertools import islice
 from sponsoredissues.models import GitHubAppInstallation, GitHubIssue, GitHubRepo
 from sponsoredissues.github_api import github_api, github_app_installation_is_suspended, github_issue_has_sponsoredissues_label, github_graphql
-from sponsoredissues.github_auth import GitHubAppAuth
+from sponsoredissues.github_auth import GitHubApp
 from urllib.parse import urlparse
 
 # Rate limiting configuration
@@ -29,7 +29,7 @@ class Command(BaseCommand):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.github_app_auth = GitHubAppAuth()
+        self.github_app_auth = GitHubApp()
 
     def add_arguments(self, parser):
         parser.add_argument(
