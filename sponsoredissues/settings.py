@@ -247,3 +247,6 @@ LOGGING = {
         "level": LOG_LEVEL,
     },
 }
+
+# Celery settings
+CELERY_BROKER_URL = env.str('CELERY_BROKER_URL')
