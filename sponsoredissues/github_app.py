@@ -39,21 +39,19 @@ class GitHubApp:
         except Exception as e:
             raise RuntimeError("Failed to generate GitHub App token. Did you configure GITHUB_APP_ID and GITHUB_APP_PRIVATE_KEY?") from e
 
-    def get_app_installations(self, target_installation_id: Optional[int] = None) -> List[Dict]:
-        """Get all GitHub App installations"""
+    def _get_request_headers(self, **kwargs):
         app_token = self._get_github_app_token()
-        if not app_token:
-            return []
-
-        headers = {
+        return {
             'Authorization': f'Bearer {app_token}',
             'Accept': 'application/vnd.github.v3+json'
-        }
+        } | kwargs
 
+    def get_app_installations(self, target_installation_id: Optional[int] = None) -> List[Dict]:
+        """Get all GitHub App installations"""
         try:
             response = requests.get(
                 'https://api.github.com/app/installations',
-                headers=headers,
+                headers=self._get_request_headers(),
                 timeout=30
             )
             response.raise_for_status()
@@ -72,23 +70,12 @@ class GitHubApp:
 
     def get_installation_for_github_account(self, github_account_name):
         """Get app installation for GitHub account name (username or orgname)"""
-        app_token = self._get_github_app_token()
-        if not app_token:
-            return None
-
         # TODO: Handle case where `github_account_name` is an orgname
         # rather than a username. (We need to do a separate query for
         # that.)
-
-        headers = {
-            'Authorization': f'Bearer {app_token}',
-            'Accept': 'application/vnd.github.v3+json',
-            'username': github_account_name,
-        }
-
         response = requests.get(
             f'https://api.github.com/users/{github_account_name}/installation',
-            headers=headers,
+            headers=self._get_request_headers(username=github_account_name),
             timeout=30
         )
         response.raise_for_status()
@@ -97,19 +84,10 @@ class GitHubApp:
 
     def get_installation_access_token(self, installation_id: int) -> Optional[str]:
         """Get installation access token for GitHub App"""
-        app_token = self._get_github_app_token()
-        if not app_token:
-            return None
-
-        headers = {
-            'Authorization': f'Bearer {app_token}',
-            'Accept': 'application/vnd.github.v3+json'
-        }
-
         try:
             response = requests.post(
                 f'https://api.github.com/app/installations/{installation_id}/access_tokens',
-                headers=headers,
+                headers=self._get_request_headers(),
                 timeout=30
             )
             response.raise_for_status()
