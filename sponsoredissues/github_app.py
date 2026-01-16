@@ -37,8 +37,7 @@ class GitHubApp:
         try:
             return jwt.encode(payload, private_key_str.encode(), algorithm='RS256')
         except Exception as e:
-            logger.error(f"Failed to generate GitHub App token: {e}")
-            return None
+            raise RuntimeError("Failed to generate GitHub App token. Did you configure GITHUB_APP_ID and GITHUB_APP_PRIVATE_KEY?") from e
 
     def get_app_installations(self, target_installation_id: Optional[int] = None) -> List[Dict]:
         """Get all GitHub App installations"""
