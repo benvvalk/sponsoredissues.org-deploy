@@ -46,7 +46,7 @@ class GitHubApp:
             'Accept': 'application/vnd.github.v3+json'
         } | kwargs
 
-    def get_app_installations(self, target_installation_id: Optional[int] = None) -> List[Dict]:
+    def get_installations(self, target_installation_id: Optional[int] = None) -> List[Dict]:
         """Get all GitHub App installations"""
         try:
             response = requests.get(
@@ -105,7 +105,7 @@ class GitHubApp:
         Attempts to get token from any available installation.
         Returns None if no installations are available.
         """
-        installations = self.get_app_installations()
+        installations = self.get_installations()
         if not installations:
             logger.warning("No GitHub App installations available")
             return None

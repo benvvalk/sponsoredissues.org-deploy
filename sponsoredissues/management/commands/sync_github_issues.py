@@ -110,7 +110,7 @@ class Command(BaseCommand):
         dry_run = options.get('dry_run', False)
 
         try:
-            installations = self.github_app.get_app_installations(target_installation_id)
+            installations = self.github_app.get_installations(target_installation_id)
         except Exception as e:
             raise RuntimeError(f'Failed to get GitHub App installations: {e}') from e
 

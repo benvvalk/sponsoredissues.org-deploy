@@ -625,7 +625,7 @@ class SuspendedInstallationTest(TestCase):
 
         with patch.object(self.command.github_app, 'get_installation_access_token') as mock_token:
             mock_token.return_value = 'fake-token'
-            with patch.object(self.command.github_app, 'get_app_installations') as mock_installations:
+            with patch.object(self.command.github_app, 'get_installations') as mock_installations:
                 mock_installations.return_value = [suspended_installation_json]
                 # Call _sync_installations
                 self.command._sync_installations({'dry_run': False})
@@ -704,7 +704,7 @@ class SuspendedInstallationTest(TestCase):
 
         with patch.object(self.command.github_app, 'get_installation_access_token') as mock_token:
             mock_token.return_value = 'fake-token'
-            with patch.object(self.command.github_app, 'get_app_installations') as mock_installations:
+            with patch.object(self.command.github_app, 'get_installations') as mock_installations:
                 mock_installations.return_value = [suspended_installation_json, active_installation_json]
                 # Call _sync_installations
                 self.command._sync_installations({'dry_run': False})
