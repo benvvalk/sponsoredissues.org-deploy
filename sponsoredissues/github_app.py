@@ -3,9 +3,30 @@ import jwt
 import logging
 from datetime import datetime, timedelta
 from django.conf import settings
-from typing import Optional, Dict, List
+from typing import Any, Optional, Dict, List
 
 logger = logging.getLogger(__name__)
+
+# Note: Added "Class" suffix to prevent name collision with
+# `GitHubAppInstallation` in `models.py`.
+class GitHubAppInstallationClass:
+    github_app : 'GitHubApp' # quotes indicate forward declaration
+    installation_id: int
+    installation_json: Optional[Dict[str, Any]] = None
+
+    def __init__(self, installation_id: int, installation_json: Optional[Dict[str, Any]] = None):
+        self.github_app = GitHubApp()
+        self.installation_id = installation_id
+        self.installation_json = installation_json
+
+    @classmethod
+    def from_json(cls, installation_json):
+        installation_id = int(installation_json['id'])
+        return cls(installation_id, installation_json)
+
+    @classmethod
+    def from_id(cls, installation_id):
+        return cls(installation_id)
 
 class GitHubApp:
     """Shared GitHub App authentication utilities"""
@@ -46,7 +67,7 @@ class GitHubApp:
             'Accept': 'application/vnd.github.v3+json'
         } | kwargs
 
-    def get_installations(self, target_installation_id: Optional[int] = None) -> List[Dict]:
+    def get_installations(self, target_installation_id: Optional[int] = None):
         """Get all GitHub App installations"""
         try:
             response = requests.get(
@@ -56,11 +77,12 @@ class GitHubApp:
             )
             response.raise_for_status()
 
-            installations = response.json()
+            installation_jsons = response.json()
 
-            # Filter by specific installation ID if provided
             if target_installation_id:
-                installations = [i for i in installations if i['id'] == target_installation_id]
+                installation_jsons = [i for i in installation_jsons if i['id'] == target_installation_id]
+
+            installations = [ GitHubAppInstallationClass.from_json(i) for i in installation_jsons ]
 
             return installations
 

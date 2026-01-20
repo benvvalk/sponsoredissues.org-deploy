@@ -136,9 +136,11 @@ class Command(BaseCommand):
         found_installation_urls = set()
 
         for installation in installations:
-            installation_url = installation['html_url']
-            installation_id = installation['id']
-            account_login = installation['account']['login']
+            installation_json = installation.installation_json
+            assert installation_json
+            installation_url = installation_json['html_url']
+            installation_id = installation_json['id']
+            account_login = installation_json['account']['login']
 
             found_installation_urls.add(installation_url)
 
@@ -150,7 +152,7 @@ class Command(BaseCommand):
                 continue
 
             try:
-                _installation_stats, _repo_stats, _issue_stats = self._sync_installation(installation, access_token, dry_run)
+                _installation_stats, _repo_stats, _issue_stats = self._sync_installation(installation_json, access_token, dry_run)
 
                 installation_stats.added += _installation_stats.added
                 installation_stats.updated += _installation_stats.updated
