@@ -134,7 +134,6 @@ class Command(BaseCommand):
             GitHubAppInstallation.objects.values_list('url', flat=True)
         )
         found_installation_urls = set()
-        suspended_installation_urls = set()
 
         for installation in installations:
             installation_url = installation['html_url']
