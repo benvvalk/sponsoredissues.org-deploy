@@ -60,7 +60,7 @@ class GitHubApp:
         except Exception as e:
             raise RuntimeError("Failed to generate GitHub App token. Did you configure GITHUB_APP_ID and GITHUB_APP_PRIVATE_KEY?") from e
 
-    def _get_request_headers(self, **kwargs):
+    def get_request_headers(self, **kwargs):
         app_token = self._get_github_app_token()
         return {
             'Authorization': f'Bearer {app_token}',
@@ -72,7 +72,7 @@ class GitHubApp:
         try:
             response = requests.get(
                 'https://api.github.com/app/installations',
-                headers=self._get_request_headers(),
+                headers=self.get_request_headers(),
                 timeout=30
             )
             response.raise_for_status()
@@ -97,7 +97,7 @@ class GitHubApp:
         # that.)
         response = requests.get(
             f'https://api.github.com/users/{github_account_name}/installation',
-            headers=self._get_request_headers(username=github_account_name),
+            headers=self.get_request_headers(username=github_account_name),
             timeout=30
         )
         response.raise_for_status()
@@ -109,7 +109,7 @@ class GitHubApp:
         try:
             response = requests.post(
                 f'https://api.github.com/app/installations/{installation_id}/access_tokens',
-                headers=self._get_request_headers(),
+                headers=self.get_request_headers(),
                 timeout=30
             )
             response.raise_for_status()
