@@ -1,5 +1,86 @@
 from django.db import models
 from django.contrib.auth.models import User
+from django.db.models.signals import pre_delete
+from django.dispatch import receiver
+
+class GitHubAppInstallationQuerySet(models.QuerySet):
+    def delete(self):
+        """
+        Override the `delete()` method for `GitHubAppInstallation`
+        query sets
+        (e.g. `GitHubAppInstallation.objects.all().delete()`), so that
+        unfunded issues are deleted but funded issues are preserved.
+
+        When we delete an app installation, we preserve funded issues
+        in a "frozen state" [1] because:
+
+        (1) We don't want to throw away the work/data of users that
+        already contributed to the GitHub issue(s).
+
+        (2) Uninstalling/suspending the GitHub App was likely a
+        mistake on the part of the maintainer. By preserving the
+        issue(s) in a frozen state, we allow the maintainer to easily
+        undo the mistake by reinstalling/unsuspending the app.
+
+        Implementation notes:
+
+        * In order for `delete()` to behave consistently for both
+        query sets and model instances (e.g. `installation.delete()`),
+        I needed to implement two `delete()` overrides: this method
+        and `GitHubAppInstallation.delete()` (see below).
+
+        * The tests for both `delete()` overrides are located in
+        `sponsoredissues/tests/test_models.py`.
+
+        * I tried to implement the desired `delete()` behaviour using
+        just `on_delete` constraints (`on_delete=models.CASCADE`,
+        `on_delete=models.PROTECT`, etc.), but I don't think it's
+        possible. If a single issue deletion fails due to an
+        `on_delete=models.PROTECT` constraint, the whole `delete()`
+        operation query set is aborted and rolled
+        back. `on_delete=models.RESTRICT` doesn't seem like the right
+        thing either.
+
+        * I also tried implementing my custom `delete()` behaviour
+        using a `pre_delete` signal. That approach works fine and is
+        simpler to implement. However, the downside is that number of
+        deleted issues is not included in the count/dictionary that is
+        returned by the main `delete()` call, and I think I'm going
+        to need/want that information.
+
+        [1]: When an issue is put in the "frozen" state, the issue
+        continues to be listed on the maintainer's issues page, but
+        the "Add or Remove Funds" button is disabled, and a warning is
+        shown that explains why the issue was frozen and how the
+        maintainer can unfreeze it.
+        """
+        # import here to avoid circular dependency
+        from sponsoredissues.models import GitHubIssue
+
+        # delete unfunded issues
+        unfunded_issues_deleted, _ = GitHubIssue.objects.filter(
+            repo__app_installation__in=self.all(),
+            sponsor_amounts__isnull=True
+        ).delete()
+
+        # delete installations (and repos via `on_delete=models.CASCADE`)
+        objects_deleted, deleted_by_model = super().delete()
+
+        # add unfunded issues count to the `deleted_by_model` dictionary
+        if unfunded_issues_deleted > 0:
+            deleted_by_model['sponsoredissues.GitHubIssue'] = unfunded_issues_deleted
+            objects_deleted += unfunded_issues_deleted
+
+        return (objects_deleted, deleted_by_model)
+
+class GitHubAppInstallationManager(models.Manager):
+    """
+    Custom manager for `GitHubAppInstallation`, which is used to
+    implement a custom `delete()` operation for `GitHubAppInstallation`
+    query sets.
+    """
+    def get_queryset(self):
+        return GitHubAppInstallationQuerySet(self.model, using=self._db)
 
 class GitHubAppInstallation(models.Model):
     """
@@ -13,6 +94,37 @@ class GitHubAppInstallation(models.Model):
     url = models.URLField(primary_key=True, max_length=500)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
+
+    objects = GitHubAppInstallationManager()
+
+    def delete(self, *args, **kwargs):
+        """
+        Override `GitHubAppInstallation.delete()` method so that it
+        deletes unfunded issues associated with the app installation,
+        but preserves any funded issues.
+
+        For more details about what I'm doing here (and why), see the
+        comments for `GitHubAppInstallationQuerySet.delete()` above,
+        which is the corresponding method for query sets.
+        """
+        # import here to avoid circular dependency
+        from sponsoredissues.models import GitHubIssue
+
+        # delete unfunded issues
+        unfunded_issues_deleted, _ = GitHubIssue.objects.filter(
+            repo__app_installation=self,
+            sponsor_amounts__isnull=True
+        ).delete()
+
+        # delete installations (and repos via `on_delete=models.CASCADE`)
+        objects_deleted, deleted_by_model = super().delete(*args, **kwargs)
+
+        # add unfunded issues count to the `deleted_by_model` dictionary
+        if unfunded_issues_deleted > 0:
+            deleted_by_model['sponsoredissues.GitHubIssue'] = unfunded_issues_deleted
+            objects_deleted += unfunded_issues_deleted
+
+        return (objects_deleted, deleted_by_model)
 
 class GitHubRepo(models.Model):
     """

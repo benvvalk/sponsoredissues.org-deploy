@@ -177,13 +177,22 @@ class Command(BaseCommand):
         # GitHub API. (These app installations must have been
         # uninstalled by the maintainer.)
         installation_urls_to_remove = current_installation_urls - found_installation_urls
-        for installation_url in installation_urls_to_remove:
-            if not dry_run:
-                repos_removed, issues_removed = self._remove_installation(installation_url)
-                repo_stats.removed += repos_removed
-                issue_stats.removed += issues_removed
-            installation_stats.removed += 1
-            self.stdout.write(f'Installation {account_login}: removed, because it was installed')
+
+        if not dry_run:
+            _, deleted_by_model = GitHubAppInstallation.objects.filter(url__in=installation_urls_to_remove).delete()
+            installations_removed = deleted_by_model.get('GitHubAppInstallation', 0)
+            repos_removed = deleted_by_model.get('GitHubRepo', 0)
+            issues_removed = deleted_by_model.get('GitHubIssue', 0)
+            self.stdout.write(f'Removed {installations_removed} installations, because they were uninstalled or suspended (- {repos_removed} repos, - {issues_removed} issues)')
+        else:
+            installations_removed = len(installation_urls_to_remove)
+            repos_removed = 0
+            issues_removed = 0
+            self.stdout.write(f'Removed {installations_removed} installations, because they were uninstalled or suspended')
+
+        installation_stats.removed += installations_removed
+        repo_stats.removed += repos_removed
+        issue_stats.removed += issues_removed
 
         # Final summary
         self.stdout.write(f'\n=== SYNC SUMMARY ===')
@@ -221,9 +230,9 @@ class Command(BaseCommand):
         if github_app_installation_is_suspended(installation_json):
             if installation:
                 if not dry_run:
-                    repos_removed, issues_removed = self._remove_installation(installation_json)
-                    repo_stats.removed += repos_removed
-                    issue_stats.removed += issues_removed
+                    _, deleted_by_model = GitHubAppInstallation.objects.get(url=installation_url).delete()
+                    repo_stats.removed += deleted_by_model.get('GitHubRepo', 0)
+                    issue_stats.removed += deleted_by_model.get('GitHubIssue', 0)
                 installation_stats.removed += 1
                 self.stdout.write(f'Removed: installation {account_login}, because it is suspended')
             else:
@@ -254,62 +263,6 @@ class Command(BaseCommand):
             self.stdout.write(f'Added: installation {account_login}')
 
         return installation_stats, repo_stats, issue_stats
-
-    def _remove_installation(self, installation_json):
-        """
-        Delete a GitHub App installation from the database.
-
-        Some important reminders from `models.py`:
-
-        * An app installation is only present in the
-        `GitHubAppInstallation` table while it is installed and
-        active. If we discover that an installation has been
-        uninstalled or suspended during a sync/webhook, we delete the
-        `GitHubAppInstallation` instance from the database.
-
-        * When we delete a `GitHubAppInstallation` instance, any repos
-        that belong to the installation are automatically deleted from
-        the `GitHubRepo` table via `on_delete=model.CASCADE`.
-
-        * `GitHubIssue`s that belong to the deleted installation/repos
-        are not automatically deleted; instead, their `repo` fields
-        are set to `None` via `on_delete=model.SET_NULL`. The reason
-        we don't auto-delete the issues is that we need to preserve
-        issues that already have funding from users. (See the long
-        comment in `_sync_installation_issues` for the reasons we
-        always keep funded issues.)
-
-        * If a `GitHubIssue` has a `repo` value of `None`, it
-        indicates that the issue will be displayed in a "frozen" state
-        on the maintainer's sponsored issues page, along with a
-        warning message explaining what the maintainer can do to fix
-        the issue state (e.g. unsuspend/reinstall the
-        "sponsoredissues-maintainer" GitHub App).
-
-        * It is safe to delete `GitHubIssue`s associated with a
-        deleted `GitHubAppInstallation` if they have zero any funding,
-        which we do with a separate query below.
-        """
-        installation_url = installation_json['html_url']
-        github_account = installation_json['account']['login']
-
-        _, result = GitHubAppInstallation.objects.get(url=installation_url).delete()
-        repos_removed = result['GitHubRepo'] if 'GitHubRepo' in result else 0
-
-        # Delete any affected issues that are unfunded.
-        # (Funded issues will be retained and displayed in a special
-        # "frozen" state on the maintainer's sponsored issues page.)
-        issues_removed, _ = GitHubIssue.objects.filter(
-            url__startswith=f'https://github.com/{github_account}/',
-            repo__isnull=True,
-            sponsor_amounts__isnull=True,
-        ).delete()
-
-        self.stdout.write(
-            f'Installation {account_login}: removed (-{repos_removed} repos, -{issues_removed} issues)'
-        )
-
-        return repos_removed, issues_removed
 
     def _sync_installation_repos(self, installation_json, access_token, dry_run):
         """Sync repos for a single GitHub App installation"""
