@@ -48,6 +48,20 @@ class GitHubAppInstallationClass:
         self.access_token = response.json()['token']
         return self.access_token
 
+    def query_json(self):
+        if self.installation_json:
+            return self.installation_json
+
+        response = requests.post(
+            f'https://api.github.com/app/installations/{self.installation_id}',
+            headers=self.github_app.get_request_headers(),
+            timeout=30
+        )
+        response.raise_for_status()
+
+        self.installation_json = response.json()
+        return self.installation_json
+
     def query_repos(self):
         data = github_api(f'/installation/repositories', self.get_access_token())
         return data['repositories']
