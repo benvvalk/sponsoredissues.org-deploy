@@ -8,7 +8,7 @@ from django.utils import timezone
 from itertools import islice
 from sponsoredissues.models import GitHubAppInstallation, GitHubIssue, GitHubRepo
 from sponsoredissues.github_api import github_api, github_app_installation_is_suspended, github_issue_has_sponsoredissues_label, github_graphql
-from sponsoredissues.github_app import GitHubApp
+from sponsoredissues.github_app import GitHubApp, GitHubAppInstallationClass
 from urllib.parse import urlparse
 
 # Rate limiting configuration
@@ -145,14 +145,7 @@ class Command(BaseCommand):
             found_installation_urls.add(installation_url)
 
             try:
-                access_token = self.github_app.get_installation_access_token(installation_id)
-            except Exception as e:
-                self.stdout.write(f'Failed to get GitHub App access token for installation {installation_id}: {e}')
-                time.sleep(delay)
-                continue
-
-            try:
-                _installation_stats, _repo_stats, _issue_stats = self._sync_installation(installation_json, access_token, dry_run)
+                _installation_stats, _repo_stats, _issue_stats = self._sync_installation(installation_json, dry_run)
 
                 installation_stats.added += _installation_stats.added
                 installation_stats.updated += _installation_stats.updated
@@ -214,7 +207,7 @@ class Command(BaseCommand):
         else:
             self.stdout.write(self.style.SUCCESS('Sync completed'))
 
-    def _sync_installation(self, installation_json, access_token, dry_run):
+    def _sync_installation(self, installation_json, dry_run):
         account_login = installation_json['account']['login']
         installation_id = installation_json['id']
         installation_url = installation_json['html_url']
@@ -240,8 +233,8 @@ class Command(BaseCommand):
                 self.stdout.write(f'Skipped: installation {account_login}, because it is suspended')
             return installation_stats, repo_stats, issue_stats
 
-        repo_stats = self._sync_installation_repos(installation_json, access_token, dry_run)
-        issue_stats = self._sync_installation_issues(installation_json, access_token, dry_run)
+        repo_stats = self._sync_installation_repos(installation_json, dry_run)
+        issue_stats = self._sync_installation_issues(installation_json, dry_run)
 
         self.stdout.write(
             f'Installation {account_login}: +{repo_stats.added} ~{repo_stats.updated} -{repo_stats.removed} repos'
@@ -265,7 +258,7 @@ class Command(BaseCommand):
 
         return installation_stats, repo_stats, issue_stats
 
-    def _sync_installation_repos(self, installation_json, access_token, dry_run):
+    def _sync_installation_repos(self, installation_json, dry_run):
         """Sync repos for a single GitHub App installation"""
         installation_id = installation_json['id']
         installation_url = installation_json['html_url']
@@ -273,6 +266,10 @@ class Command(BaseCommand):
 
         installation = GitHubAppInstallation.objects.get(url=installation_url)
         assert installation
+
+        # Get installation access token
+        _installation = GitHubAppInstallationClass.from_json(installation_json)
+        access_token = _installation.get_access_token()
 
         # Query repositories and issues using GraphQL
         repos = self._query_installation_repos(access_token)
@@ -328,10 +325,14 @@ class Command(BaseCommand):
 
         return repo_stats
 
-    def _sync_installation_issues(self, installation, access_token, dry_run):
+    def _sync_installation_issues(self, installation, dry_run):
         """Sync issues for a single GitHub App installation"""
         installation_id = installation['id']
         account_login = installation['account']['login']
+
+        # Get installation access token
+        _installation = GitHubAppInstallationClass.from_json(installation)
+        access_token = _installation.get_access_token()
 
         # Query repositories and issues using GraphQL
         issues_data = self._query_installation_issues(account_login, access_token)

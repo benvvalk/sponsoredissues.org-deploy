@@ -10,7 +10,8 @@ logger = logging.getLogger(__name__)
 # Note: Added "Class" suffix to prevent name collision with
 # `GitHubAppInstallation` in `models.py`.
 class GitHubAppInstallationClass:
-    github_app : 'GitHubApp' # quotes indicate forward declaration
+    access_token: Optional[str] = None
+    github_app: 'GitHubApp' # quotes indicate forward declaration
     installation_id: int
     installation_json: Optional[Dict[str, Any]] = None
 
@@ -27,6 +28,20 @@ class GitHubAppInstallationClass:
     @classmethod
     def from_id(cls, installation_id):
         return cls(installation_id)
+
+    def get_access_token(self):
+        if self.access_token:
+            return self.access_token
+
+        response = requests.post(
+            f'https://api.github.com/app/installations/{self.installation_id}/access_tokens',
+            headers=self.github_app.get_request_headers(),
+            timeout=30
+        )
+        response.raise_for_status()
+
+        self.access_token = response.json()['token']
+        return self.access_token
 
 class GitHubApp:
     """Shared GitHub App authentication utilities"""
@@ -104,22 +119,6 @@ class GitHubApp:
 
         return response.json()
 
-    def get_installation_access_token(self, installation_id: int) -> Optional[str]:
-        """Get installation access token for GitHub App"""
-        try:
-            response = requests.post(
-                f'https://api.github.com/app/installations/{installation_id}/access_tokens',
-                headers=self.get_request_headers(),
-                timeout=30
-            )
-            response.raise_for_status()
-
-            return response.json()['token']
-
-        except requests.RequestException as e:
-            logger.error(f'Failed to get installation access token for {installation_id}: {e}')
-            return None
-
     def get_any_installation_access_token(self):
         """
         Get GitHub App access token for API calls.
@@ -133,7 +132,7 @@ class GitHubApp:
             return None
 
         # Use the first available installation
-        access_token = self.get_installation_access_token(installations[0]['id'])
+        access_token = installations[0].get_access_token()
         if not access_token:
             logger.warning("Failed to get GitHub App access token")
             return None

@@ -45,7 +45,6 @@ class SyncInstallationReposTest(TestCase):
         # Call the method
         stats = self.command._sync_installation_repos(
             self.installation_json,
-            'fake-access-token',
             dry_run=False
         )
 
@@ -82,7 +81,6 @@ class SyncInstallationReposTest(TestCase):
         # Call the method
         stats = self.command._sync_installation_repos(
             self.installation_json,
-            'fake-access-token',
             dry_run=False
         )
 
@@ -109,7 +107,6 @@ class SyncInstallationReposTest(TestCase):
         # Call the method
         stats = self.command._sync_installation_repos(
             self.installation_json,
-            'fake-access-token',
             dry_run=False
         )
 
@@ -137,7 +134,6 @@ class SyncInstallationReposTest(TestCase):
         # Call the method
         stats = self.command._sync_installation_repos(
             self.installation_json,
-            'fake-access-token',
             dry_run=False
         )
 
@@ -198,11 +194,11 @@ class SyncInstallationIssuesTest(TestCase):
         mock_query_issues.return_value = [issue_data]
 
         # Call the method
-        stats = self.command._sync_installation_issues(
-            self.installation_json,
-            'fake-access-token',
-            dry_run=False
-        )
+        with patch.object(GitHubAppInstallationClass, 'get_access_token', return_value='fake-token'):
+            stats = self.command._sync_installation_issues(
+                self.installation_json,
+                dry_run=False
+            )
 
         # Verify the issue was created in the database
         self.assertEqual(GitHubIssue.objects.count(), 1)
@@ -249,11 +245,11 @@ class SyncInstallationIssuesTest(TestCase):
         mock_query_issues.return_value = [updated_data]
 
         # Call the method
-        stats = self.command._sync_installation_issues(
-            self.installation_json,
-            'fake-access-token',
-            dry_run=False
-        )
+        with patch.object(GitHubAppInstallationClass, 'get_access_token', return_value='fake-token'):
+            stats = self.command._sync_installation_issues(
+                self.installation_json,
+                dry_run=False
+            )
 
         # Verify issue still exists and was updated
         self.assertEqual(GitHubIssue.objects.count(), 1)
@@ -295,11 +291,11 @@ class SyncInstallationIssuesTest(TestCase):
         mock_query_issues.return_value = [updated_data]
 
         # Call the method
-        stats = self.command._sync_installation_issues(
-            self.installation_json,
-            'fake-access-token',
-            dry_run=False
-        )
+        with patch.object(GitHubAppInstallationClass, 'get_access_token', return_value='fake-token'):
+            stats = self.command._sync_installation_issues(
+                self.installation_json,
+                dry_run=False
+            )
 
         # Verify issue was deleted from database
         self.assertEqual(GitHubIssue.objects.count(), 0)
@@ -345,11 +341,11 @@ class SyncInstallationIssuesTest(TestCase):
         mock_query_issues.return_value = [issue1_data, issue2_data]
 
         # Call the method
-        stats = self.command._sync_installation_issues(
-            self.installation_json,
-            'fake-access-token',
-            dry_run=False
-        )
+        with patch.object(GitHubAppInstallationClass, 'get_access_token', return_value='fake-token'):
+            stats = self.command._sync_installation_issues(
+                self.installation_json,
+                dry_run=False
+            )
 
         # Verify both issues were created with correct repo assignments
         self.assertEqual(GitHubIssue.objects.count(), 2)
@@ -420,11 +416,11 @@ class SyncInstallationIssuesTest(TestCase):
         mock_query_issues.return_value = [updated_issue1_data, new_issue3_data]
 
         # Call the method
-        stats = self.command._sync_installation_issues(
-            self.installation_json,
-            'fake-access-token',
-            dry_run=False
-        )
+        with patch.object(GitHubAppInstallationClass, 'get_access_token', return_value='fake-token'):
+            stats = self.command._sync_installation_issues(
+                self.installation_json,
+                dry_run=False
+            )
 
         # Verify operations
         self.assertEqual(GitHubIssue.objects.count(), 2)  # issue1 and issue3
@@ -483,11 +479,11 @@ class SyncInstallationIssuesTest(TestCase):
         mock_query_issues.return_value = [updated_issue_data, new_issue_data]
 
         # Call the method in DRY RUN mode
-        stats = self.command._sync_installation_issues(
-            self.installation_json,
-            'fake-access-token',
-            dry_run=True
-        )
+        with patch.object(GitHubAppInstallationClass, 'get_access_token', return_value='fake-token'):
+            stats = self.command._sync_installation_issues(
+                self.installation_json,
+                dry_run=True
+            )
 
         # Verify NO database changes occurred
         self.assertEqual(GitHubIssue.objects.count(), 1)  # Still just the original issue
@@ -533,11 +529,11 @@ class SyncInstallationIssuesTest(TestCase):
         mock_query_issues.return_value = [closed_issue_data]
 
         # Call the method
-        stats = self.command._sync_installation_issues(
-            self.installation_json,
-            'fake-access-token',
-            dry_run=False
-        )
+        with patch.object(GitHubAppInstallationClass, 'get_access_token', return_value='fake-token'):
+            stats = self.command._sync_installation_issues(
+                self.installation_json,
+                dry_run=False
+            )
 
         # Verify issue still exists (not deleted)
         self.assertEqual(GitHubIssue.objects.count(), 1)
@@ -624,7 +620,7 @@ class SuspendedInstallationTest(TestCase):
             target_github_issue=funded_issue
         )
 
-        with patch.object(self.command.github_app, 'get_installation_access_token') as mock_token:
+        with patch.object(GitHubAppInstallationClass, 'get_access_token') as mock_token:
             mock_token.return_value = 'fake-token'
             with patch.object(self.command.github_app, 'query_installations') as mock_installations:
                 mock_installations.return_value = [
@@ -705,7 +701,7 @@ class SuspendedInstallationTest(TestCase):
         mock_sync_repos.return_value = (0, 1, 0)  # added, updated, removed
         mock_sync_issues.return_value = (0, 0, 0)
 
-        with patch.object(self.command.github_app, 'get_installation_access_token') as mock_token:
+        with patch.object(GitHubAppInstallationClass, 'get_access_token') as mock_token:
             mock_token.return_value = 'fake-token'
             with patch.object(self.command.github_app, 'query_installations') as mock_installations:
                 mock_installations.return_value = [
