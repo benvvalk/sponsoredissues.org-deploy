@@ -267,12 +267,9 @@ class Command(BaseCommand):
         installation = GitHubAppInstallation.objects.get(url=installation_url)
         assert installation
 
-        # Get installation access token
-        _installation = GitHubAppInstallationClass.from_json(installation_json)
-        access_token = _installation.get_access_token()
-
         # Query repositories and issues using GraphQL
-        repos = self._query_installation_repos(access_token)
+        _installation = GitHubAppInstallationClass.from_json(installation_json)
+        repos = _installation.query_repos()
 
         self.stdout.write(f'`Installation {account_login}: found {len(repos)} repos')
 
@@ -473,10 +470,6 @@ class Command(BaseCommand):
                     self.stdout.write(f'Removed: {issue_url}')
 
         return issue_stats
-
-    def _query_installation_repos(self, access_token):
-        data = github_api(f'/installation/repositories', access_token)
-        return data['repositories']
 
     def _query_installation_issues(self, username, access_token):
         """

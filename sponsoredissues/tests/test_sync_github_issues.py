@@ -30,7 +30,7 @@ class SyncInstallationReposTest(TestCase):
         }
         self.installation = GitHubAppInstallation.objects.create(url=installation_url)
 
-    @patch.object(Command, '_query_installation_repos')
+    @patch.object(GitHubAppInstallationClass, 'query_repos')
     def test_add_new_public_repo(self, mock_query_repos):
         """Test adding a new public repository."""
         # Mock the API response with one new public repo
@@ -58,7 +58,7 @@ class SyncInstallationReposTest(TestCase):
         self.assertEqual(stats.updated, 0)
         self.assertEqual(stats.removed, 0)
 
-    @patch.object(Command, '_query_installation_repos')
+    @patch.object(GitHubAppInstallationClass, 'query_repos')
     def test_update_existing_repo(self, mock_query_repos):
         """Test updating an existing repository's timestamp."""
         # Create an existing repo in the database
@@ -94,7 +94,7 @@ class SyncInstallationReposTest(TestCase):
         self.assertEqual(stats.updated, 1)
         self.assertEqual(stats.removed, 0)
 
-    @patch.object(Command, '_query_installation_repos')
+    @patch.object(GitHubAppInstallationClass, 'query_repos')
     def test_remove_repo_no_longer_accessible(self, mock_query_repos):
         """Test removing a repository that is no longer accessible."""
         # Create an existing repo in the database
@@ -119,7 +119,7 @@ class SyncInstallationReposTest(TestCase):
         self.assertEqual(stats.updated, 0)
         self.assertEqual(stats.removed, 1)
 
-    @patch.object(Command, '_query_installation_repos')
+    @patch.object(GitHubAppInstallationClass, 'query_repos')
     def test_skip_private_repos(self, mock_query_repos):
         """Test that private repositories are skipped and not added to database."""
         # Mock the API response with one private repo

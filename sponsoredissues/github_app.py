@@ -3,6 +3,7 @@ import jwt
 import logging
 from datetime import datetime, timedelta
 from django.conf import settings
+from sponsoredissues.github_api import github_api
 from typing import Any, Optional, Dict, List
 
 logger = logging.getLogger(__name__)
@@ -42,6 +43,10 @@ class GitHubAppInstallationClass:
 
         self.access_token = response.json()['token']
         return self.access_token
+
+    def query_repos(self):
+        data = github_api(f'/installation/repositories', self.get_access_token())
+        return data['repositories']
 
 class GitHubApp:
     """Shared GitHub App authentication utilities"""
