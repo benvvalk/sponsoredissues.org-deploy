@@ -174,7 +174,7 @@ class SyncInstallationIssuesTest(TestCase):
             app_installation=self.installation,
         )
 
-    @patch.object(Command, '_query_installation_issues')
+    @patch.object(GitHubAppInstallationClass, 'query_issues_with_sponsoredissues_label_or_funding')
     def test_add_new_issue_with_label(self, mock_query_issues):
         """Test adding a new issue with sponsoredissues.org label."""
         # Mock the API response with one new issue
@@ -194,11 +194,10 @@ class SyncInstallationIssuesTest(TestCase):
         mock_query_issues.return_value = [issue_data]
 
         # Call the method
-        with patch.object(GitHubAppInstallationClass, 'get_access_token', return_value='fake-token'):
-            stats = self.command._sync_installation_issues(
-                self.installation_json,
-                dry_run=False
-            )
+        stats = self.command._sync_installation_issues(
+            self.installation_json,
+            dry_run=False
+        )
 
         # Verify the issue was created in the database
         self.assertEqual(GitHubIssue.objects.count(), 1)
@@ -212,7 +211,7 @@ class SyncInstallationIssuesTest(TestCase):
         self.assertEqual(stats.updated, 0)
         self.assertEqual(stats.removed, 0)
 
-    @patch.object(Command, '_query_installation_issues')
+    @patch.object(GitHubAppInstallationClass, 'query_issues_with_sponsoredissues_label_or_funding')
     def test_update_existing_issue(self, mock_query_issues):
         """Test updating an existing issue's data."""
         # Create an existing issue in the database
@@ -245,11 +244,10 @@ class SyncInstallationIssuesTest(TestCase):
         mock_query_issues.return_value = [updated_data]
 
         # Call the method
-        with patch.object(GitHubAppInstallationClass, 'get_access_token', return_value='fake-token'):
-            stats = self.command._sync_installation_issues(
-                self.installation_json,
-                dry_run=False
-            )
+        stats = self.command._sync_installation_issues(
+            self.installation_json,
+            dry_run=False
+        )
 
         # Verify issue still exists and was updated
         self.assertEqual(GitHubIssue.objects.count(), 1)
@@ -263,7 +261,7 @@ class SyncInstallationIssuesTest(TestCase):
         self.assertEqual(stats.updated, 1)
         self.assertEqual(stats.removed, 0)
 
-    @patch.object(Command, '_query_installation_issues')
+    @patch.object(GitHubAppInstallationClass, 'query_issues_with_sponsoredissues_label_or_funding')
     def test_remove_unfunded_issue_when_label_removed(self, mock_query_issues):
         """Test removing an unfunded issue when sponsoredissues.org label is removed."""
         # Create an existing unfunded issue in the database
@@ -291,11 +289,10 @@ class SyncInstallationIssuesTest(TestCase):
         mock_query_issues.return_value = [updated_data]
 
         # Call the method
-        with patch.object(GitHubAppInstallationClass, 'get_access_token', return_value='fake-token'):
-            stats = self.command._sync_installation_issues(
-                self.installation_json,
-                dry_run=False
-            )
+        stats = self.command._sync_installation_issues(
+            self.installation_json,
+            dry_run=False
+        )
 
         # Verify issue was deleted from database
         self.assertEqual(GitHubIssue.objects.count(), 0)
@@ -306,7 +303,7 @@ class SyncInstallationIssuesTest(TestCase):
         self.assertEqual(stats.updated, 0)
         self.assertEqual(stats.removed, 1)
 
-    @patch.object(Command, '_query_installation_issues')
+    @patch.object(GitHubAppInstallationClass, 'query_issues_with_sponsoredissues_label_or_funding')
     def test_issue_assigned_to_correct_repo(self, mock_query_issues):
         """Test that issues are correctly assigned to their parent repository."""
         # Create a second repo
@@ -341,11 +338,10 @@ class SyncInstallationIssuesTest(TestCase):
         mock_query_issues.return_value = [issue1_data, issue2_data]
 
         # Call the method
-        with patch.object(GitHubAppInstallationClass, 'get_access_token', return_value='fake-token'):
-            stats = self.command._sync_installation_issues(
-                self.installation_json,
-                dry_run=False
-            )
+        stats = self.command._sync_installation_issues(
+            self.installation_json,
+            dry_run=False
+        )
 
         # Verify both issues were created with correct repo assignments
         self.assertEqual(GitHubIssue.objects.count(), 2)
@@ -359,7 +355,7 @@ class SyncInstallationIssuesTest(TestCase):
         self.assertEqual(stats.updated, 0)
         self.assertEqual(stats.removed, 0)
 
-    @patch.object(Command, '_query_installation_issues')
+    @patch.object(GitHubAppInstallationClass, 'query_issues_with_sponsoredissues_label_or_funding')
     def test_mixed_add_update_remove_operations(self, mock_query_issues):
         """Test mixed operations: add new issue, update existing, remove old."""
         # Create two existing issues
@@ -416,11 +412,10 @@ class SyncInstallationIssuesTest(TestCase):
         mock_query_issues.return_value = [updated_issue1_data, new_issue3_data]
 
         # Call the method
-        with patch.object(GitHubAppInstallationClass, 'get_access_token', return_value='fake-token'):
-            stats = self.command._sync_installation_issues(
-                self.installation_json,
-                dry_run=False
-            )
+        stats = self.command._sync_installation_issues(
+            self.installation_json,
+            dry_run=False
+        )
 
         # Verify operations
         self.assertEqual(GitHubIssue.objects.count(), 2)  # issue1 and issue3
@@ -440,7 +435,7 @@ class SyncInstallationIssuesTest(TestCase):
         self.assertEqual(stats.updated, 1)
         self.assertEqual(stats.removed, 1)
 
-    @patch.object(Command, '_query_installation_issues')
+    @patch.object(GitHubAppInstallationClass, 'query_issues_with_sponsoredissues_label_or_funding')
     def test_dry_run_mode_makes_no_changes(self, mock_query_issues):
         """Test that dry run mode doesn't make any database changes."""
         # Create an existing issue
@@ -479,11 +474,10 @@ class SyncInstallationIssuesTest(TestCase):
         mock_query_issues.return_value = [updated_issue_data, new_issue_data]
 
         # Call the method in DRY RUN mode
-        with patch.object(GitHubAppInstallationClass, 'get_access_token', return_value='fake-token'):
-            stats = self.command._sync_installation_issues(
-                self.installation_json,
-                dry_run=True
-            )
+        stats = self.command._sync_installation_issues(
+            self.installation_json,
+            dry_run=True
+        )
 
         # Verify NO database changes occurred
         self.assertEqual(GitHubIssue.objects.count(), 1)  # Still just the original issue
@@ -500,7 +494,7 @@ class SyncInstallationIssuesTest(TestCase):
         self.assertEqual(stats.updated, 1)
         self.assertEqual(stats.removed, 0)
 
-    @patch.object(Command, '_query_installation_issues')
+    @patch.object(GitHubAppInstallationClass, 'query_issues_with_sponsoredissues_label_or_funding')
     def test_issue_state_change_open_to_closed(self, mock_query_issues):
         """Test that issue state changes (open to closed) are properly updated."""
         # Create an existing open issue
@@ -529,11 +523,10 @@ class SyncInstallationIssuesTest(TestCase):
         mock_query_issues.return_value = [closed_issue_data]
 
         # Call the method
-        with patch.object(GitHubAppInstallationClass, 'get_access_token', return_value='fake-token'):
-            stats = self.command._sync_installation_issues(
-                self.installation_json,
-                dry_run=False
-            )
+        stats = self.command._sync_installation_issues(
+            self.installation_json,
+            dry_run=False
+        )
 
         # Verify issue still exists (not deleted)
         self.assertEqual(GitHubIssue.objects.count(), 1)
