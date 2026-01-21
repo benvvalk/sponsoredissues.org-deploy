@@ -475,11 +475,7 @@ class Command(BaseCommand):
         return issue_stats
 
     def _query_installation_repos(self, access_token):
-        status_code, data = github_api(f'/installation/repositories', access_token)
-
-        if status_code != 200:
-            raise Exception(f"GitHub API request failed with status {status_code}: {data}")
-
+        data = github_api(f'/installation/repositories', access_token)
         return data['repositories']
 
     def _query_installation_issues(self, username, access_token):

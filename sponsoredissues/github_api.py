@@ -72,6 +72,7 @@ def github_api(endpoint, access_token=None, auto_paginate=True, max_pages=10, pe
             headers=headers,
             timeout=10 # seconds
         )
+        response.raise_for_status()
 
         # Log GitHub API rate limit info
         remaining = response.headers.get('X-RateLimit-Remaining')
@@ -79,20 +80,18 @@ def github_api(endpoint, access_token=None, auto_paginate=True, max_pages=10, pe
         if remaining:
             logger.debug(f"GitHub API rate limit: {remaining} remaining (resets at {reset_time})")
 
-        initial_status = response.status_code
-
-        # If not auto-paginating or request failed, return as-is
-        if not auto_paginate or response.status_code != 200:
-            return response.status_code, response.json()
-
         # Parse initial response
         data = response.json()
+
+        # If not auto-paginating or request failed, return as-is
+        if not auto_paginate:
+            return data
 
         # Check if response is paginated (has Link header with 'next')
         link_header = response.headers.get('Link')
         if not link_header:
             # No pagination, return as-is
-            return initial_status, data
+            return data
 
         links = _parse_link_header(link_header)
 
@@ -114,10 +113,10 @@ def github_api(endpoint, access_token=None, auto_paginate=True, max_pages=10, pe
                 is_list_response = False
             else:
                 # Dict but not a recognized paginated format
-                return initial_status, data
+                return data
         else:
             # Not a format we can paginate
-            return initial_status, data
+            return data
 
         # Fetch additional pages
         page_count = 1
@@ -134,6 +133,7 @@ def github_api(endpoint, access_token=None, auto_paginate=True, max_pages=10, pe
                 headers=headers,
                 timeout=10
             )
+            response.raise_for_status()
 
             # Log rate limit info
             remaining = response.headers.get('X-RateLimit-Remaining')
@@ -169,15 +169,14 @@ def github_api(endpoint, access_token=None, auto_paginate=True, max_pages=10, pe
 
         # Return merged results
         if is_list_response:
-            return initial_status, all_items
+            return all_items
         else:
             # Update the dict with all items
             data[pagination_key] = all_items
-            return initial_status, data
+            return data
 
     except requests.exceptions.RequestException as e:
-        logger.error(f"GitHub API request failed: {e}")
-        raise
+        raise RuntimeError(f"GitHub API request failed") from e
 
 def github_graphql(query, access_token, variables=None, timeout=30):
     """
