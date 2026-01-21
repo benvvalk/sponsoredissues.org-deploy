@@ -1,5 +1,3 @@
-import time
-import random
 import requests
 import traceback
 from django.core.management.base import BaseCommand, CommandError
@@ -7,14 +5,9 @@ from django.conf import settings
 from django.utils import timezone
 from itertools import islice
 from sponsoredissues.models import GitHubAppInstallation, GitHubIssue, GitHubRepo
-from sponsoredissues.github_api import github_api, github_app_installation_is_suspended, github_issue_has_sponsoredissues_label, github_graphql
+from sponsoredissues.github_api import github_api, github_app_installation_is_suspended, github_issue_has_sponsoredissues_label, github_graphql, random_sleep_for_rate_limiting
 from sponsoredissues.github_app import GitHubApp, GitHubAppInstallationClass
 from urllib.parse import urlparse
-
-# Rate limiting configuration
-REQUEST_DELAY_MIN = 2.0  # Minimum delay between requests (seconds)
-REQUEST_DELAY_MAX = 10.0 # Maximum delay between requests (seconds)
-RETRY_DELAY = 60.0       # Delay before retrying failed requests (seconds)
 
 class SyncStats:
     """
@@ -87,8 +80,7 @@ class Command(BaseCommand):
                     if not loop_mode:
                         return
                     else:
-                        self.stdout.write(f'Waiting {loop_delay}s before next cycle...')
-                        time.sleep(loop_delay)
+                        random_sleep_for_rate_limiting()
                         continue
 
                 # Exit if not in loop mode
@@ -97,8 +89,7 @@ class Command(BaseCommand):
 
                 # Wait before next cycle
                 if loop_delay > 0:
-                    self.stdout.write(f'\nWaiting {loop_delay}s before next cycle...')
-                    time.sleep(loop_delay)
+                    random_sleep_for_rate_limiting()
 
         except KeyboardInterrupt:
             self.stdout.write(f'\n\nSync interrupted by user after {cycle} cycle(s)')
@@ -122,9 +113,6 @@ class Command(BaseCommand):
         installation_stats = SyncStats()
         repo_stats = SyncStats()
         issue_stats = SyncStats()
-
-        # Rate limiting between queries
-        delay = random.uniform(REQUEST_DELAY_MIN, REQUEST_DELAY_MAX)
 
         # Compare the app installation URLs in our database to the
         # installation URLs we retrieved from the GitHub API, to
@@ -164,7 +152,7 @@ class Command(BaseCommand):
                     self.style.ERROR(f'Error syncing installation {account_login}: {e}\n{traceback.format_exc()}')
                 )
 
-            time.sleep(delay)
+            random_sleep_for_rate_limiting()
 
         # Delete any app installations in our database that weren't
         # present in the latest list of app installations from the
@@ -567,7 +555,7 @@ class Command(BaseCommand):
                 data = github_graphql(query, access_token, variables=variables, timeout=30)
             except requests.RequestException as e:
                 self.stdout.write(self.style.ERROR(f'GraphQL request failed: {e}'))
-                time.sleep(RETRY_DELAY)
+                random_sleep_for_rate_limiting()
                 continue
 
             user_data = data.get('user')
@@ -614,9 +602,7 @@ class Command(BaseCommand):
             # Update info about next page of query results (if any)
             page_info = repositories.get('pageInfo')
 
-            # Rate limiting between requests
-            delay = random.uniform(REQUEST_DELAY_MIN, REQUEST_DELAY_MAX)
-            time.sleep(delay)
+            random_sleep_for_rate_limiting()
 
         return issues
 
@@ -713,7 +699,7 @@ class Command(BaseCommand):
                 data = github_graphql(query, access_token, timeout=30)
             except requests.RequestException as e:
                 self.stdout.write(self.style.ERROR(f'GraphQL request failed: {e}'))
-                time.sleep(RETRY_DELAY)
+                random_sleep_for_rate_limiting()
                 continue
 
             for i in range(len(data)):
@@ -741,8 +727,6 @@ class Command(BaseCommand):
                         }
                     }
                     issues.append(issue_data)
-            # Rate limiting between requests
-            delay = random.uniform(REQUEST_DELAY_MIN, REQUEST_DELAY_MAX)
-            time.sleep(delay)
+            random_sleep_for_rate_limiting()
 
         return issues

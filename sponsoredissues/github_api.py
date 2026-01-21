@@ -8,9 +8,10 @@ from urllib.parse import urljoin
 
 logger = logging.getLogger(__name__)
 
-# Rate limiting delays between paginated requests (in seconds)
-REQUEST_DELAY_MIN = 2
-REQUEST_DELAY_MAX = 10
+def random_sleep_for_rate_limiting():
+    seconds = random.uniform(2, 10)
+    logger.info(f"Sleeping {seconds:.1f}s (for rate limiting)...")
+    time.sleep(seconds)
 
 def _parse_link_header(link_header):
     """
@@ -124,9 +125,8 @@ def github_api(endpoint, access_token=None, auto_paginate=True, max_pages=10, pe
 
         while next_url and page_count < max_pages:
             # Rate limiting delay
-            delay = random.uniform(REQUEST_DELAY_MIN, REQUEST_DELAY_MAX)
-            logger.debug(f"Fetching page {page_count + 1}, sleeping {delay:.1f}s for rate limiting")
-            time.sleep(delay)
+            random_sleep_for_rate_limiting(logger=logger)
+            logger.debug(f"Fetching page {page_count + 1}")
 
             response = requests.get(
                 next_url,
