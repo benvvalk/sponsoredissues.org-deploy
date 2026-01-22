@@ -1,13 +1,9 @@
-import requests
 import traceback
-from django.core.management.base import BaseCommand, CommandError
-from django.conf import settings
+from django.core.management.base import BaseCommand
 from django.utils import timezone
-from itertools import islice
 from sponsoredissues.models import GitHubAppInstallation, GitHubIssue, GitHubRepo
-from sponsoredissues.github_api import github_api, github_app_installation_is_suspended, github_issue_has_sponsoredissues_label, github_graphql, random_sleep_for_rate_limiting
+from sponsoredissues.github_api import github_app_installation_is_suspended, github_issue_has_sponsoredissues_label, random_sleep_for_rate_limiting
 from sponsoredissues.github_app import GitHubApp, GitHubAppInstallationClass
-from urllib.parse import urlparse
 
 class SyncStats:
     """
