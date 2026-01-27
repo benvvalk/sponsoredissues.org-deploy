@@ -97,6 +97,13 @@ class GitHubAppInstallation(models.Model):
 
     objects = GitHubAppInstallationManager()
 
+    def installation_id(self):
+        """
+        Return the GitHub App installation ID, by parsing it out of
+        the installation URL.
+        """
+        return int(self.url.split('/')[-1])
+
     def delete(self, *args, **kwargs):
         """
         Override `GitHubAppInstallation.delete()` method so that it

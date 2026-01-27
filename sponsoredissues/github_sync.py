@@ -88,143 +88,146 @@ def github_sync_repos_for_app_installation(installation_api, logger=default_logg
 def github_sync_issues_for_app_installation(installation_api, logger=default_logger):
     """Sync issues for a single GitHub App installation"""
     installation_json = installation_api.query_json()
-    account_login = installation_json['account']['login']
+    installation_url = installation_json['html_url']
+    github_username = installation_json['account']['login']
 
-    # query relevant issues using GitHub API
-    logger.info(f'querying GitHub for issues with "sponsoredissues.org" label or existing funding')
-    issues_on_github = installation_api.query_issues_with_sponsoredissues_label_or_funding()
-    logger.info(f'found {len(issues_on_github)} issues')
+    # Get all issues in DB related to app installation.
+    #
+    # Note:
+    #
+    # It is important to query issues by URL here
+    # (i.e. `url__startswith==...`), rather than with a join query
+    # like `repo__app_installation=installation`, because latter will
+    # omit issues where `GitHubIssue.repo == NULL`, which we also want
+    # to include in our issue data updates.
+    #
+    # `GitHubIssue.repo == NULL` means that the maintainer has
+    # disabled the GitHub App on the parent repo for the issue, by
+    # removing it from list of selected repos under Profile ->
+    # Settings -> Application -> sponsoredissues-maintainer –> Only
+    # select repositories (radio button). We are still able to retrieve
+    # the latest issue data from deselected repos because all repos
+    # used with `sponsoredissues.org` are public.
 
-    # Get current repo URLs for this installation's account
-    repo_urls_in_db = set(
-        GitHubRepo.objects.filter(
-            url__startswith=f'https://github.com/{account_login}/'
-        ).values_list('url', flat=True)
+    issues_in_db = GitHubIssue.objects.filter(
+        url__startswith = f'https://github.com/{github_username}/'
+    )
+    issue_urls_in_db = set(
+        issues_in_db.distinct().values_list('url', flat=True)
     )
 
-    # Get current issues URLs for this installation's account
-    issues_in_db = dict(
-        GitHubIssue.objects.filter(
-            url__contains=f'github.com/{account_login}/'
-        ).values_list('url', 'data')
-    )
-
-    # The set of issues that currently have non-zero user funding,
-    # (a subset of `issues_in_db` above).
+    # Get the funded issues in the DB.
     #
-    # We never delete funded issues, for several reasons:
+    # We treat funded issues as a special case when removing issues
+    # from the DB. If the maintainer performs an action on GitHub that
+    # would remove a funded issue, such as removing the
+    # "sponsoredissues.org" label or disabling the GitHub App on the
+    # parent repo, we put the issue into a special "frozen" state
+    # instead of removing it [1]. Frozen issues still appear on the
+    # maintainer's sponsored issues page, but their "Add or Remove
+    # Funds" buttons are disabled, and warning messages are shown that
+    # explain why the issue(s) are frozen.
     #
-    # (1) It undoes the work of users who contributed to the issue(s).
+    # We never want to delete funded issues from the DB, because:
     #
-    # (2) Deleting funded issue(s) is usually an accident by the
-    # maintainer. We want the maintainer to easily undo their
-    # mistake, by re-adding the `sponsoredissues.org` label and/or
-    # reinstalling/unsuspending the app, in which case we need restore
-    # the issue funding totals to their previous values.
+    # (1) Deleting a funded issue would undo the work of the issue's
+    # contributors.
+    #
+    # (2) The maintainer probably triggered deletion of the funded
+    # issue by accident. Thus we want the maintainer to be able to easily
+    # undo their mistake, by re-adding the `sponsoredissues.org` label
+    # and/or re-enabling the app on the parent repo.
     #
     # (3) Keeping previously funded issues in the database allows us
-    # to compute interesting historical stats for closed issues, such
-    # as average funding amount for close issues, average time to
-    # close issues, etc.
+    # to compute interesting historical stats, such as average funding
+    # for closed issues.
     #
-    # Regarding (2): If the maintainer accidentally removes the
-    # `sponsoredissues.org` label from an issue with existing
-    # funding, we display the issue in a special "frozen" state,
-    # with the "Add or Remove Funds" button disabled and an
-    # explanatory error message.
-    funded_issue_urls = set(
-        GitHubIssue.objects.filter(
-            url__contains=f'github.com/{account_login}/',
-            sponsor_amounts__isnull=False,
-        ).distinct().values_list('url', flat=True)
-    )
+    # [1]: Implementation note: In the database, an funded issue is
+    # frozen if either: (1) `GitHubIssue.repo` is NULL (indicating
+    # that the GitHub App is disabled on the repo), or (2) the JSON
+    # data for the issue does not contain the `sponsoredissues.org`
+    # label.
 
-    # Issues that we should not delete from our database, because
-    # all of the following are true:
+    funded_issues = issues_in_db.filter(sponsor_amounts__isnull=False)
+    funded_issue_urls_in_db = set(funded_issues.distinct().values_list('url', flat=True))
+
+    # Retrieve the latest JSON issue data from the GitHub GraphQL
+    # API, for all issues that are relevant to sponsoredissues.org.
     #
-    # (1) The issue still exists on GitHub, *AND*
-    # (2) The `sponsoredissues-maintainer` GitHub App
-    # is still installed and active on the repo, *AND*
-    # (3) The issue still has the `sponsoredissues.org`
-    # label on GitHub.
-    found_issue_urls = set()
+    # An issue is relevant to sponsoredissues.org if either:
+    #
+    # (1) It belongs to a repo with the "sponsoredissues-maintainer" GitHub
+    # App installed *AND* it has the `sponsoredissues.org` label.
+    # (2) It has a non-zero amount of funding on sponsoredissues.org.
+    #
+    # Note that it is possible for any combination of (1) and (2) to
+    # be true. For example, the maintainer might accidentally remove
+    # the `sponsoredissues.org` label from an issue that already has
+    # funding on their sponsored issues page. In that case, the
+    # issue is shown in a special "frozen" state, with the "Add or
+    # Remove Funds" button disabled.
 
-    # Stats about added/updated/removed issues.
-    issues_added = 0
-    issues_updated = 0
-    issues_removed = 0
+    logger.info(f'querying GitHub for issues with "sponsoredissues.org" label')
+    issues_from_github_with_label = installation_api.query_issues_with_sponsoredissues_label()
 
-    # Unfunded issues that we should delete from our database,
-    # because the `sponsoredissues-maintainer` GitHub App has been
-    # uninstalled/suspended on the repo.
-    repo_disabled_issue_urls = set()
+    logger.info(f'querying GitHub for issues with funding')
+    issues_from_github_with_funding = installation_api.query_issue_urls(funded_issue_urls_in_db)
 
-    # Unfunded issues that we should delete from our database,
-    # because the `sponsoredissues.org` GitHub App has been
-    # uninstalled/suspended on the repo.
-    label_removed_issue_urls = set()
+    # Merge results from two queries above
+    issues_from_github = {issue['url']: issue for issue in issues_from_github_with_label}
+    issues_from_github.update({issue['url']: issue for issue in issues_from_github_with_funding})
+    issue_urls_from_github = issues_from_github.keys()
+    logger.info(f'retrieved latest data for {len(issue_urls_from_github)} issues')
 
-    for issue_json in issues_on_github:
-        issue_url = issue_json['url']
+    # Identify the subset of issues that belong to enabled repos, i.e.
+    # repos that are currently selected under Profile -> Settings ->
+    # Application -> sponsoredissues-maintainer –> "Only select
+    # repositories" (radio button). If the radio button is set to "All
+    # repositories" instead (the default), then all issues belong to
+    # enabled repos.
+    #
+    # In our database, the set of enabled repos is represented by the
+    # list of repos that currently exist in the `GitHubRepo`
+    # table. (We always sync `GitHubRepo` table with GitHub,
+    # immediately before we call this method to sync the issues.)
+
+    installation_in_db = GitHubAppInstallation.objects.get(url=installation_url)
+    enabled_repos_in_db = GitHubRepo.objects.filter(app_installation=installation_in_db)
+    enabled_repo_urls = set(enabled_repos_in_db.distinct().values_list('url', flat=True))
+    issue_urls_from_github_with_enabled_repos = {
+        issue['url'] for issue in issues_from_github.values() \
+        if issue['repository']['html_url'] in enabled_repo_urls
+    }
+
+    # Use set arithmetic to determine which issues need to be
+    # added/updated/removed in the database.
+
+    issue_urls_to_add = issue_urls_from_github_with_enabled_repos - issue_urls_in_db
+    issue_urls_to_update = issue_urls_from_github & issue_urls_in_db
+    issue_urls_to_remove = issue_urls_in_db - funded_issue_urls_in_db - issue_urls_from_github_with_enabled_repos
+
+    def get_repo(issue_url):
         repo_url = '/'.join(issue_url.split('/')[:-2])
+        return GitHubRepo.objects.filter(url=repo_url).first()
 
-        # Unfunded issues will be deleted if either:
-        #
-        # (1) The `sponsoredissues-maintainer` GitHub App is no
-        # longer installed/active on the repo that contains the
-        # issue.
-        # (2) The `sponsoredissues.org` label was removed
-        # from the issue.
-        #
-        # Note our detection of (1) and (2) is mutually exclusive;
-        # We will not be able to retrieve the current labels for
-        # an issue after the app is uninstalled/suspended.
+    for issue_url in issue_urls_to_add:
+        GitHubIssue.objects.create(
+            url=issue_url,
+            data=issues_from_github[issue_url],
+            repo=get_repo(issue_url)
+        )
+        logger.info(f'added issue {issue_url}')
 
-        if not issue_url in funded_issue_urls:
-            if not repo_url in repo_urls_in_db:
-                repo_disabled_issue_urls.add(issue_url)
-                continue
-            elif not github_issue_has_sponsoredissues_label(issue_json):
-                label_removed_issue_urls.add(issue_url)
-                continue
+    for issue_url in issue_urls_to_update:
+        GitHubIssue.objects.filter(url=issue_url).update(
+            data=issues_from_github[issue_url],
+            repo=get_repo(issue_url),
+            updated_at=timezone.now()
+        )
+        logger.info(f'updated issue {issue_url}')
 
-        found_issue_urls.add(issue_url)
-        repo = GitHubRepo.objects.get(url=repo_url)
+    for issue_url in issue_urls_to_remove:
+        GitHubIssue.objects.get(url=issue_url).delete()
+        logger.info(f'removed issue {issue_url}')
 
-        if issue_url in issues_in_db:
-            GitHubIssue.objects.filter(url=issue_url).update(data=issue_json, repo=repo, updated_at=timezone.now())
-            issues_updated += 1
-            logger.info(f'updated issue {issue_url}')
-        else:
-            GitHubIssue.objects.update_or_create(
-                url=issue_url,
-                defaults={
-                    'data': issue_json,
-                    'repo': repo,
-                }
-            )
-            issues_added += 1
-            logger.info(f'added issue {issue_url}')
-
-    # Remove unfunded issues that no longer have "sponsoredissues.org"
-    # label, or whose repos have been disabled for the GitHub App.
-
-    issues_urls_in_db = issues_in_db.keys()
-    issues_to_remove = issues_urls_in_db - found_issue_urls
-
-    for issue_url in issues_to_remove:
-        issue = GitHubIssue.objects.filter(url=issue_url)
-        assert issue
-
-        deleted_count, _ = issue.delete()
-        assert deleted_count == 1
-        issues_removed += 1
-
-        if issue_url in repo_disabled_issue_urls:
-            logger.info(f'removed issue {issue_url}, because GitHub App is disabled on repo)')
-        elif issue_url in label_removed_issue_urls:
-            logger.info(f'removed issue {issue_url}, because `sponsoredissues.org` label was removed')
-        else:
-            logger.info(f'removed issue {issue_url}')
-
-    logger.info(f'issue sync stats: +{issues_added} ~{issues_updated} -{issues_removed}')
+    logger.info(f'issue sync stats: +{len(issue_urls_to_add)} ~{len(issue_urls_to_update)} -{len(issue_urls_to_remove)}')
