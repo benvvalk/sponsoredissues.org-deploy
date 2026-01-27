@@ -1,0 +1,2 @@
+django-types==0.22.0
+types-psycopg2==2.9.21.20251012
