@@ -52,7 +52,7 @@ class GitHubAppInstallationClass:
         if self.installation_json:
             return self.installation_json
 
-        response = requests.post(
+        response = requests.get(
             f'https://api.github.com/app/installations/{self.installation_id}',
             headers=self.github_app.get_request_headers(),
             timeout=30
