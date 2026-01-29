@@ -330,7 +330,7 @@ class GitHubApp:
         try:
             return jwt.encode(payload, private_key_str.encode(), algorithm='RS256')
         except Exception as e:
-            raise RuntimeError("Failed to generate GitHub App token. Did you configure GITHUB_APP_ID and GITHUB_APP_PRIVATE_KEY?") from e
+            raise RuntimeError("Failed to generate GitHub App token: Check format of GITHUB_APP_PRIVATE_KEY") from e
 
     def get_request_headers(self, **kwargs):
         app_token = self._get_github_app_token()
