@@ -245,19 +245,12 @@ class GitHubAppInstallationClass:
         """
         return query
 
-    def query_issues_with_funding(self):
+    def query_issue_urls(self, issue_urls):
         """
         Get latest issue data queries for GitHub issues that have received
         non-zero user funding on sponsoredissues.org.
         """
         from itertools import islice
-        from sponsoredissues.models import GitHubIssue
-
-        # Get issues with non-zero funding.
-        issue_urls = GitHubIssue.objects.filter(
-            url__startswith=f"https://github.com/{self.get_github_account_name()}/",
-            sponsor_amounts__isnull=False
-        ).distinct().values_list('url', flat=True)
 
         # Query in batches to avoid exceeding GitHub API limits.
         queries = []
@@ -306,33 +299,6 @@ class GitHubAppInstallationClass:
             random_sleep_for_rate_limiting()
 
         return issues
-
-    def query_issues_with_sponsoredissues_label_or_funding(self):
-        """
-        Retrieve the latest JSON issue data from the GitHub GraphQL
-        API, for all issues that are relevant to sponsoredissues.org.
-
-        An issue is relevant to sponsoredissues.org if either:
-
-        (1) It belongs to a repo with the "sponsoredissues-maintainer" GitHub
-        App installed *AND* it has the `sponsoredissues.org` label.
-        (2) It has a non-zero amount of funding on sponsoredissues.org.
-
-        Note that it is possible for any combination of (1) and (2) to
-        be true. For example, the maintainer might accidentally remove
-        the `sponsoredissues.org` label from an issue that already has
-        funding on their sponsored issues page. In that case, the
-        issue is shown in a special "frozen" state, with the "Add or
-        Remove Funds" button disabled.
-        """
-        issues_with_label = self.query_issues_with_sponsoredissues_label()
-        issues_with_funding = self.query_issues_with_funding()
-
-        # Merge lists.
-        issues_by_url = {issue['url']: issue for issue in issues_with_label}
-        issues_by_url.update({issue['url']: issue for issue in issues_with_funding})
-
-        return list(issues_by_url.values())
 
 class GitHubApp:
     """Shared GitHub App authentication utilities"""

@@ -308,28 +308,7 @@ class Command(BaseCommand):
 
     def _sync_installation_issues(self, installation, dry_run):
         """Sync issues for a single GitHub App installation"""
-        installation_id = installation['id']
         account_login = installation['account']['login']
-
-        # Query repositories and issues using GraphQL
-        _installation = GitHubAppInstallationClass.from_json(installation)
-        issues_data = _installation.query_issues_with_sponsoredissues_label_or_funding(account_login)
-
-        self.stdout.write(f'Found {len(issues_data)} issues with sponsoredissues.org label or funding')
-
-        # Get current repo URLs for this installation's account
-        current_repo_urls = set(
-            GitHubRepo.objects.filter(
-                url__startswith=f'https://github.com/{account_login}/'
-            ).values_list('url', flat=True)
-        )
-
-        # Get current issues URLs for this installation's account
-        current_issues = dict(
-            GitHubIssue.objects.filter(
-                url__contains=f'github.com/{account_login}/'
-            ).values_list('url', 'data')
-        )
 
         # The set of issues that currently have non-zero user funding,
         # (a subset of `current_issues` above).
@@ -358,6 +337,36 @@ class Command(BaseCommand):
             ).distinct().values_list('url', flat=True)
         )
 
+        # Query repositories and issues using GraphQL
+        _installation = GitHubAppInstallationClass.from_json(installation)
+
+        self.stdout.write(f'querying GitHub for issues with "sponsoredissues.org" label')
+        issues_from_github_with_label = _installation.query_issues_with_sponsoredissues_label()
+
+        self.stdout.write(f'querying GitHub for issues with funding')
+        issues_from_github_with_funding = _installation.query_issue_urls(funded_issue_urls)
+
+        # Merge results from two queries above
+        issues_data = {issue['url']: issue for issue in issues_from_github_with_label}
+        issues_data.update({issue['url']: issue for issue in issues_from_github_with_funding})
+        self.stdout.write(f'retrieved latest data for {len(issues_data)} issues')
+
+        self.stdout.write(f'Found {len(issues_data)} issues with sponsoredissues.org label or funding')
+
+        # Get current repo URLs for this installation's account
+        current_repo_urls = set(
+            GitHubRepo.objects.filter(
+                url__startswith=f'https://github.com/{account_login}/'
+            ).values_list('url', flat=True)
+        )
+
+        # Get current issues URLs for this installation's account
+        current_issues = dict(
+            GitHubIssue.objects.filter(
+                url__contains=f'github.com/{account_login}/'
+            ).values_list('url', 'data')
+        )
+
         # Issues that we should not delete from our database, because
         # all of the following are true:
         #
@@ -381,8 +390,7 @@ class Command(BaseCommand):
         # uninstalled/suspended on the repo.
         label_removed_issue_urls = set()
 
-        for issue_data in issues_data:
-            issue_url = issue_data['url']
+        for issue_url, issue_data in issues_data.items():
             repo_url = '/'.join(issue_url.split('/')[:-2])
 
             # Unfunded issues will be deleted if either:
