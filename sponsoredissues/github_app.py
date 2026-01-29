@@ -313,7 +313,7 @@ class GitHubApp:
     def _get_github_app_token(self) -> Optional[str]:
         """Generate GitHub App JWT token"""
         if not self.app_id or not self.private_key:
-            return None
+            raise RuntimeError("Failed to generate GitHub App token: GITHUB_APP_ID or GITHUB_APP_PRIVATE_KEY not set")
 
         private_key_str = self.private_key
 
