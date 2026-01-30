@@ -214,7 +214,7 @@ def github_graphql(query, access_token, variables=None, timeout=30):
 
     graphql_errors = response_json.get('errors')
     if graphql_errors:
-        logger.error(f'GraphQL errors: {graphql_errors}')
+        raise RuntimeError(f'GraphQL errors: {graphql_errors}')
 
     return response_json.get('data')
 
