@@ -248,5 +248,23 @@ LOGGING = {
     },
 }
 
+# Redis connection URL.
+#
+# For local Redis on standard port, use `redis://localhost`.
+#
+# Redis is required for two purposes:
+#
+# (1) We use Redis as the message queue for Celery background jobs
+# (see `CELERY_BROKER_URL` below).
+#
+# (2) We use Redis to implement distributed locks in
+# `sponsoredissues/tasks.py` (via `redis-py` package).  Distributed
+# locks need to be used to ensure that two Celery tasks don't try to
+# modify the same GitHub App installation in the database
+# simultaneously.
+
+REDIS_URL = env.str('REDIS_URL')
+
 # Celery settings
-CELERY_BROKER_URL = env.str('CELERY_BROKER_URL')
+
+CELERY_BROKER_URL = REDIS_URL
