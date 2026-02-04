@@ -95,6 +95,10 @@ class GitHubAppInstallationClass:
                                 number
                                 title
                                 body
+                                repository {
+                                    homepageUrl
+                                    url
+                                }
                                 state
                                 url
                                 createdAt
@@ -156,6 +160,10 @@ class GitHubAppInstallationClass:
                         'title': issue['title'],
                         'body': issue['body'],
                         'state': issue['state'].lower(),
+                        'repository': {
+                            'html_url': issue['repository']['homepageUrl'],
+                            'url': issue['repository']['url'],
+                        },
                         'url': issue['url'],
                         'created_at': issue['createdAt'],
                         'updated_at': issue['updatedAt'],
@@ -221,6 +229,10 @@ class GitHubAppInstallationClass:
                     number
                     title
                     body
+                    repository {
+                        homepageUrl
+                        url
+                    }
                     state
                     url
                     createdAt
@@ -280,6 +292,10 @@ class GitHubAppInstallationClass:
                         'number': issue['number'],
                         'title': issue['title'],
                         'body': issue['body'],
+                        'repository': {
+                            'html_url': issue['repository']['homepageUrl'],
+                            'url': issue['repository']['url'],
+                        },
                         'state': issue['state'].lower(),
                         'url': issue['url'],
                         'created_at': issue['createdAt'],
