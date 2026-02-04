@@ -76,13 +76,13 @@ def github_sync_repos_for_app_installation(installation_api, logger=default_logg
         logger.info(f'added repo {repo_url}')
 
     for repo_url in repo_urls_to_update:
-        GitHubRepo.objects.filter(url=repo_url).update(updated_at=timezone.now())    
+        GitHubRepo.objects.filter(url=repo_url).update(updated_at=timezone.now())
         logger.info(f'updated repo {repo_url}')
 
     for repo_url in repo_urls_to_remove:
         GitHubRepo.objects.get(url=repo_url).delete()
         logger.info(f'removed repo {repo_url}')
-    
+
     logger.info(f'repo sync stats: +{len(repo_urls_to_add)} ~{len(repo_urls_to_update)} -{len(repo_urls_to_remove)}')
 
 def github_sync_issues_for_app_installation(installation_api, logger=default_logger):
