@@ -9,6 +9,13 @@ from sponsoredissues.models import GitHubAppInstallation, GitHubIssue, GitHubRep
 
 default_logger = logging.getLogger(__name__)
 
+def github_sync_app_installation_remove(installation, logger=default_logger):
+    installation_url = installation.url
+    _, deleted_by_object = installation.delete()
+    repos_removed = deleted_by_object.get('GitHubRepo', 0)
+    issues_removed = deleted_by_object.get('GitHubIssue', 0)
+    logger.info(f'removed installation from database: {installation_url} (removed: {repos_removed} repos, {issues_removed} unfunded issues)')
+
 def github_sync_app_installation(installation_id, base_logger=default_logger):
     installation_url = f'https://github.com/settings/installations/{installation_id}'
     installation_api = GitHubAppInstallationClass.from_id(installation_id)
@@ -46,13 +53,9 @@ def github_sync_app_installation(installation_id, base_logger=default_logger):
 
     # check if maintainer has suspended the app installation
     if github_app_installation_is_suspended(installation_json):
+        logger.info('installation is suspended')
         if installation:
-            _, deleted_by_object = installation.delete()
-            repos_removed = deleted_by_object.get('GitHubRepo', 0)
-            issues_removed = deleted_by_object.get('GitHubIssue', 0)
-            logger.info(f'removed installation, because it is suspended (removed: {repos_removed} repos, {issues_removed} issues)')
-        else:
-            logger.info(f'skipped installation, because it is suspended')
+            github_sync_app_installation_remove(installation, logger)
         return
 
     installation, created = GitHubAppInstallation.objects.get_or_create(url=installation_url)
