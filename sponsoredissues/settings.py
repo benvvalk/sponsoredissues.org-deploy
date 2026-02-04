@@ -231,9 +231,7 @@ LOGGING = {
     "disable_existing_loggers": False,
     "formatters": {
         "sponsoredissues.formatter": {
-            "format": "[{asctime}] [{levelname}] {message}",
-            "datefmt": "%d/%b/%Y %H:%M:%S", # same `datefmt` as `django` logger
-            "style": "{",
+            "class": "sponsoredissues.logging.LoggingFormatter",
         },
     },
     "handlers": {
