@@ -1,6 +1,7 @@
 import logging
 
 from django.utils import timezone
+from requests.exceptions import HTTPError
 from sponsoredissues.github_api import github_app_installation_is_suspended, github_issue_has_sponsoredissues_label
 from sponsoredissues.github_app import GitHubAppInstallationClass
 from sponsoredissues.logging import PrefixLoggerAdapter
@@ -9,20 +10,39 @@ from sponsoredissues.models import GitHubAppInstallation, GitHubIssue, GitHubRep
 default_logger = logging.getLogger(__name__)
 
 def github_sync_app_installation(installation_id, base_logger=default_logger):
+    installation_url = f'https://github.com/settings/installations/{installation_id}'
     installation_api = GitHubAppInstallationClass.from_id(installation_id)
+    installation = GitHubAppInstallation.objects.filter(url=installation_url).first()
 
     logger = PrefixLoggerAdapter(base_logger, {'prefix': f'Installation {installation_id}: '})
     logger.info(f'starting sync')
 
-    installation_json = installation_api.query_json()
+    try:
+        logger.info(f'querying JSON data')
+        installation_json = installation_api.query_json()
+    except HTTPError as e:
+        # We will get HTTP 404 if the maintainer has uninstalled the
+        # "sponsoredissues-maintainer" GitHub App, in which case
+        # we need to abort the sync.
+        #
+        # This app installation will eventually get removed from the
+        # database by
+        # `task_sync_github_app_installations_new_and_removed`.  We
+        # shouldn't remove the app installation here because that the
+        # HTTP 404 happened for some other reason (e.g. a general
+        # GitHub API outage).
+        if e.response.status_code == 404 and installation:
+            logger.info('received HTTP 404, skipping sync')
+            return
+        else:
+            raise
+
     assert installation_json
 
     account_login = installation_json['account']['login']
     installation_url = installation_json['html_url']
 
     logger.info(f'GitHub account is "{account_login}"')
-
-    installation = GitHubAppInstallation.objects.filter(url=installation_url).first()
 
     # check if maintainer has suspended the app installation
     if github_app_installation_is_suspended(installation_json):
