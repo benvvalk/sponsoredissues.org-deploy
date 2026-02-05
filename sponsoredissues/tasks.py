@@ -28,6 +28,6 @@ def task_sync_github_app_installation_least_recently_updated(self):
         )
         if lock.acquire():
             try:
-                github_sync_app_installation(installation.installation_id(), logger)
+                github_sync_app_installation(installation.installation_id())
             finally:
                 lock.release()
