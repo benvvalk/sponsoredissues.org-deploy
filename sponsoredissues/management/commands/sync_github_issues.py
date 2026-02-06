@@ -1,8 +1,9 @@
+import time
 import traceback
 from django.core.management.base import BaseCommand
 from django.utils import timezone
 from sponsoredissues.models import GitHubAppInstallation, GitHubIssue, GitHubRepo
-from sponsoredissues.github_api import github_app_installation_is_suspended, github_issue_has_sponsoredissues_label, random_sleep_for_rate_limiting
+from sponsoredissues.github_api import github_app_installation_is_suspended, github_issue_has_sponsoredissues_label
 from sponsoredissues.github_app import GitHubApp, GitHubAppInstallationClass
 
 class SyncStats:
@@ -76,7 +77,9 @@ class Command(BaseCommand):
                     if not loop_mode:
                         return
                     else:
-                        random_sleep_for_rate_limiting()
+                        # GitHub API might be down.
+                        # Do a long sleep (10 minutes) before trying again.
+                        time.sleep(600)
                         continue
 
                 # Exit if not in loop mode
@@ -85,7 +88,7 @@ class Command(BaseCommand):
 
                 # Wait before next cycle
                 if loop_delay > 0:
-                    random_sleep_for_rate_limiting()
+                    time.sleep(loop_delay)
 
         except KeyboardInterrupt:
             self.stdout.write(f'\n\nSync interrupted by user after {cycle} cycle(s)')
@@ -147,8 +150,6 @@ class Command(BaseCommand):
                 self.stdout.write(
                     self.style.ERROR(f'Error syncing installation {account_login}: {e}\n{traceback.format_exc()}')
                 )
-
-            random_sleep_for_rate_limiting()
 
         # Delete any app installations in our database that weren't
         # present in the latest list of app installations from the

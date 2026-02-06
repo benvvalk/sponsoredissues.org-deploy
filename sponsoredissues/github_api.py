@@ -52,6 +52,8 @@ def github_api(endpoint, access_token=None, auto_paginate=True, max_pages=10, pe
         - data: Response JSON data. If auto_paginate=True and response is a list or
                 dict with 'repositories', 'items', etc., all pages are merged.
     """
+    random_sleep_for_rate_limiting()
+
     headers = {
         'Accept': 'application/vnd.github.v3+json',
         'User-Agent': 'sponsoredissues.org'
@@ -191,6 +193,8 @@ def github_graphql(query, access_token, variables=None, timeout=30):
     Returns:
         data: The value of the `data` key in the response JSON
     """
+    random_sleep_for_rate_limiting()
+
     headers = {
         'Authorization': f'Bearer {access_token}',
         'Content-Type': 'application/json',

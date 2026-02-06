@@ -3,7 +3,7 @@ import jwt
 import logging
 from datetime import datetime, timedelta
 from django.conf import settings
-from sponsoredissues.github_api import github_api, github_graphql, random_sleep_for_rate_limiting
+from sponsoredissues.github_api import github_api, github_graphql
 from typing import Any, Optional, Dict, List
 
 logger = logging.getLogger(__name__)
@@ -185,8 +185,6 @@ class GitHubAppInstallationClass:
             # Update info about next page of query results (if any)
             page_info = repositories.get('pageInfo')
 
-            random_sleep_for_rate_limiting()
-
         return issues
 
     def _build_query_for_issue_urls(self, issue_urls):
@@ -280,7 +278,6 @@ class GitHubAppInstallationClass:
                 data = github_graphql(query, self.get_access_token(), timeout=30)
             except requests.RequestException as e:
                 logger.error(f'GraphQL request failed: {e}')
-                random_sleep_for_rate_limiting()
                 continue
 
             for i in range(len(data)):
@@ -312,7 +309,6 @@ class GitHubAppInstallationClass:
                         }
                     }
                     issues.append(issue_data)
-            random_sleep_for_rate_limiting()
 
         return issues
 
