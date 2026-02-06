@@ -1,4 +1,6 @@
+import logging
 import redis
+import time
 
 from celery.utils.log import get_task_logger
 from django.conf import settings
@@ -15,6 +17,11 @@ logger = get_task_logger(__name__)
 @app.task(bind=True, ignore_result=True)
 def debug_task(self):
     logger.info(f'Request: {self.request!r}')
+
+def task_sleep_after_unexpected_exception():
+    seconds = 600
+    logger.info(f'sleeping for {seconds} seconds before continuing')
+    time.sleep(seconds)
 
 def task_sync_github_app_installation_lock(installation_url: str):
     return redis_client.lock(
@@ -33,6 +40,9 @@ def task_sync_github_app_installation_least_recently_updated(self):
         if lock.acquire():
             try:
                 github_sync_app_installation(installation.installation_id())
+            except Exception:
+                logging.exception('unexpected exception during `github_sync_app_installation`')
+                task_sleep_after_unexpected_exception()
             finally:
                 lock.release()
 
@@ -72,6 +82,9 @@ def task_sync_github_app_installations_new_and_removed(self):
                 logger.info(f'created GitHubAppInstallation: {installation_url}')
                 installation_id = int(installation_json['id'])
                 github_sync_app_installation(installation_id)
+            except Exception:
+                logging.exception('unexpected exception during `github_sync_app_installation`')
+                task_sleep_after_unexpected_exception()
             finally:
                 lock.release()
         else:
