@@ -6,7 +6,6 @@ import time
 
 from sponsoredissues.github_app import GitHubAppInstallationClass
 from sponsoredissues.github_sync import github_sync_app_installation, github_sync_issues_for_app_installation, github_sync_repos_for_app_installation
-from sponsoredissues.management.commands.sync_github_issues import Command
 from sponsoredissues.models import GitHubAppInstallation, GitHubRepo, GitHubIssue, SponsorAmount
 from django.contrib.auth.models import User
 
@@ -352,9 +351,6 @@ class SyncAppInstallationTest(TestCase):
 
     def setUp(self):
         """Set up test fixtures."""
-        self.command = Command()
-        self.command.stdout = StringIO()
-
         # Create test user for funded issues
         self.user = User.objects.create_user(username='testuser', email='test@example.com')
 
