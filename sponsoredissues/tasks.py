@@ -46,6 +46,9 @@ def task_sync_github_app_installation_least_recently_updated(self):
             finally:
                 lock.release()
 
+    logger.info('starting next task iteration')
+    self.apply_async()
+
 @app.task(bind=True, ignore_result=True)
 def task_sync_github_app_installations_new_and_removed(self):
     """
@@ -103,3 +106,6 @@ def task_sync_github_app_installations_new_and_removed(self):
                 lock.release()
         else:
             logger.info(f'skipped removing installation {installation_url}: failed to acquire lock')
+
+    logger.info('starting next task iteration')
+    self.apply_async()
