@@ -125,7 +125,7 @@ def github_api(endpoint, access_token=None, auto_paginate=True, max_pages=10, pe
 
         while next_url and page_count < max_pages:
             # Rate limiting delay
-            random_sleep_for_rate_limiting(logger=logger)
+            random_sleep_for_rate_limiting()
             logger.debug(f"Fetching page {page_count + 1}")
 
             response = requests.get(
