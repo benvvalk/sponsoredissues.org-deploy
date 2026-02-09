@@ -296,10 +296,9 @@ LOGGING = {
 # (see `CELERY_BROKER_URL` below).
 #
 # (2) We use Redis to implement distributed locks in
-# `sponsoredissues/tasks.py` (via `redis-py` package).  Distributed
-# locks need to be used to ensure that two Celery tasks don't try to
-# modify the same GitHub App installation in the database
-# simultaneously.
+# `sponsoredissues/tasks.py` (via `redis-py` package). Distributed
+# locks are used to ensure that two Celery tasks don't try to modify
+# the same GitHub App installation in the database simultaneously.
 
 REDIS_URL = env_str('REDIS_URL')
 
