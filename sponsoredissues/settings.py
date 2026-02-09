@@ -13,29 +13,62 @@ https://docs.djangoproject.com/en/5.2/ref/settings/
 from django.core.management.utils import get_random_secret_key
 from pathlib import Path
 import dj_database_url
-import environ
 import os
+
+# Helper functions for reading environment variables.
+#
+# I previously used the `django-environ` package for this, but
+# I was not impressed by the quality of that library.In
+# particular, the following bug convinced me that it
+# would be better to just write my own code:
+#
+# https://github.com/joke2k/django-environ/issues/284
+
+def env_list(env_var_name, default=None, required=True):
+    """
+    Read and parse an environment variable as a comma-separated list.
+    """
+    if default and not type(default) is list:
+        raise RuntimeError(f'default value for `{env_var_name}` must be `None` or list')
+    string_value = os.getenv(env_var_name)
+    if string_value:
+        items = string_value.split(',')
+        list_value = [ item.strip() for item in items ]
+        return list_value
+    elif default != None:
+        return default
+    elif required:
+        raise RuntimeError(f'required environment variable not set: `{env_var_name}`')
+    else:
+        return
+
+def env_str(env_var_name, default=None, required=True):
+    """
+    Return the value of an environment variable as a string.
+    """
+    if default and not type(default) is str:
+        raise RuntimeError(f'default value for `{env_var_name}` must `None` or string')
+    string_value = os.getenv(env_var_name, default)
+    if required and not string_value:
+        raise RuntimeError(f'required environment variable not set: {env_var_name}')
+    return string_value
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
-
-# Read environment variables from `.env` in project root.
-env = environ.Env()
-env.read_env(BASE_DIR / '.env', parse_comments=True)
 
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/5.2/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = env.str('DJANGO_SECRET_KEY', default=get_random_secret_key())
+SECRET_KEY = env_str('DJANGO_SECRET_KEY', default=get_random_secret_key())
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = env.bool('DJANGO_DEBUG', default=True)
+DEBUG = 'DJANGO_DEBUG' in os.environ
 
 # `ALLOWED_HOSTS` is a security measure to block "HTTP Host header
 # attacks". For further info, see:
 # https://docs.djangoproject.com/en/5.2/ref/settings/#allowed-hosts
-ALLOWED_HOSTS = env.list('DJANGO_ALLOWED_HOSTS', default=[])
+ALLOWED_HOSTS = env_list('DJANGO_ALLOWED_HOSTS', default=[])
 
 
 # Application definition
@@ -76,27 +109,34 @@ AUTHENTICATION_BACKENDS = [
 SOCIALACCOUNT_PROVIDERS = {
     'github': {
         'APP': {
-            'client_id': env.str('GITHUB_CLIENT_ID', default=None),
-            'secret': env.str('GITHUB_CLIENT_SECRET', default=None),
+            'client_id': env_str('GITHUB_CLIENT_ID'),
+            'secret': env_str('GITHUB_CLIENT_SECRET'),
         }
     }
 }
 
 # GitHub App configuration for API access
-GITHUB_APP_ID = env.str('GITHUB_APP_ID', default=None)
-GITHUB_APP_PRIVATE_KEY = env.str('GITHUB_APP_PRIVATE_KEY', default=None)
+GITHUB_APP_ID = env_str('GITHUB_APP_ID')
+GITHUB_APP_PRIVATE_KEY = env_str('GITHUB_APP_PRIVATE_KEY')
 
 # For authenticating webhook notifications from GitHub
-GITHUB_WEBHOOK_SECRET = env.str('GITHUB_WEBHOOK_SECRET', default=None)
+GITHUB_WEBHOOK_SECRET = env_str('GITHUB_WEBHOOK_SECRET')
 
-# GitHub login whitelist for development
-# If set, only these GitHub usernames will be allowed to log in.
-# All other users will see the custom message defined in GITHUB_LOGIN_DISABLED_MESSAGE.
-# Example: ALLOWED_GITHUB_USERS=user1,user2,user3
-ALLOWED_GITHUB_USERS = env.list('ALLOWED_GITHUB_USERS', default=[])
+# Comma separated list of GitHub usernames that are allowed to "Sign
+# in with GitHub".
+#
+# Setting `ALLOWED_GITHUB_USERS` is optional. If the variable is not
+# set, any GitHub user will be allowed to log in.
+#
+# Users that are not allowed to log in will see the custom message
+# defined in GITHUB_LOGIN_DISABLED_MESSAGE.
+#
+# Example value:
+# ALLOWED_GITHUB_USERS=user1,user2,user3
+ALLOWED_GITHUB_USERS = env_list('ALLOWED_GITHUB_USERS', required=False)
 
 # Custom message shown to users who are not in the whitelist
-GITHUB_LOGIN_DISABLED_MESSAGE = env.str(
+GITHUB_LOGIN_DISABLED_MESSAGE = env_str(
     'GITHUB_LOGIN_DISABLED_MESSAGE',
     default='Sorry, logins on sponsoredissues.org are currently disabled, because the site is still under development. Please come back in a few weeks!'
 )
@@ -261,7 +301,7 @@ LOGGING = {
 # modify the same GitHub App installation in the database
 # simultaneously.
 
-REDIS_URL = env.str('REDIS_URL')
+REDIS_URL = env_str('REDIS_URL')
 
 # Celery settings
 
