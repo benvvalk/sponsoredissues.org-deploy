@@ -295,12 +295,11 @@ def github_sync_issue(issue_json):
     #
     # * It is possible for an issue to have non-zero funding but to no
     # longer have the `sponsoredissues.org` label, if the maintainer
-    # accidentally removes the label after users have started funding
-    # the issue. In that case, we still show the issue on the
-    # maintainer's sponsored issues page, but we show it in a special
-    # "frozen" state, with a warning message and the "Add or Remove
-    # Funds" button disabled. See [1] from the FAQ for further
-    # explanation.
+    # accidentally removes the label on GitHub. In that case, we still
+    # show the issue on the maintainer's sponsored issues page, but we
+    # show it in a special "frozen" state, with a warning message and
+    # the "Add or Remove Funds" button disabled. See [1] from the FAQ
+    # for further explanation.
     #
     # [1]: https://sponsoredissues.org/site/faq#label-removed
 
