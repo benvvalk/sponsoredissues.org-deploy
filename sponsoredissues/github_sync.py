@@ -255,21 +255,21 @@ def github_sync_issues_for_app_installation(installation_api, logger=default_log
 
     logger.info(f'issue sync stats: +{len(issue_urls_to_add)} ~{len(issue_urls_to_update)} -{len(issue_urls_to_remove)}')
 
-def github_sync_issue(issue_data):
+def github_sync_issue(issue_json):
     """
     Create or update a GitHubIssue in the database, based on the
     issue data from GitHub.
     """
     logger = default_logger
-    issue_url = issue_data.get('html_url')
-    issue_state = issue_data.get('state')
+    issue_url = issue_json.get('html_url')
+    issue_state = issue_json.get('state')
 
     if not issue_url or not issue_state:
         logger.error("GitHub issue data is malformed")
         return
 
     # Check if issue has the sponsoredissues.org label
-    has_label = github_issue_has_sponsoredissues_label(issue_data)
+    has_label = github_issue_has_sponsoredissues_label(issue_json)
 
     # Check if issue exists in database
     try:
@@ -310,12 +310,12 @@ def github_sync_issue(issue_data):
         # Create new issue
         GitHubIssue.objects.create(
             url=issue_url,
-            data=issue_data
+            data=issue_json
         )
         logger.info(f"Created GitHubIssue: {issue_url}")
     elif should_exist and issue_exists:
         # Update existing issue
-        github_issue.data = issue_data
+        github_issue.data = issue_json
         github_issue.save()
         logger.info(f"Updated GitHubIssue: {issue_url}")
     elif not should_exist and issue_exists:
