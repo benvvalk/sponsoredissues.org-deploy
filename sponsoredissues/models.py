@@ -149,6 +149,11 @@ class GitHubRepo(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
+    @staticmethod
+    def get_by_issue_url(issue_url: str):
+        repo_url = '/'.join(issue_url.split('/')[:-2])
+        return GitHubRepo.objects.filter(url=repo_url).first()
+
 class GitHubIssue(models.Model):
     """
     GitHub issues that are currently shown on the maintainer's

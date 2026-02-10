@@ -229,22 +229,18 @@ def github_sync_issues_for_app_installation(installation_api, logger=default_log
     issue_urls_to_update = issue_urls_from_github & issue_urls_in_db
     issue_urls_to_remove = issue_urls_in_db - funded_issue_urls_in_db - issue_urls_from_github_with_enabled_repos
 
-    def get_repo(issue_url):
-        repo_url = '/'.join(issue_url.split('/')[:-2])
-        return GitHubRepo.objects.filter(url=repo_url).first()
-
     for issue_url in issue_urls_to_add:
         GitHubIssue.objects.create(
             url=issue_url,
             data=issues_from_github[issue_url],
-            repo=get_repo(issue_url)
+            repo=GitHubRepo.get_by_issue_url(issue_url)
         )
         logger.info(f'added issue {issue_url}')
 
     for issue_url in issue_urls_to_update:
         GitHubIssue.objects.filter(url=issue_url).update(
             data=issues_from_github[issue_url],
-            repo=get_repo(issue_url),
+            repo=GitHubRepo.get_by_issue_url(issue_url),
             updated_at=timezone.now()
         )
         logger.info(f'updated issue {issue_url}')
