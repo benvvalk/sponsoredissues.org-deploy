@@ -10,6 +10,7 @@ from django.views.decorators.csrf import csrf_exempt
 from django.http import HttpResponse, HttpResponseBadRequest, HttpResponseForbidden, Http404
 from django.utils import timezone
 from datetime import timedelta
+from pprint import pformat
 from .models import GitHubIssue, SponsorAmount
 from .github_api import github_issue_has_sponsoredissues_label
 from .github_sync import github_sync_issue
@@ -434,12 +435,15 @@ def github_webhook(request):
     except json.JSONDecodeError:
         return HttpResponseBadRequest("Invalid JSON payload")
 
+    logger.debug(f'webhook: payload:\n{pformat(payload)}')
+
     # Handle ping event (webhook test)
     if event_type == 'ping':
         logger.info("Received ping event from GitHub webhook")
         return HttpResponse("pong", status=200)
 
-    from pprint import pformat
+    action = payload.get('action')
+    logger.info(f'webhook: event_type: {event_type}, action: {action}')
 
     # Handle app installation events.
     #
@@ -486,26 +490,11 @@ def github_webhook(request):
     #   `action=new_permissions_accepted`, when the maintainer
     #   approves the new permissions.
 
-    if event_type == 'installation':
-        action = payload['action']
-        logger.info(f"Received '{event_type}' webhook: action={action}")
-        logger.info("Payload:\n%s", pformat(payload))
-
-    if event_type == 'installation_repositories':
-        action = payload['action']
-        logger.info(f"Received '{event_type}' webhook: action={action}")
-        logger.info("Payload:\n%s", pformat(payload))
-
-    if event_type == 'installation_target':
-        action = payload['action']
-        logger.info(f"Received '{event_type}' webhook: action={action}")
-        logger.info("Payload:\n%s", pformat(payload))
 
     # Handle issue events
     if event_type == 'issues':
-        action = payload['action']
         issue_data = payload['issue']
-        logger.info(f"Received issues webhook: action={action}, issue={issue_data['html_url']}")
+        logger.info(f"webhook: issue={issue_data['html_url']}")
 
         # Handle different issue actions
         if action in ['opened', 'reopened', 'closed', 'labeled', 'unlabeled', 'edited']:
