@@ -23,20 +23,17 @@ def task_sleep_after_unexpected_exception():
     logger.info(f'sleeping for {seconds} seconds before continuing')
     time.sleep(seconds)
 
-def task_sync_github_app_installation_lock(installation_url: str):
-    return redis_client.lock(
-        name=f'lock:{installation_url}',
-        timeout=300,        # task must complete before this expires
-        blocking_timeout=0  # return immediately if lock not available
-    )
-
 @app.task(bind=True, ignore_result=True)
 def task_sync_github_app_installation_least_recently_updated(self):
     installations = GitHubAppInstallation.objects.all().order_by("updated_at")
     logger.info(f'database contains {installations.count()} app installations')
 
     for installation in installations:
-        lock = task_sync_github_app_installation_lock(installation.url)
+        lock = redis_client.lock(
+            name=f'lock:{installation.url}',
+            blocking=False,  # return immediately if lock not available
+            timeout=300      # lock will be released after timeout
+        )
         if lock.acquire():
             try:
                 github_sync_app_installation(installation.installation_id())
@@ -78,7 +75,11 @@ def task_sync_github_app_installations_new_and_removed(self):
     logger.info(f'found {len(installation_urls_to_add)} new installations')
 
     for installation_url, installation_json in installations_from_github.items():
-        lock = task_sync_github_app_installation_lock(installation_url)
+        lock = redis_client.lock(
+            name=f'lock:{installation_url}',
+            blocking=False,  # return immediately if lock not available
+            timeout=300      # lock will be released after timeout
+        )
         if lock.acquire():
             try:
                 GitHubAppInstallation.objects.create(url=installation_url)
@@ -97,7 +98,11 @@ def task_sync_github_app_installations_new_and_removed(self):
     logger.info(f'found {len(installation_urls_to_remove)} installations to remove')
 
     for installation_url in installation_urls_to_remove:
-        lock = task_sync_github_app_installation_lock(installation_url)
+        lock = redis_client.lock(
+            name=f'lock:{installation_url}',
+            blocking=False,  # return immediately if lock not available
+            timeout=300      # lock will be released after timeout
+        )
         if lock.acquire():
             try:
                 installation = GitHubAppInstallation.objects.get(url=installation_url)
