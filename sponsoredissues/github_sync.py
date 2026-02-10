@@ -305,12 +305,14 @@ def github_sync_issue(issue_json):
         # Create new issue
         GitHubIssue.objects.create(
             url=issue_url,
-            data=issue_json
+            data=issue_json,
+            repo=GitHubRepo.get_by_issue_url(issue_url)
         )
         logger.info(f"Created GitHubIssue: {issue_url}")
     elif should_exist and issue_exists:
         # Update existing issue
         github_issue.data = issue_json
+        github_issue.repo = GitHubRepo.get_by_issue_url(issue_url)
         github_issue.save()
         logger.info(f"Updated GitHubIssue: {issue_url}")
     elif not should_exist and issue_exists:
