@@ -487,29 +487,25 @@ def github_webhook(request):
     #   approves the new permissions.
 
     if event_type == 'installation':
-        action = payload.get('action')
+        action = payload['action']
         logger.info(f"Received '{event_type}' webhook: action={action}")
         logger.info("Payload:\n%s", pformat(payload))
 
     if event_type == 'installation_repositories':
-        action = payload.get('action')
+        action = payload['action']
         logger.info(f"Received '{event_type}' webhook: action={action}")
         logger.info("Payload:\n%s", pformat(payload))
 
     if event_type == 'installation_target':
-        action = payload.get('action')
+        action = payload['action']
         logger.info(f"Received '{event_type}' webhook: action={action}")
         logger.info("Payload:\n%s", pformat(payload))
 
     # Handle issue events
     if event_type == 'issues':
-        action = payload.get('action')
-        issue_data = payload.get('issue')
-
-        if not issue_data:
-            return HttpResponseBadRequest("Missing issue data in payload")
-
-        logger.info(f"Received issues webhook: action={action}, issue={issue_data.get('html_url')}")
+        action = payload['action']
+        issue_data = payload['issue']
+        logger.info(f"Received issues webhook: action={action}, issue={issue_data['html_url']}")
 
         # Handle different issue actions
         if action in ['opened', 'reopened', 'closed', 'labeled', 'unlabeled', 'edited']:
