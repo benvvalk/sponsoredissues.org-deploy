@@ -12,6 +12,7 @@ from django.utils import timezone
 from datetime import timedelta
 from .models import GitHubIssue, SponsorAmount
 from .github_api import github_issue_has_sponsoredissues_label
+from .github_sync import github_sync_issue
 from .github_sponsors import GitHubSponsorService
 from .github_validation_service import GitHubValidationService
 import json
@@ -405,73 +406,6 @@ def _verify_webhook_signature(request):
 
     return True
 
-def _sync_github_issue(issue_data):
-    """
-    Create or update a GitHubIssue in the database, based on the
-    issue data from GitHub.
-    """
-    issue_url = issue_data.get('html_url')
-    issue_state = issue_data.get('state')
-
-    if not issue_url or not issue_state:
-        logger.error("GitHub issue data is malformed")
-        return
-
-    # Check if issue has the sponsoredissues.org label
-    has_label = github_issue_has_sponsoredissues_label(issue_data)
-
-    # Check if issue exists in database
-    try:
-        github_issue = GitHubIssue.objects.get(url=issue_url)
-        issue_exists = True
-    except GitHubIssue.DoesNotExist:
-        github_issue = None
-        issue_exists = False
-
-    # We need to create/update the issue in the database if either:
-    #
-    # (1) The issue is open AND has `sponsoredissues.org` label, *OR*
-    # (2) The issue has non-zero funding from users (regardless of
-    # its labels or open/closed state)
-    #
-    # Notes regarding (2):
-    #
-    # * We want to keep closed issues with non-zero funding because it
-    # allows us to compute interesting historical stats (average
-    # funding for resolved issues, average time to resolve issues,
-    # etc.). It also allows the maintainer to re-open the issue and
-    # resume funding.
-    #
-    # * It is possible for an issue to have non-zero funding but to no
-    # longer have the `sponsoredissues.org` label, if the maintainer
-    # accidentally removes the label after users have started funding
-    # the issue. In that case, we still show the issue on the
-    # maintainer's sponsored issues page, but we show it in a special
-    # "frozen" state, with a warning message and the "Add or Remove
-    # Funds" button disabled. See [1] from the FAQ for further
-    # explanation.
-    #
-    # [1]: https://sponsoredissues.org/site/faq#label-removed
-
-    should_exist = (issue_state == 'open' and has_label) | (issue_exists and github_issue.is_funded())
-
-    if should_exist and not issue_exists:
-        # Create new issue
-        GitHubIssue.objects.create(
-            url=issue_url,
-            data=issue_data
-        )
-        logger.info(f"Created GitHubIssue: {issue_url}")
-    elif should_exist and issue_exists:
-        # Update existing issue
-        github_issue.data = issue_data
-        github_issue.save()
-        logger.info(f"Updated GitHubIssue: {issue_url}")
-    elif not should_exist and issue_exists:
-        # Delete issue (closed or label removed)
-        github_issue.delete()
-        logger.info(f"Deleted GitHubIssue: {issue_url} (issue closed or label removed, and issue does not have existing funding)")
-
 @csrf_exempt
 @require_POST
 def github_webhook(request):
@@ -579,7 +513,7 @@ def github_webhook(request):
 
         # Handle different issue actions
         if action in ['opened', 'reopened', 'closed', 'labeled', 'unlabeled', 'edited']:
-            _sync_github_issue(issue_data)
+            github_sync_issue(issue_data)
             return HttpResponse(f"Processed {action} event", status=200)
         else:
             logger.info(f"Ignoring unsupported action: {action}")
