@@ -14,6 +14,17 @@ redis_client = redis.Redis.from_url(url=settings.REDIS_URL, decode_responses=Tru
 
 logger = get_task_logger(__name__)
 
+@app.task(ignore_result=True)
+def task_sync_github_app_installation(installation_id: int):
+    installation_url = f'https://github.com/settings/installations/{installation_id}'
+    lock = redis_client.lock(
+        name=f'lock:{installation_url}',
+        blocking=True,
+        timeout=300, # lock will be released after timeout
+    )
+    with lock:
+        github_sync_app_installation(installation_id)
+
 @app.task(bind=True, ignore_result=True)
 def debug_task(self):
     logger.info(f'Request: {self.request!r}')

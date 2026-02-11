@@ -11,11 +11,12 @@ from django.http import HttpResponse, HttpResponseBadRequest, HttpResponseForbid
 from django.utils import timezone
 from datetime import timedelta
 from pprint import pformat
-from .models import GitHubIssue, SponsorAmount
+from .models import GitHubAppInstallation, GitHubIssue, SponsorAmount
 from .github_api import github_issue_has_sponsoredissues_label
 from .github_sync import github_sync_issue
 from .github_sponsors import GitHubSponsorService
 from .github_validation_service import GitHubValidationService
+from .tasks import task_sync_github_app_installation
 import json
 import hmac
 import hashlib
@@ -490,6 +491,29 @@ def github_webhook(request):
     #   `action=new_permissions_accepted`, when the maintainer
     #   approves the new permissions.
 
+    if event_type == 'installation':
+        installation_id = payload['installation']['id']
+        installation_url = payload['installation']['html_url']
+        assert action
+        if action in ['deleted', 'suspend']:
+            installation = GitHubAppInstallation.objects.filter(url=installation_url).first()
+            if installation:
+                installation.delete()
+            else:
+                logger.info(f"webhook: app installation doesn't exist in database, nothing to delete: {installation_url}")
+            return HttpResponse(f"Processed event: event_type={event_type}, action={action}", status=200)
+        elif action in ['created', 'unsuspend']:
+            # start background sync task via Celery
+            task_sync_github_app_installation.delay(installation_id)
+            return HttpResponse(f"Processed event: event_type={event_type}, action={action}", status=200)
+        else:
+            logger.info(f"Ignoring unsupported action: {action}")
+            return HttpResponse(f"Ignored action: {action}", status=200)
+
+    if event_type == 'installation_repositories':
+        installation_id = payload['installation']['id']
+        # start background sync task via Celery
+        task_sync_github_app_installation.delay(installation_id)
 
     # Handle issue events
     if event_type == 'issues':
