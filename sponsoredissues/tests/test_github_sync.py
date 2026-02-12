@@ -166,7 +166,7 @@ class SyncIssuesForInstallationTest(TestCase):
             app_installation=self.installation,
         )
 
-    @patch.object(GitHubAppInstallationClass, 'query_issues_with_sponsoredissues_label_or_funding')
+    @patch.object(GitHubAppInstallationClass, 'query_issues_with_sponsoredissues_label')
     def test_add_new_issue_with_label(self, mock_query_issues):
         """Test adding a new issue with sponsoredissues.org label."""
         # Mock the API response with one new issue
@@ -183,7 +183,7 @@ class SyncIssuesForInstallationTest(TestCase):
         self.assertEqual(issue.data['title'], issue_json['title'])
         self.assertEqual(issue.repo, self.repo)
 
-    @patch.object(GitHubAppInstallationClass, 'query_issues_with_sponsoredissues_label_or_funding')
+    @patch.object(GitHubAppInstallationClass, 'query_issues_with_sponsoredissues_label')
     def test_update_existing_issue(self, mock_query_issues):
         """Test updating an existing issue's data."""
         # Create an existing issue in the database
@@ -214,7 +214,7 @@ class SyncIssuesForInstallationTest(TestCase):
         self.assertEqual(issue.data['body'], 'New body')
         self.assertGreater(issue.updated_at, original_updated_at)
 
-    @patch.object(GitHubAppInstallationClass, 'query_issues_with_sponsoredissues_label_or_funding')
+    @patch.object(GitHubAppInstallationClass, 'query_issues_with_sponsoredissues_label')
     def test_issue_assigned_to_correct_repo(self, mock_query_issues):
         """Test that issues are correctly assigned to their parent repository."""
         # Create a second repo
@@ -240,7 +240,7 @@ class SyncIssuesForInstallationTest(TestCase):
         self.assertEqual(issue1.repo, repo1)
         self.assertEqual(issue2.repo, repo2)
 
-    @patch.object(GitHubAppInstallationClass, 'query_issues_with_sponsoredissues_label_or_funding')
+    @patch.object(GitHubAppInstallationClass, 'query_issues_with_sponsoredissues_label')
     def test_mixed_add_update_remove_operations(self, mock_query_issues):
         """Test mixed operations: add new issue, update existing, remove old."""
         # Set up test data
@@ -281,7 +281,7 @@ class SyncIssuesForInstallationTest(TestCase):
         # Check existing issue removed
         self.assertFalse(GitHubIssue.objects.filter(url=removed_issue_json['url']).exists())
 
-    @patch.object(GitHubAppInstallationClass, 'query_issues_with_sponsoredissues_label_or_funding')
+    @patch.object(GitHubAppInstallationClass, 'query_issues_with_sponsoredissues_label')
     def test_issue_state_change_open_to_closed(self, mock_query_issues):
         """Test that issue state changes (open to closed) are properly updated."""
         # Create an existing open issue
@@ -307,7 +307,7 @@ class SyncIssuesForInstallationTest(TestCase):
         # Verify state was updated to closed
         self.assertEqual(issue.data['state'], 'closed')
 
-    @patch.object(GitHubAppInstallationClass, 'query_issues_with_sponsoredissues_label_or_funding')
+    @patch.object(GitHubAppInstallationClass, 'query_issues_with_sponsoredissues_label')
     def test_preserve_funded_issues(self, mock_query_issues):
         """Test removing an unfunded issue when sponsoredissues.org label is removed."""
         # Create an existing unfunded issue in the database
