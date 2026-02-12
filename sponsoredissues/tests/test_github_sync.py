@@ -334,12 +334,11 @@ class SyncIssuesForInstallationTest(TestCase):
             target_github_issue=funded_issue
         )
 
-        # Mock the API response - issue now without the sponsoredissues.org label
-        new_unfunded_issue_json = unfunded_issue_json.copy()
-        new_unfunded_issue_json['labels'] = [{'name': 'bug', 'color': 'ff0000'}]
-        new_funded_issue_json = funded_issue_json.copy()
-        new_funded_issue_json['labels'] = [{'name': 'bug', 'color': 'ff0000'}]
-        mock_query_issues.return_value = [new_unfunded_issue_json, new_funded_issue_json]
+        # Mock the API response.
+        # Simulate removal of `sponsoredissues.org` label from both
+        # issues, by returning empty list from
+        # mocked `query_issues_with_sponsoredissues_label` method.
+        mock_query_issues.return_value = []
 
         # Call the method
         github_sync_issues_for_app_installation(self.installation_api)
