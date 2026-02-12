@@ -60,7 +60,10 @@ class MockData:
             'labels': [
                 {'name': 'sponsoredissues.org', 'color': '000000'}
             ],
-            'user': {'login': f'{user_name}'}
+            'user': {'login': f'{user_name}'},
+            'repository' : {
+                'html_url': f'https://github.com/{user_name}/{repo_name}'
+            }
         }
 
 class SyncReposForInstallationTest(TestCase):
