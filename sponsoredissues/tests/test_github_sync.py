@@ -440,7 +440,7 @@ class SyncAppInstallationTest(TestCase):
 
         suspended_repo_name = 'repo1'
         suspended_repo = GitHubRepo.objects.create(
-            url='https://github.com/{suspended_user_name}/{suspended_repo_name}',
+            url=f'https://github.com/{suspended_user_name}/{suspended_repo_name}',
             app_installation=suspended_installation)
 
         suspended_issue_json = MockData.issue_json(
