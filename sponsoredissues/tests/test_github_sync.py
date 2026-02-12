@@ -24,7 +24,7 @@ class MockData:
                 'login': f'{user_name}',
                 'html_url': f'https://github.com/{user_name}'
             },
-            'html_url': f'https://github.com/installation/{installation_id}'
+            'html_url': f'https://github.com/settings/installations/{installation_id}'
         }
 
         if suspended_at:
