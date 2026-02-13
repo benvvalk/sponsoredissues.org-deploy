@@ -1,7 +1,6 @@
 from django.test import TestCase
-from typing import Any, Dict, Final
+from typing import Final
 from unittest.mock import patch
-from io import StringIO
 import time
 
 from sponsoredissues.github_app import GitHubAppInstallationClass
