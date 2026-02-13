@@ -12,6 +12,7 @@ class MockData:
     DEFAULT_USER_NAME : Final = 'test-user'
     DEFAULT_REPO_NAME : Final = 'test-repo'
 
+    @staticmethod
     def installation_json(
         installation_id=1111,
         user_name=DEFAULT_USER_NAME,
@@ -31,6 +32,7 @@ class MockData:
 
         return json
 
+    @staticmethod
     def repo_json(
         user_name=DEFAULT_USER_NAME,
         repo_name=DEFAULT_REPO_NAME,
@@ -42,6 +44,7 @@ class MockData:
             'private': private
         }
 
+    @staticmethod
     def issue_json(
         user_name=DEFAULT_USER_NAME,
         repo_name=DEFAULT_REPO_NAME,
