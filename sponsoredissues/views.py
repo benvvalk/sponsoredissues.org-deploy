@@ -499,10 +499,10 @@ def github_webhook(request):
         # Handle different issue actions
         if action in ['opened', 'reopened', 'closed', 'labeled', 'unlabeled', 'edited']:
             github_sync_issue(issue_data)
-            return HttpResponse(f"Processed {action} event", status=200)
+            return HttpResponse(f"Processed event: event_type={event_type}, action={action}", status=200)
         else:
             logger.info(f"Ignoring unsupported action: {action}")
-            return HttpResponse(f"Ignored action: {action}", status=200)
+            return HttpResponse(f"Ignored event: event_type={event_type}, action={action}", status=200)
 
     # Ignore other event types
     logger.info(f"Ignoring unsupported event type: {event_type}")
