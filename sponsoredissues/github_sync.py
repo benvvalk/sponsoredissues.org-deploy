@@ -267,11 +267,8 @@ def github_sync_issue(issue_json):
     # Check if issue has the sponsoredissues.org label
     has_label = github_issue_has_sponsoredissues_label(issue_json)
 
-    # Check if issue exists in database
-    try:
-        github_issue = GitHubIssue.objects.get(url=issue_url)
-    except GitHubIssue.DoesNotExist:
-        github_issue = None
+    # Get issue in database if it exists, otherwise `None`
+    github_issue = GitHubIssue.objects.filter(url=issue_url).first()
 
     # We need to create/update the issue in the database if either:
     #
