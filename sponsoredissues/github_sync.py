@@ -62,14 +62,14 @@ def github_sync_app_installation(installation_id, base_logger=default_logger):
     if created:
         logger.info(f'added (empty) installation to DB')
 
-    github_sync_repos_for_app_installation(installation_api, logger)
+    github_sync_app_installation_repos(installation_api, logger)
     github_sync_issues_for_app_installation(installation_api, logger)
 
     installation.updated_at = timezone.now()
     installation.save()
     logger.info(f'successfully synced installation')
 
-def github_sync_repos_for_app_installation(installation_api, logger=default_logger):
+def github_sync_app_installation_repos(installation_api, logger=default_logger):
     """Sync repos for a single GitHub App installation"""
     installation_json = installation_api.query_json()
     installation_url = installation_json['html_url']

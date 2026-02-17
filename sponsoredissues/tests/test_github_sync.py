@@ -4,7 +4,7 @@ from unittest.mock import patch
 import time
 
 from sponsoredissues.github_app import GitHubAppInstallationClass
-from sponsoredissues.github_sync import github_sync_app_installation, github_sync_issues_for_app_installation, github_sync_repos_for_app_installation
+from sponsoredissues.github_sync import github_sync_app_installation, github_sync_issues_for_app_installation, github_sync_app_installation_repos
 from sponsoredissues.models import GitHubAppInstallation, GitHubRepo, GitHubIssue, SponsorAmount
 from django.contrib.auth.models import User
 
@@ -85,7 +85,7 @@ class SyncReposForInstallationTest(TestCase):
         repo_json = MockData.repo_json()
         mock_query_repos.return_value = [ repo_json ]
 
-        github_sync_repos_for_app_installation(self.installation_api)
+        github_sync_app_installation_repos(self.installation_api)
 
         # Verify the repo was created in the database
         self.assertEqual(GitHubRepo.objects.count(), 1)
@@ -108,7 +108,7 @@ class SyncReposForInstallationTest(TestCase):
         mock_query_repos.return_value = [ repo_json ]
 
         # Call the method
-        github_sync_repos_for_app_installation(self.installation_api)
+        github_sync_app_installation_repos(self.installation_api)
 
         # Verify repo still exists and was updated
         self.assertEqual(GitHubRepo.objects.count(), 1)
@@ -127,7 +127,7 @@ class SyncReposForInstallationTest(TestCase):
         mock_query_repos.return_value = []
 
         # Call the method
-        github_sync_repos_for_app_installation(self.installation_api)
+        github_sync_app_installation_repos(self.installation_api)
 
         # Verify repo was deleted from database
         self.assertEqual(GitHubRepo.objects.count(), 0)
@@ -141,7 +141,7 @@ class SyncReposForInstallationTest(TestCase):
         mock_query_repos.return_value = [ repo_json ]
 
         # Call the method
-        github_sync_repos_for_app_installation(self.installation_api)
+        github_sync_app_installation_repos(self.installation_api)
 
         # Verify no repo was created
         self.assertEqual(GitHubRepo.objects.count(), 0)
@@ -358,7 +358,7 @@ class SyncAppInstallationTest(TestCase):
         # Create test user for funded issues
         self.user = User.objects.create_user(username='testuser', email='test@example.com')
 
-    @patch('sponsoredissues.github_sync.github_sync_repos_for_app_installation')
+    @patch('sponsoredissues.github_sync.github_sync_app_installation_repos')
     @patch('sponsoredissues.github_sync.github_sync_issues_for_app_installation')
     def test_suspended_installation_removes_unfunded_issues(self, mock_sync_issues, mock_sync_repos):
         """Test that suspended installations remove repos and unfunded issues."""
@@ -426,7 +426,7 @@ class SyncAppInstallationTest(TestCase):
         mock_sync_repos.assert_not_called()
         mock_sync_issues.assert_not_called()
 
-    @patch('sponsoredissues.github_sync.github_sync_repos_for_app_installation')
+    @patch('sponsoredissues.github_sync.github_sync_app_installation_repos')
     @patch('sponsoredissues.github_sync.github_sync_issues_for_app_installation')
     def test_mix_of_suspended_and_active_installations(self, mock_sync_issues, mock_sync_repos):
         """Test that mix of suspended and active installations are handled correctly."""
