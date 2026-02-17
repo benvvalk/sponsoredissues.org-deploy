@@ -257,12 +257,8 @@ def github_sync_issue(issue_json):
     the latest JSON issue data from GitHub.
     """
     logger = default_logger
-    issue_url = issue_json.get('html_url')
-    issue_state = issue_json.get('state')
-
-    if not issue_url or not issue_state:
-        logger.error("GitHub issue data is malformed")
-        return
+    issue_url = issue_json['html_url']
+    issue_state = issue_json['state']
 
     # Check if issue has the sponsoredissues.org label
     has_label = github_issue_has_sponsoredissues_label(issue_json)
