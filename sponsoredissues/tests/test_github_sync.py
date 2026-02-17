@@ -56,7 +56,7 @@ class MockData:
             'title': 'Test Issue',
             'body': 'Test body',
             'state': 'open',
-            'url': f'https://github.com/{user_name}/{repo_name}/issues/{issue_number}',
+            'html_url': f'https://github.com/{user_name}/{repo_name}/issues/{issue_number}',
             'created_at': '2024-01-01T00:00:00Z',
             'updated_at': '2024-01-01T00:00:00Z',
             'labels': [
@@ -184,7 +184,7 @@ class SyncIssuesForInstallationTest(TestCase):
         # Verify the issue was created in the database
         self.assertEqual(GitHubIssue.objects.count(), 1)
         issue = GitHubIssue.objects.first()
-        self.assertEqual(issue.url, issue_json['url'])
+        self.assertEqual(issue.url, issue_json['html_url'])
         self.assertEqual(issue.data['title'], issue_json['title'])
         self.assertEqual(issue.repo, self.repo)
 
@@ -194,7 +194,7 @@ class SyncIssuesForInstallationTest(TestCase):
         # Create an existing issue in the database
         existing_issue_json : Final = MockData.issue_json()
         existing_issue = GitHubIssue.objects.create(
-            url=existing_issue_json['url'],
+            url=existing_issue_json['html_url'],
             data=existing_issue_json,
             repo=self.repo
         )
@@ -214,7 +214,7 @@ class SyncIssuesForInstallationTest(TestCase):
 
         # Verify issue still exists and was updated
         self.assertEqual(GitHubIssue.objects.count(), 1)
-        issue = GitHubIssue.objects.get(url=existing_issue_json['url'])
+        issue = GitHubIssue.objects.get(url=existing_issue_json['html_url'])
         self.assertEqual(issue.data['title'], 'New Title')
         self.assertEqual(issue.data['body'], 'New body')
         self.assertGreater(issue.updated_at, original_updated_at)
@@ -240,8 +240,8 @@ class SyncIssuesForInstallationTest(TestCase):
 
         # Verify both issues were created with correct repo assignments
         self.assertEqual(GitHubIssue.objects.count(), 2)
-        issue1 = GitHubIssue.objects.get(url=issue1_json['url'])
-        issue2 = GitHubIssue.objects.get(url=issue2_json['url'])
+        issue1 = GitHubIssue.objects.get(url=issue1_json['html_url'])
+        issue2 = GitHubIssue.objects.get(url=issue2_json['html_url'])
         self.assertEqual(issue1.repo, repo1)
         self.assertEqual(issue2.repo, repo2)
 
@@ -251,14 +251,14 @@ class SyncIssuesForInstallationTest(TestCase):
         # Set up test data
         existing_issue_json = MockData.issue_json(issue_number=1)
         GitHubIssue.objects.create(
-            url=existing_issue_json['url'],
+            url=existing_issue_json['html_url'],
             data=existing_issue_json,
             repo=self.repo
         )
 
         removed_issue_json = MockData.issue_json(issue_number=2)
         GitHubIssue.objects.create(
-            url=removed_issue_json['url'],
+            url=removed_issue_json['html_url'],
             data=removed_issue_json,
             repo=self.repo
         )
@@ -277,14 +277,14 @@ class SyncIssuesForInstallationTest(TestCase):
         self.assertEqual(GitHubIssue.objects.count(), 2)  # issue1 and issue3
 
         # Check existing issue updated
-        issue = GitHubIssue.objects.get(url=existing_issue_json['url'])
+        issue = GitHubIssue.objects.get(url=existing_issue_json['html_url'])
         self.assertEqual(issue.data['title'], 'Updated Issue 1')
 
         # Check new issue added
-        self.assertTrue(GitHubIssue.objects.filter(url=new_issue_json['url']).exists())
+        self.assertTrue(GitHubIssue.objects.filter(url=new_issue_json['html_url']).exists())
 
         # Check existing issue removed
-        self.assertFalse(GitHubIssue.objects.filter(url=removed_issue_json['url']).exists())
+        self.assertFalse(GitHubIssue.objects.filter(url=removed_issue_json['html_url']).exists())
 
     @patch.object(GitHubAppInstallationClass, 'query_issues_with_sponsoredissues_label')
     def test_issue_state_change_open_to_closed(self, mock_query_issues):
@@ -292,7 +292,7 @@ class SyncIssuesForInstallationTest(TestCase):
         # Create an existing open issue
         issue_json = MockData.issue_json()
         GitHubIssue.objects.create(
-            url=issue_json['url'],
+            url=issue_json['html_url'],
             data=issue_json,
             repo=self.repo
         )
@@ -307,7 +307,7 @@ class SyncIssuesForInstallationTest(TestCase):
 
         # Verify issue still exists (not deleted)
         self.assertEqual(GitHubIssue.objects.count(), 1)
-        issue = GitHubIssue.objects.get(url=issue_json['url'])
+        issue = GitHubIssue.objects.get(url=issue_json['html_url'])
 
         # Verify state was updated to closed
         self.assertEqual(issue.data['state'], 'closed')
@@ -318,14 +318,14 @@ class SyncIssuesForInstallationTest(TestCase):
         # Create an existing unfunded issue in the database
         unfunded_issue_json = MockData.issue_json(issue_number=3)
         GitHubIssue.objects.create(
-            url=unfunded_issue_json['url'],
+            url=unfunded_issue_json['html_url'],
             data=unfunded_issue_json,
             repo=self.repo
         )
 
         funded_issue_json = MockData.issue_json(issue_number=4)
         funded_issue = GitHubIssue.objects.create(
-            url=funded_issue_json['url'],
+            url=funded_issue_json['html_url'],
             data=funded_issue_json,
             repo=self.repo
         )
@@ -346,8 +346,8 @@ class SyncIssuesForInstallationTest(TestCase):
         github_sync_app_installation_issues(self.installation_api)
 
         # Verify funded was preserved and unfunded issue was deleted
-        self.assertTrue(GitHubIssue.objects.filter(url=funded_issue_json['url']).exists())
-        self.assertFalse(GitHubIssue.objects.filter(url=unfunded_issue_json['url']).exists())
+        self.assertTrue(GitHubIssue.objects.filter(url=funded_issue_json['html_url']).exists())
+        self.assertFalse(GitHubIssue.objects.filter(url=unfunded_issue_json['html_url']).exists())
         self.assertEqual(GitHubIssue.objects.count(), 1)
 
 class SyncAppInstallationTest(TestCase):
@@ -384,7 +384,7 @@ class SyncAppInstallationTest(TestCase):
         # Create an unfunded issue
         unfunded_issue_json = MockData.issue_json(issue_number=1, repo_name=repo1_name)
         unfunded_issue = GitHubIssue.objects.create(
-            url=unfunded_issue_json['url'],
+            url=unfunded_issue_json['html_url'],
             data=unfunded_issue_json,
             repo=repo1
         )
@@ -392,7 +392,7 @@ class SyncAppInstallationTest(TestCase):
         # Create a funded issue (should be kept)
         funded_issue_json = MockData.issue_json(issue_number=2, repo_name=repo2_name)
         funded_issue = GitHubIssue.objects.create(
-            url=funded_issue_json['url'],
+            url=funded_issue_json['html_url'],
             data=funded_issue_json,
             repo=repo1
         )
@@ -415,11 +415,11 @@ class SyncAppInstallationTest(TestCase):
         self.assertEqual(GitHubRepo.objects.all().count(), 0)
 
         # Verify unfunded issue was removed
-        self.assertFalse(GitHubIssue.objects.filter(url=unfunded_issue_json['url']).exists())
+        self.assertFalse(GitHubIssue.objects.filter(url=unfunded_issue_json['html_url']).exists())
 
         # Verify funded issue was kept (has non-null repo reference initially, but repo was deleted)
-        self.assertTrue(GitHubIssue.objects.filter(url=funded_issue_json['url']).exists())
-        remaining_issue = GitHubIssue.objects.get(url=funded_issue_json['url'])
+        self.assertTrue(GitHubIssue.objects.filter(url=funded_issue_json['html_url']).exists())
+        remaining_issue = GitHubIssue.objects.get(url=funded_issue_json['html_url'])
         self.assertIsNone(remaining_issue.repo)  # Repo should be null due to `on_delete=models.SET_NULL`
 
         # Verify _sync_installation_repos and _sync_installation_issues were NOT called for suspended installation
@@ -449,7 +449,7 @@ class SyncAppInstallationTest(TestCase):
             issue_number=1
         )
         GitHubIssue.objects.create(
-            url=suspended_issue_json['url'],
+            url=suspended_issue_json['html_url'],
             data=suspended_issue_json,
             repo=suspended_repo
         )

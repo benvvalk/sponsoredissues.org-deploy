@@ -164,7 +164,7 @@ class GitHubAppInstallationClass:
                             'html_url': issue['repository']['homepageUrl'],
                             'url': issue['repository']['url'],
                         },
-                        'url': issue['url'],
+                        'html_url': issue['url'],
                         'created_at': issue['createdAt'],
                         'updated_at': issue['updatedAt'],
                         'labels': [
@@ -294,7 +294,7 @@ class GitHubAppInstallationClass:
                             'url': issue['repository']['url'],
                         },
                         'state': issue['state'].lower(),
-                        'url': issue['url'],
+                        'html_url': issue['url'],
                         'created_at': issue['createdAt'],
                         'updated_at': issue['updatedAt'],
                         'labels': [

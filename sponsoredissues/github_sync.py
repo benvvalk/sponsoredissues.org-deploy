@@ -197,8 +197,8 @@ def github_sync_app_installation_issues(installation_api, logger=default_logger)
     issues_from_github_with_funding = installation_api.query_issue_urls(funded_issue_urls_in_db)
 
     # Merge results from two queries above
-    issues_from_github = {issue['url']: issue for issue in issues_from_github_with_label}
-    issues_from_github.update({issue['url']: issue for issue in issues_from_github_with_funding})
+    issues_from_github = {issue['html_url']: issue for issue in issues_from_github_with_label}
+    issues_from_github.update({issue['html_url']: issue for issue in issues_from_github_with_funding})
     issue_urls_from_github = issues_from_github.keys()
     logger.info(f'retrieved latest data for {len(issue_urls_from_github)} issues')
 
@@ -218,7 +218,7 @@ def github_sync_app_installation_issues(installation_api, logger=default_logger)
     enabled_repos_in_db = GitHubRepo.objects.filter(app_installation=installation_in_db)
     enabled_repo_urls = set(enabled_repos_in_db.distinct().values_list('url', flat=True))
     issue_urls_from_github_with_enabled_repos = {
-        issue['url'] for issue in issues_from_github.values() \
+        issue['html_url'] for issue in issues_from_github.values() \
         if issue['repository']['html_url'] in enabled_repo_urls
     }
 
@@ -277,8 +277,8 @@ def github_sync_issue(issue_json):
     # maintainer has disabled the "sponsoredissues-maintainer" GitHub
     # App on the repo [1]. In that case, the issue should be removed
     # from the database unless it it has funding. If the the issue has
-    # non-zero funding, we preserve issue and show it in a special
-    # "frozen" state on the maintainer's sponsored issues page.
+    # funding, we keep the issue and show it in a special "frozen"
+    # state on the maintainer's sponsored issues page.
     #
     # [1]: The maintainer can select which repos are disabled/enabled
     # for the app by going to User menu -> Settings -> Applications ->
