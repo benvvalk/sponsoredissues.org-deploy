@@ -253,8 +253,8 @@ def github_sync_app_installation_issues(installation_api, logger=default_logger)
 
 def github_sync_issue(issue_json):
     """
-    Create or update a GitHubIssue in the database, based on the
-    issue data from GitHub.
+    Add, update, or remove a GitHubIssue from the database, given the
+    the latest JSON issue data from GitHub.
     """
     logger = default_logger
     issue_url = issue_json.get('html_url')
