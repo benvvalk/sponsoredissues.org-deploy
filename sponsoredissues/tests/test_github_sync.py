@@ -4,7 +4,7 @@ from unittest.mock import patch
 import time
 
 from sponsoredissues.github_app import GitHubAppInstallationClass
-from sponsoredissues.github_sync import github_sync_app_installation, github_sync_app_installation_issues, github_sync_app_installation_repos
+from sponsoredissues.github_sync import github_sync_app_installation, github_sync_app_installation_issues, github_sync_app_installation_repos, github_sync_issue
 from sponsoredissues.models import GitHubAppInstallation, GitHubRepo, GitHubIssue, SponsorAmount
 from django.contrib.auth.models import User
 
@@ -495,3 +495,267 @@ class SyncAppInstallationTest(TestCase):
         # Verify github_sync_*_for_app_installation methods were called only on active installation
         self.assertEqual(mock_sync_repos.call_count, 1)
         self.assertEqual(mock_sync_issues.call_count, 1)
+
+class SyncIssueTest(TestCase):
+
+    def setUp(self):
+        """Set up test fixtures."""
+        # Mock user
+        self.user = User.objects.create_user(
+            username=MockData.DEFAULT_USER_NAME,
+            email='test@example.com'
+        )
+
+        # Mock installation
+        installation_json = MockData.installation_json()
+        installation_url = installation_json['html_url']
+        self.installation_api = GitHubAppInstallationClass.from_json(installation_json)
+        self.installation = GitHubAppInstallation.objects.create(url=installation_url)
+
+        # Mock repo
+        repo_json = MockData.repo_json()
+        self.repo = GitHubRepo.objects.create(
+            url=repo_json['html_url'],
+            app_installation=self.installation,
+        )
+
+    def test_add_issue_with_label(self):
+        """Test adding a new issue with `sponsoredissues.org` label."""
+        issue_json = MockData.issue_json()
+
+        # Call the method
+        github_sync_issue(issue_json)
+
+        # Verify the issue was created in the database
+        self.assertEqual(GitHubIssue.objects.count(), 1)
+        issue = GitHubIssue.objects.first()
+        assert issue
+        self.assertEqual(issue.url, issue_json['html_url'])
+        self.assertEqual(issue.data['title'], issue_json['title'])
+
+        # Verify issue linked to correct repo in database
+        self.assertEqual(issue.repo, self.repo)
+
+    def test_update_existing_issue(self):
+        """Test updating an existing issue's data."""
+        # Create an existing issue in the database
+        existing_issue_json : Final = MockData.issue_json()
+        existing_issue = GitHubIssue.objects.create(
+            url=existing_issue_json['html_url'],
+            data=existing_issue_json,
+            repo=self.repo
+        )
+        original_updated_at = existing_issue.updated_at
+
+        # Wait a moment to ensure timestamp will be different
+        time.sleep(0.01)
+
+        # Mock the API response with updated data
+        updated_issue_json = existing_issue_json.copy()
+        updated_issue_json['title'] = 'New Title'
+        updated_issue_json['body'] = 'New body'
+
+        # Call the method
+        github_sync_issue(updated_issue_json)
+
+        # Verify issue still exists and was updated
+        self.assertEqual(GitHubIssue.objects.count(), 1)
+        issue = GitHubIssue.objects.get(url=existing_issue_json['html_url'])
+        self.assertEqual(issue.data['title'], 'New Title')
+        self.assertEqual(issue.data['body'], 'New body')
+        self.assertGreater(issue.updated_at, original_updated_at)
+
+    def test_remove_closed_issue_if_unfunded(self):
+        """Test that issue state changes (open to closed) are properly updated."""
+        # Create an existing open issue
+        issue_json = MockData.issue_json()
+        GitHubIssue.objects.create(
+            url=issue_json['html_url'],
+            data=issue_json,
+            repo=self.repo
+        )
+
+        # Mock API response with the same issue but now closed
+        closed_issue_json = issue_json.copy()
+        closed_issue_json['state'] = 'closed'
+
+        # Call the method
+        github_sync_issue(closed_issue_json)
+
+        # Verify closed issue deleted (because unfunded)
+        self.assertEqual(GitHubIssue.objects.count(), 0)
+
+    def test_keep_closed_issue_if_funded(self):
+        """Test that issue state changes (open to closed) are properly updated."""
+        # Create an existing open issue
+        issue_json = MockData.issue_json()
+        funded_issue = GitHubIssue.objects.create(
+            url=issue_json['html_url'],
+            data=issue_json,
+            repo=self.repo
+        )
+        SponsorAmount.objects.create(
+            cents_usd=1000,
+            sponsor_user=self.user,
+            target_github_issue=funded_issue
+        )
+
+        # Mock API response with the same issue but now closed
+        closed_issue_json = issue_json.copy()
+        closed_issue_json['state'] = 'closed'
+
+        # Call the method
+        github_sync_issue(closed_issue_json)
+
+        # Verify closed issue is kept (because it was funded)
+        self.assertEqual(GitHubIssue.objects.count(), 1)
+        issue = GitHubIssue.objects.first()
+        assert issue
+        self.assertEqual(issue.url, issue_json['html_url'])
+        self.assertEqual(issue.data['title'], issue_json['title'])
+
+    def test_keep_funded_issue_if_label_removed(self):
+        # Create an existing open issue
+        issue_json = MockData.issue_json()
+        funded_issue = GitHubIssue.objects.create(
+            url=issue_json['html_url'],
+            data=issue_json,
+            repo=self.repo
+        )
+        SponsorAmount.objects.create(
+            cents_usd=1000,
+            sponsor_user=self.user,
+            target_github_issue=funded_issue
+        )
+
+        unlabeled_issue_json = issue_json.copy()
+        unlabeled_issue_json['labels'] = []
+
+        # Call the method
+        github_sync_issue(unlabeled_issue_json)
+
+        # Verify the issue was created in the database
+        self.assertEqual(GitHubIssue.objects.count(), 1)
+        issue = GitHubIssue.objects.first()
+        assert issue
+        self.assertEqual(issue.url, issue_json['html_url'])
+        self.assertEqual(issue.data['title'], issue_json['title'])
+
+    def test_keep_funded_issue_if_repo_disabled(self):
+        # Create an existing open issue
+        issue_json = MockData.issue_json()
+        funded_issue = GitHubIssue.objects.create(
+            url=issue_json['html_url'],
+            data=issue_json,
+            repo=self.repo
+        )
+        SponsorAmount.objects.create(
+            cents_usd=1000,
+            sponsor_user=self.user,
+            target_github_issue=funded_issue
+        )
+
+        self.repo.delete()
+
+        # Call the method
+        github_sync_issue(issue_json)
+
+        # Verify the issue was created in the database
+        self.assertEqual(GitHubIssue.objects.count(), 1)
+        issue = GitHubIssue.objects.first()
+        assert issue
+        self.assertEqual(issue.url, issue_json['html_url'])
+        self.assertEqual(issue.data['title'], issue_json['title'])
+
+    def test_skip_add_issue_from_disabled_repo(self):
+        issue_json = MockData.issue_json(repo_name='disabled_repo')
+
+        # Call the method
+        github_sync_issue(issue_json)
+
+        # Verify issue is *not* added to database, because
+        # the associated repo doesn't exist in the database.
+        #
+        # If the associated repo doesn't exist in the database, it
+        # indicates that GitHub App is currently disabled for that
+        # repo.
+        self.assertEqual(GitHubIssue.objects.count(), 0)
+
+    def test_remove_unfunded_issue_when_label_removed(self):
+        """Test that unfunded issue gets deleted when sponsoredissues.org label is removed."""
+        # Create an existing open issue with label
+        issue_json = MockData.issue_json()
+        GitHubIssue.objects.create(
+            url=issue_json['html_url'],
+            data=issue_json,
+            repo=self.repo
+        )
+
+        # Remove the sponsoredissues.org label
+        unlabeled_issue_json = issue_json.copy()
+        unlabeled_issue_json['labels'] = []
+
+        # Call the method
+        github_sync_issue(unlabeled_issue_json)
+
+        # Verify the unfunded issue was deleted
+        self.assertEqual(GitHubIssue.objects.count(), 0)
+
+    def test_remove_unfunded_issue_when_repo_disabled(self):
+        """Test that unfunded issue gets deleted when its parent repo is disabled."""
+        # Create an existing open issue with label
+        issue_json = MockData.issue_json()
+        GitHubIssue.objects.create(
+            url=issue_json['html_url'],
+            data=issue_json,
+            repo=self.repo
+        )
+
+        # Disable the repo by removing it from database
+        self.repo.delete()
+
+        # Call the method with the issue (still has label and is open)
+        github_sync_issue(issue_json)
+
+        # Verify the unfunded issue was deleted
+        self.assertEqual(GitHubIssue.objects.count(), 0)
+
+    def test_skip_add_closed_issue_with_label_but_unfunded(self):
+        """Test that closed issue with label but no funding is not added to database."""
+        # Create issue JSON for closed issue with label
+        issue_json = MockData.issue_json(issue_state='closed')
+
+        # Call the method
+        github_sync_issue(issue_json)
+
+        # Verify the issue was not added (closed + unfunded = should not exist)
+        self.assertEqual(GitHubIssue.objects.count(), 0)
+
+    def test_repo_reference_updated_when_repo_reenabled(self):
+        """Test that issue's repo reference gets updated when repo is re-enabled."""
+        # Create an existing funded issue with repo=None (simulating disabled repo)
+        issue_json = MockData.issue_json()
+        funded_issue = GitHubIssue.objects.create(
+            url=issue_json['html_url'],
+            data=issue_json,
+            repo=None  # Repo was previously disabled
+        )
+        SponsorAmount.objects.create(
+            cents_usd=1000,
+            sponsor_user=self.user,
+            target_github_issue=funded_issue
+        )
+
+        # Verify repo is None initially
+        self.assertIsNone(funded_issue.repo)
+
+        # Now "re-enable" the repo by ensuring it exists in database
+        # (self.repo already exists from setUp)
+
+        # Call the method with updated issue JSON
+        github_sync_issue(issue_json)
+
+        # Verify the issue's repo reference was updated
+        updated_issue = GitHubIssue.objects.get(url=issue_json['html_url'])
+        self.assertEqual(updated_issue.repo, self.repo)
+        self.assertIsNotNone(updated_issue.repo)
