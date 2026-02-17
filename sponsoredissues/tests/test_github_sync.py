@@ -4,7 +4,7 @@ from unittest.mock import patch
 import time
 
 from sponsoredissues.github_app import GitHubAppInstallationClass
-from sponsoredissues.github_sync import github_sync_app_installation, github_sync_issues_for_app_installation, github_sync_app_installation_repos
+from sponsoredissues.github_sync import github_sync_app_installation, github_sync_app_installation_issues, github_sync_app_installation_repos
 from sponsoredissues.models import GitHubAppInstallation, GitHubRepo, GitHubIssue, SponsorAmount
 from django.contrib.auth.models import User
 
@@ -179,7 +179,7 @@ class SyncIssuesForInstallationTest(TestCase):
         mock_query_issues.return_value = [ issue_json ]
 
         # Call the method
-        github_sync_issues_for_app_installation(self.installation_api)
+        github_sync_app_installation_issues(self.installation_api)
 
         # Verify the issue was created in the database
         self.assertEqual(GitHubIssue.objects.count(), 1)
@@ -210,7 +210,7 @@ class SyncIssuesForInstallationTest(TestCase):
         mock_query_issues.return_value = [ updated_issue_json ]
 
         # Call the method
-        github_sync_issues_for_app_installation(self.installation_api)
+        github_sync_app_installation_issues(self.installation_api)
 
         # Verify issue still exists and was updated
         self.assertEqual(GitHubIssue.objects.count(), 1)
@@ -236,7 +236,7 @@ class SyncIssuesForInstallationTest(TestCase):
         mock_query_issues.return_value = [issue1_json, issue2_json]
 
         # Call the method
-        github_sync_issues_for_app_installation(self.installation_api)
+        github_sync_app_installation_issues(self.installation_api)
 
         # Verify both issues were created with correct repo assignments
         self.assertEqual(GitHubIssue.objects.count(), 2)
@@ -271,7 +271,7 @@ class SyncIssuesForInstallationTest(TestCase):
         mock_query_issues.return_value = [updated_issue_json, new_issue_json]
 
         # Call the method
-        github_sync_issues_for_app_installation(self.installation_api)
+        github_sync_app_installation_issues(self.installation_api)
 
         # Verify operations
         self.assertEqual(GitHubIssue.objects.count(), 2)  # issue1 and issue3
@@ -303,7 +303,7 @@ class SyncIssuesForInstallationTest(TestCase):
         mock_query_issues.return_value = [closed_issue_json]
 
         # Call the method
-        github_sync_issues_for_app_installation(self.installation_api)
+        github_sync_app_installation_issues(self.installation_api)
 
         # Verify issue still exists (not deleted)
         self.assertEqual(GitHubIssue.objects.count(), 1)
@@ -343,7 +343,7 @@ class SyncIssuesForInstallationTest(TestCase):
         mock_query_issues.return_value = []
 
         # Call the method
-        github_sync_issues_for_app_installation(self.installation_api)
+        github_sync_app_installation_issues(self.installation_api)
 
         # Verify funded was preserved and unfunded issue was deleted
         self.assertTrue(GitHubIssue.objects.filter(url=funded_issue_json['url']).exists())
@@ -359,7 +359,7 @@ class SyncAppInstallationTest(TestCase):
         self.user = User.objects.create_user(username='testuser', email='test@example.com')
 
     @patch('sponsoredissues.github_sync.github_sync_app_installation_repos')
-    @patch('sponsoredissues.github_sync.github_sync_issues_for_app_installation')
+    @patch('sponsoredissues.github_sync.github_sync_app_installation_issues')
     def test_suspended_installation_removes_unfunded_issues(self, mock_sync_issues, mock_sync_repos):
         """Test that suspended installations remove repos and unfunded issues."""
         # Mock installation with suspended_at field
@@ -427,7 +427,7 @@ class SyncAppInstallationTest(TestCase):
         mock_sync_issues.assert_not_called()
 
     @patch('sponsoredissues.github_sync.github_sync_app_installation_repos')
-    @patch('sponsoredissues.github_sync.github_sync_issues_for_app_installation')
+    @patch('sponsoredissues.github_sync.github_sync_app_installation_issues')
     def test_mix_of_suspended_and_active_installations(self, mock_sync_issues, mock_sync_repos):
         """Test that mix of suspended and active installations are handled correctly."""
         # Mock suspended installation

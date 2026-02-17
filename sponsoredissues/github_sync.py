@@ -63,7 +63,7 @@ def github_sync_app_installation(installation_id, base_logger=default_logger):
         logger.info(f'added (empty) installation to DB')
 
     github_sync_app_installation_repos(installation_api, logger)
-    github_sync_issues_for_app_installation(installation_api, logger)
+    github_sync_app_installation_issues(installation_api, logger)
 
     installation.updated_at = timezone.now()
     installation.save()
@@ -108,7 +108,7 @@ def github_sync_app_installation_repos(installation_api, logger=default_logger):
 
     logger.info(f'repo sync stats: +{len(repo_urls_to_add)} ~{len(repo_urls_to_update)} -{len(repo_urls_to_remove)}')
 
-def github_sync_issues_for_app_installation(installation_api, logger=default_logger):
+def github_sync_app_installation_issues(installation_api, logger=default_logger):
     """Sync issues for a single GitHub App installation"""
     installation_json = installation_api.query_json()
     installation_url = installation_json['html_url']
