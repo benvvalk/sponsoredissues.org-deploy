@@ -270,10 +270,8 @@ def github_sync_issue(issue_json):
     # Check if issue exists in database
     try:
         github_issue = GitHubIssue.objects.get(url=issue_url)
-        issue_exists = True
     except GitHubIssue.DoesNotExist:
         github_issue = None
-        issue_exists = False
 
     # We need to create/update the issue in the database if either:
     #
@@ -299,9 +297,9 @@ def github_sync_issue(issue_json):
     #
     # [1]: https://sponsoredissues.org/site/faq#label-removed
 
-    should_exist = (issue_state == 'open' and has_label) | (issue_exists and github_issue.is_funded())
+    should_exist = (issue_state == 'open' and has_label) | (github_issue != None and github_issue.is_funded())
 
-    if should_exist and not issue_exists:
+    if should_exist and not github_issue:
         # Create new issue
         GitHubIssue.objects.create(
             url=issue_url,
@@ -309,13 +307,13 @@ def github_sync_issue(issue_json):
             repo=GitHubRepo.get_by_issue_url(issue_url)
         )
         logger.info(f"Created GitHubIssue: {issue_url}")
-    elif should_exist and issue_exists:
+    elif should_exist and github_issue:
         # Update existing issue
         github_issue.data = issue_json
         github_issue.repo = GitHubRepo.get_by_issue_url(issue_url)
         github_issue.save()
         logger.info(f"Updated GitHubIssue: {issue_url}")
-    elif not should_exist and issue_exists:
+    elif not should_exist and github_issue:
         # Delete issue (closed or label removed)
         github_issue.delete()
         logger.info(f"Deleted GitHubIssue: {issue_url} (issue closed or label removed, and issue does not have existing funding)")
