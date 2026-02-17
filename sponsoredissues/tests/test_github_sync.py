@@ -184,6 +184,7 @@ class SyncIssuesForInstallationTest(TestCase):
         # Verify the issue was created in the database
         self.assertEqual(GitHubIssue.objects.count(), 1)
         issue = GitHubIssue.objects.first()
+        assert issue
         self.assertEqual(issue.url, issue_json['html_url'])
         self.assertEqual(issue.data['title'], issue_json['title'])
         self.assertEqual(issue.repo, self.repo)
