@@ -270,47 +270,71 @@ def github_sync_issue(issue_json):
     # Get issue in database if it exists, otherwise `None`
     github_issue = GitHubIssue.objects.filter(url=issue_url).first()
 
-    # We need to create/update the issue in the database if either:
+    # Get associated repo for the issue in our database if it exists,
+    # otherwise set to `None`.
     #
-    # (1) The issue is open AND has `sponsoredissues.org` label, *OR*
-    # (2) The issue has non-zero funding from users (regardless of
-    # its labels or open/closed state)
+    # If a repo does not exist in our database, it means that the
+    # maintainer has disabled the "sponsoredissues-maintainer" GitHub
+    # App on the repo [1]. In that case, the issue should be removed
+    # from the database unless it it has funding. If the the issue has
+    # non-zero funding, we preserve issue and show it in a special
+    # "frozen" state on the maintainer's sponsored issues page.
     #
-    # Notes regarding (2):
-    #
-    # * We want to keep closed issues with non-zero funding because it
-    # allows us to compute interesting historical stats (average
-    # funding for resolved issues, average time to resolve issues,
-    # etc.). It also allows the maintainer to re-open the issue and
-    # resume funding.
-    #
-    # * It is possible for an issue to have non-zero funding but to no
-    # longer have the `sponsoredissues.org` label, if the maintainer
-    # accidentally removes the label on GitHub. In that case, we still
-    # show the issue on the maintainer's sponsored issues page, but we
-    # show it in a special "frozen" state, with a warning message and
-    # the "Add or Remove Funds" button disabled. See [1] from the FAQ
-    # for further explanation.
-    #
-    # [1]: https://sponsoredissues.org/site/faq#label-removed
+    # [1]: The maintainer can select which repos are disabled/enabled
+    # for the app by going to User menu -> Settings -> Applications ->
+    # "sponsoredissues-maintainer" on the GitHub website.
+    github_repo = GitHubRepo.get_by_issue_url(issue_url)
 
-    should_exist = (issue_state == 'open' and has_label) | (github_issue != None and github_issue.is_funded())
+    # Decide if the issue should exist in our database.
+    #
+    # If an issue has non-zero funding, we always preserve it in
+    # our database, so that we don't lose the data about funding
+    # amounts and undo the work of the contributors [1].
+    #
+    # For unfunded issues, we should only add/update the issue in our
+    # database if *all* of the following are true:
+    #
+    # (1) The repo is currently enabled for the app installation
+    # (i.e. the repo currently exists in our GitHubRepo table)
+    # (2) The issue is state "open"
+    # (3) The issue `sponsoredissues.org` label
+    #
+    # If any of the above condition are not true, and the issue does
+    # not have any funding, we should remove the issue from the
+    # database.
+    #
+    # [1]: Additional notes about issues with non-zero funding:
+    #
+    #   * We always keep closed issues that received non-zero
+    #   funding in our database, because it allows us to compute
+    #   interesting historical stats about them (e.g. average
+    #   funding for resolved issues).
+    #
+    #   * Issues that are preserved because they have non-zero
+    #   funding, but would otherwise be deleted (e.g. because the
+    #   maintainer removed the `sponsoredissues.org` label), are
+    #   shown in a "frozen" state on the maintainer's sponsored
+    #   issues page. See the following FAQ for further
+    #   explanation/discussion:
+    #   https://sponsoredissues.org/site/faq#label-removed
+    should_exist = (github_issue != None and github_issue.is_funded()) | (github_repo != None and issue_state == 'open' and has_label)
 
     if should_exist and not github_issue:
         # Create new issue
+        assert github_repo
         GitHubIssue.objects.create(
             url=issue_url,
             data=issue_json,
-            repo=GitHubRepo.get_by_issue_url(issue_url)
+            repo=github_repo
         )
-        logger.info(f"Created GitHubIssue: {issue_url}")
+        logger.info(f"added issue: {issue_url}")
     elif should_exist and github_issue:
         # Update existing issue
         github_issue.data = issue_json
-        github_issue.repo = GitHubRepo.get_by_issue_url(issue_url)
+        github_issue.repo = github_repo
         github_issue.save()
-        logger.info(f"Updated GitHubIssue: {issue_url}")
+        logger.info(f"updated issue: {issue_url}")
     elif not should_exist and github_issue:
         # Delete issue (closed or label removed)
         github_issue.delete()
-        logger.info(f"Deleted GitHubIssue: {issue_url} (issue closed or label removed, and issue does not have existing funding)")
+        logger.info(f"deleted issue: {issue_url} (issue closed or label removed, and issue does not have existing funding)")
