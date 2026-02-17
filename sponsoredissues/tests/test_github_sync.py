@@ -55,7 +55,7 @@ class MockData:
             'number': issue_number,
             'title': 'Test Issue',
             'body': 'Test body',
-            'state': 'open',
+            'state': issue_state,
             'html_url': f'https://github.com/{user_name}/{repo_name}/issues/{issue_number}',
             'created_at': '2024-01-01T00:00:00Z',
             'updated_at': '2024-01-01T00:00:00Z',
