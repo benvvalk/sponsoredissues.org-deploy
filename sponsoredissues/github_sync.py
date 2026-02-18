@@ -3,7 +3,7 @@ import logging
 from django.utils import timezone
 from requests.exceptions import HTTPError
 from sponsoredissues.github_api import github_app_installation_is_suspended, github_issue_has_sponsoredissues_label
-from sponsoredissues.github_app import GitHubAppInstallationClass
+from sponsoredissues.github_app import github_app_installation_query_token, GitHubAppInstallationClass
 from sponsoredissues.logging import PrefixLoggerAdapter
 from sponsoredissues.models import GitHubAppInstallation, GitHubIssue, GitHubRepo
 
@@ -19,6 +19,8 @@ def github_sync_app_installation_remove(installation, logger=default_logger):
 def github_sync_app_installation(installation_id, base_logger=default_logger):
     installation_url = f'https://github.com/settings/installations/{installation_id}'
     installation_api = GitHubAppInstallationClass.from_id(installation_id)
+    installation_token = github_app_installation_query_token(installation_id)
+
     installation = GitHubAppInstallation.objects.filter(url=installation_url).first()
 
     logger = PrefixLoggerAdapter(base_logger, {'prefix': f'Installation {installation_id}: '})
@@ -62,14 +64,14 @@ def github_sync_app_installation(installation_id, base_logger=default_logger):
     if created:
         logger.info(f'added (empty) installation to DB')
 
-    github_sync_app_installation_repos(installation_api, logger)
-    github_sync_app_installation_issues(installation_api, logger)
+    github_sync_app_installation_repos(installation_token, installation_api, logger)
+    github_sync_app_installation_issues(installation_token, installation_api, logger)
 
     installation.updated_at = timezone.now()
     installation.save()
     logger.info(f'successfully synced installation')
 
-def github_sync_app_installation_repos(installation_api, logger=default_logger):
+def github_sync_app_installation_repos(installation_token, installation_api, logger=default_logger):
     """Sync repos for a single GitHub App installation"""
     installation_json = installation_api.query_json()
     installation_url = installation_json['html_url']
@@ -79,7 +81,7 @@ def github_sync_app_installation_repos(installation_api, logger=default_logger):
 
     # query currently enabled repositories for app installation
     logger.info(f'querying GitHub for enabled repos')
-    repos_from_github = installation_api.query_repos()
+    repos_from_github = installation_api.query_repos(installation_token)
     logger.info(f'found {len(repos_from_github)} enabled repos')
 
     # Get current repo URLs for this installation's account
@@ -108,7 +110,7 @@ def github_sync_app_installation_repos(installation_api, logger=default_logger):
 
     logger.info(f'repo sync stats: +{len(repo_urls_to_add)} ~{len(repo_urls_to_update)} -{len(repo_urls_to_remove)}')
 
-def github_sync_app_installation_issues(installation_api, logger=default_logger):
+def github_sync_app_installation_issues(installation_token, installation_api, logger=default_logger):
     """Sync issues for a single GitHub App installation"""
     installation_json = installation_api.query_json()
     installation_url = installation_json['html_url']
@@ -191,10 +193,10 @@ def github_sync_app_installation_issues(installation_api, logger=default_logger)
     # Remove Funds" button disabled.
 
     logger.info(f'querying GitHub for issues with "sponsoredissues.org" label')
-    issues_from_github_with_label = installation_api.query_issues_with_sponsoredissues_label()
+    issues_from_github_with_label = installation_api.query_issues_with_sponsoredissues_label(installation_token)
 
     logger.info(f'querying GitHub for issues with funding')
-    issues_from_github_with_funding = installation_api.query_issue_urls(funded_issue_urls_in_db)
+    issues_from_github_with_funding = installation_api.query_issue_urls(installation_token, funded_issue_urls_in_db)
 
     # Merge results from two queries above
     issues_from_github = {issue['html_url']: issue for issue in issues_from_github_with_label}

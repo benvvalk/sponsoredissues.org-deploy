@@ -77,6 +77,15 @@ def github_app_query_installations(target_installation_id: Optional[int] = None)
         logger.error(f'Failed to get GitHub App installations: {e}')
         return []
 
+def github_app_installation_query_token(installation_id: int):
+    response = requests.post(
+        f'https://api.github.com/app/installations/{installation_id}/access_tokens',
+        headers=github_app_request_headers(),
+        timeout=30
+    )
+    response.raise_for_status()
+    return response.json()['token']
+
 def github_app_query_installation_token_any():
     """
     Get GitHub App access token for API calls.
@@ -90,7 +99,10 @@ def github_app_query_installation_token_any():
         return None
 
     # Use the first available installation
-    access_token = installations[0].get_access_token()
+    installation_json = installations[0].installation_json
+    assert installation_json
+    installation_id = installation_json['id']
+    access_token = github_app_installation_query_token(installation_id)
     if not access_token:
         logger.warning("Failed to get GitHub App access token")
         return None
@@ -121,20 +133,6 @@ class GitHubAppInstallationClass:
         assert self.installation_json
         return self.installation_json['account']['login']
 
-    def get_access_token(self):
-        if self.access_token:
-            return self.access_token
-
-        response = requests.post(
-            f'https://api.github.com/app/installations/{self.installation_id}/access_tokens',
-            headers=github_app_request_headers(),
-            timeout=30
-        )
-        response.raise_for_status()
-
-        self.access_token = response.json()['token']
-        return self.access_token
-
     def query_json(self):
         if self.installation_json:
             return self.installation_json
@@ -149,11 +147,11 @@ class GitHubAppInstallationClass:
         self.installation_json = response.json()
         return self.installation_json
 
-    def query_repos(self):
-        data = github_api(f'/installation/repositories', self.get_access_token())
+    def query_repos(self, installation_token):
+        data = github_api(f'/installation/repositories', installation_token)
         return data['repositories']
 
-    def query_issues_with_sponsoredissues_label(self):
+    def query_issues_with_sponsoredissues_label(self, installation_token):
         """Query user's public repositories and issues with sponsoredissues.org label"""
         query = """
         query($username: String!, $issueFirst: Int!, $cursor: String) {
@@ -222,7 +220,7 @@ class GitHubAppInstallationClass:
 
             logger.info(f'Querying repos (processed {repos_processed} repos so far)...')
 
-            data = github_graphql(query, self.get_access_token(), variables=variables, timeout=30)
+            data = github_graphql(query, installation_token, variables=variables, timeout=30)
 
             user_data = data.get('user')
             if not user_data:
@@ -342,7 +340,7 @@ class GitHubAppInstallationClass:
         """
         return query
 
-    def query_issue_urls(self, issue_urls):
+    def query_issue_urls(self, installation_token, issue_urls):
         """
         Get latest issue data queries for GitHub issues that have received
         non-zero user funding on sponsoredissues.org.
@@ -362,7 +360,7 @@ class GitHubAppInstallationClass:
         issues = []
         for query in queries:
             try:
-                data = github_graphql(query, self.get_access_token(), timeout=30)
+                data = github_graphql(query, installation_token, timeout=30)
             except requests.RequestException as e:
                 logger.error(f'GraphQL request failed: {e}')
                 continue
