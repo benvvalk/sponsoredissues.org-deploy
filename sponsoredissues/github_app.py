@@ -39,6 +39,29 @@ def github_app_request_headers(**kwargs):
         'Accept': 'application/vnd.github.v3+json'
     } | kwargs
 
+def github_app_query_installations(target_installation_id: Optional[int] = None):
+    """Get all GitHub App installations"""
+    try:
+        response = requests.get(
+            'https://api.github.com/app/installations',
+            headers=github_app_request_headers(),
+            timeout=30
+        )
+        response.raise_for_status()
+
+        installation_jsons = response.json()
+
+        if target_installation_id:
+            installation_jsons = [i for i in installation_jsons if i['id'] == target_installation_id]
+
+        installations = [ GitHubAppInstallationClass.from_json(i) for i in installation_jsons ]
+
+        return installations
+
+    except requests.RequestException as e:
+        logger.error(f'Failed to get GitHub App installations: {e}')
+        return []
+
 # Note: Added "Class" suffix to prevent name collision with
 # `GitHubAppInstallation` in `models.py`.
 class GitHubAppInstallationClass:
@@ -353,29 +376,6 @@ class GitHubApp:
         if not self.app_id or not self.private_key:
             logger.warning("GitHub App credentials not configured. GitHub App features will not be available.")
 
-    def query_installations(self, target_installation_id: Optional[int] = None):
-        """Get all GitHub App installations"""
-        try:
-            response = requests.get(
-                'https://api.github.com/app/installations',
-                headers=github_app_request_headers(),
-                timeout=30
-            )
-            response.raise_for_status()
-
-            installation_jsons = response.json()
-
-            if target_installation_id:
-                installation_jsons = [i for i in installation_jsons if i['id'] == target_installation_id]
-
-            installations = [ GitHubAppInstallationClass.from_json(i) for i in installation_jsons ]
-
-            return installations
-
-        except requests.RequestException as e:
-            logger.error(f'Failed to get GitHub App installations: {e}')
-            return []
-
     def get_installation_for_github_account(self, github_account_name):
         """Get app installation for GitHub account name (username or orgname)"""
         # TODO: Handle case where `github_account_name` is an orgname
@@ -397,7 +397,7 @@ class GitHubApp:
         Attempts to get token from any available installation.
         Returns None if no installations are available.
         """
-        installations = self.query_installations()
+        installations = github_app_query_installations()
         if not installations:
             logger.warning("No GitHub App installations available")
             return None
