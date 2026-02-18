@@ -32,6 +32,13 @@ def github_app_token():
     except Exception as e:
         raise RuntimeError("Failed to generate GitHub App token: Check format of GITHUB_APP_PRIVATE_KEY") from e
 
+def github_app_request_headers(**kwargs):
+    app_token = github_app_token()
+    return {
+        'Authorization': f'Bearer {app_token}',
+        'Accept': 'application/vnd.github.v3+json'
+    } | kwargs
+
 # Note: Added "Class" suffix to prevent name collision with
 # `GitHubAppInstallation` in `models.py`.
 class GitHubAppInstallationClass:
@@ -64,7 +71,7 @@ class GitHubAppInstallationClass:
 
         response = requests.post(
             f'https://api.github.com/app/installations/{self.installation_id}/access_tokens',
-            headers=self.github_app.get_request_headers(),
+            headers=github_app_request_headers(),
             timeout=30
         )
         response.raise_for_status()
@@ -78,7 +85,7 @@ class GitHubAppInstallationClass:
 
         response = requests.get(
             f'https://api.github.com/app/installations/{self.installation_id}',
-            headers=self.github_app.get_request_headers(),
+            headers=github_app_request_headers(),
             timeout=30
         )
         response.raise_for_status()
@@ -346,19 +353,12 @@ class GitHubApp:
         if not self.app_id or not self.private_key:
             logger.warning("GitHub App credentials not configured. GitHub App features will not be available.")
 
-    def get_request_headers(self, **kwargs):
-        app_token = github_app_token()
-        return {
-            'Authorization': f'Bearer {app_token}',
-            'Accept': 'application/vnd.github.v3+json'
-        } | kwargs
-
     def query_installations(self, target_installation_id: Optional[int] = None):
         """Get all GitHub App installations"""
         try:
             response = requests.get(
                 'https://api.github.com/app/installations',
-                headers=self.get_request_headers(),
+                headers=github_app_request_headers(),
                 timeout=30
             )
             response.raise_for_status()
@@ -383,7 +383,7 @@ class GitHubApp:
         # that.)
         response = requests.get(
             f'https://api.github.com/users/{github_account_name}/installation',
-            headers=self.get_request_headers(username=github_account_name),
+            headers=github_app_request_headers(username=github_account_name),
             timeout=30
         )
         response.raise_for_status()
