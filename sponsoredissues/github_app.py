@@ -39,6 +39,21 @@ def github_app_request_headers(**kwargs):
         'Accept': 'application/vnd.github.v3+json'
     } | kwargs
 
+
+def github_app_query_installation_for_github_account(github_account_name):
+    """Get app installation for GitHub account name (username or orgname)"""
+    # TODO: Handle case where `github_account_name` is an orgname
+    # rather than a username. (We need to do a separate query for
+    # that.)
+    response = requests.get(
+        f'https://api.github.com/users/{github_account_name}/installation',
+        headers=github_app_request_headers(username=github_account_name),
+        timeout=30
+    )
+    response.raise_for_status()
+
+    return response.json()
+
 def github_app_query_installations(target_installation_id: Optional[int] = None):
     """Get all GitHub App installations"""
     try:
@@ -395,17 +410,3 @@ class GitHubApp:
 
         if not self.app_id or not self.private_key:
             logger.warning("GitHub App credentials not configured. GitHub App features will not be available.")
-
-    def get_installation_for_github_account(self, github_account_name):
-        """Get app installation for GitHub account name (username or orgname)"""
-        # TODO: Handle case where `github_account_name` is an orgname
-        # rather than a username. (We need to do a separate query for
-        # that.)
-        response = requests.get(
-            f'https://api.github.com/users/{github_account_name}/installation',
-            headers=github_app_request_headers(username=github_account_name),
-            timeout=30
-        )
-        response.raise_for_status()
-
-        return response.json()

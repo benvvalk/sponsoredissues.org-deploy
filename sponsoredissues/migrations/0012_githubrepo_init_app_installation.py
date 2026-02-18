@@ -28,8 +28,7 @@ def init_app_installation_for_existing_repos(apps, schema_editor):
     make forward progress in case we need to run the migration
     multiple times (e.g. due to a spotty internet connection).
     """
-    from sponsoredissues.github_app import GitHubApp
-    from sponsoredissues.github_api import github_api
+    from sponsoredissues.github_app import github_app_query_installation_for_github_account
 
     # Import models
 
@@ -46,9 +45,6 @@ def init_app_installation_for_existing_repos(apps, schema_editor):
 
     print(f"Found {unlinked_repos.count()} unlinked repos with `app_installation` == NULL")
 
-    # Our own API for querying GitHub App installations.
-    app = GitHubApp()
-
     # Cache of GitHub username/orgname -> `GitHubAppInstallation` mappings.
     account_to_installation_map = {}
 
@@ -58,7 +54,7 @@ def init_app_installation_for_existing_repos(apps, schema_editor):
         github_username = repo.url.split('/')[-2]
         installation = account_to_installation_map.get(github_username)
         if not installation:
-            installation_json = app.get_installation_for_github_account(github_username)
+            installation_json = github_app_query_installation_for_github_account(github_username)
             # TODO: Not sure this is the right key / URL format.
             # I might have to construct the URL myself from the installation ID.
             installation_url = installation_json['html_url']
