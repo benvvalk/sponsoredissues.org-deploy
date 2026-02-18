@@ -9,7 +9,7 @@ import logging
 from typing import Optional, Tuple
 from django.core.cache import cache
 from django.conf import settings
-from .github_app import GitHubApp
+from sponsoredissues.github_app import github_app_query_installation_token_any
 
 logger = logging.getLogger(__name__)
 
@@ -22,8 +22,7 @@ class GitHubValidationService:
     REQUEST_TIMEOUT = 10
 
     def __init__(self):
-        self.github_app = GitHubApp()
-        self.access_token = self.github_app.get_any_installation_access_token()
+        self.access_token = github_app_query_installation_token_any()
 
     def validate_user_exists(self, username: str) -> bool:
         """

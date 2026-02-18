@@ -62,6 +62,26 @@ def github_app_query_installations(target_installation_id: Optional[int] = None)
         logger.error(f'Failed to get GitHub App installations: {e}')
         return []
 
+def github_app_query_installation_token_any():
+    """
+    Get GitHub App access token for API calls.
+
+    Attempts to get token from any available installation.
+    Returns None if no installations are available.
+    """
+    installations = github_app_query_installations()
+    if not installations:
+        logger.warning("No GitHub App installations available")
+        return None
+
+    # Use the first available installation
+    access_token = installations[0].get_access_token()
+    if not access_token:
+        logger.warning("Failed to get GitHub App access token")
+        return None
+
+    return access_token
+
 # Note: Added "Class" suffix to prevent name collision with
 # `GitHubAppInstallation` in `models.py`.
 class GitHubAppInstallationClass:
@@ -389,23 +409,3 @@ class GitHubApp:
         response.raise_for_status()
 
         return response.json()
-
-    def get_any_installation_access_token(self):
-        """
-        Get GitHub App access token for API calls.
-
-        Attempts to get token from any available installation.
-        Returns None if no installations are available.
-        """
-        installations = github_app_query_installations()
-        if not installations:
-            logger.warning("No GitHub App installations available")
-            return None
-
-        # Use the first available installation
-        access_token = installations[0].get_access_token()
-        if not access_token:
-            logger.warning("Failed to get GitHub App access token")
-            return None
-
-        return access_token
