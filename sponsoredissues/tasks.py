@@ -6,7 +6,7 @@ from celery.utils.log import get_task_logger
 from django.conf import settings
 from sponsoredissues.celery import app
 from sponsoredissues.github_api import github_api
-from sponsoredissues.github_app import GitHubApp
+from sponsoredissues.github_app import github_app_token
 from sponsoredissues.github_sync import github_sync_app_installation, github_sync_app_installation_remove
 from sponsoredissues.models import GitHubAppInstallation
 
@@ -65,10 +65,9 @@ def task_sync_github_app_installations_new_and_removed(self):
     remove any installations from the database that no longer exist
     on GitHub.
     """
-    github_app = GitHubApp()
-    github_app_token = github_app._get_github_app_token()
+    app_token = github_app_token()
 
-    installations_from_github_array = github_api('/app/installations', access_token=github_app_token)
+    installations_from_github_array = github_api('/app/installations', access_token=app_token)
     logger.info(f'found {len(installations_from_github_array)} app installations in total')
     installations_from_github = {
         installation['html_url']: installation for installation in installations_from_github_array

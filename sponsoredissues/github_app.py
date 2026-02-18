@@ -8,6 +8,30 @@ from typing import Any, Optional, Dict, List
 
 logger = logging.getLogger(__name__)
 
+def github_app_token():
+    """Generate GitHub App JWT token"""
+
+    app_id = settings.GITHUB_APP_ID
+    private_key = settings.GITHUB_APP_PRIVATE_KEY
+
+    if not app_id or not private_key:
+        raise RuntimeError("Failed to generate GitHub App token: GITHUB_APP_ID or GITHUB_APP_PRIVATE_KEY not set")
+
+    # Handle both single-line (with \\n) and multiline PEM formats
+    if '\\n' in private_key:
+        private_key = private_key.replace('\\n', '\n')
+
+    payload = {
+        'iat': int(datetime.utcnow().timestamp()),
+        'exp': int((datetime.utcnow() + timedelta(minutes=5)).timestamp()),
+        'iss': app_id
+    }
+
+    try:
+        return jwt.encode(payload, private_key.encode(), algorithm='RS256')
+    except Exception as e:
+        raise RuntimeError("Failed to generate GitHub App token: Check format of GITHUB_APP_PRIVATE_KEY") from e
+
 # Note: Added "Class" suffix to prevent name collision with
 # `GitHubAppInstallation` in `models.py`.
 class GitHubAppInstallationClass:
@@ -322,30 +346,8 @@ class GitHubApp:
         if not self.app_id or not self.private_key:
             logger.warning("GitHub App credentials not configured. GitHub App features will not be available.")
 
-    def _get_github_app_token(self) -> Optional[str]:
-        """Generate GitHub App JWT token"""
-        if not self.app_id or not self.private_key:
-            raise RuntimeError("Failed to generate GitHub App token: GITHUB_APP_ID or GITHUB_APP_PRIVATE_KEY not set")
-
-        private_key_str = self.private_key
-
-        # Handle both single-line (with \\n) and multiline PEM formats
-        if '\\n' in private_key_str:
-            private_key_str = private_key_str.replace('\\n', '\n')
-
-        payload = {
-            'iat': int(datetime.utcnow().timestamp()),
-            'exp': int((datetime.utcnow() + timedelta(minutes=5)).timestamp()),
-            'iss': self.app_id
-        }
-
-        try:
-            return jwt.encode(payload, private_key_str.encode(), algorithm='RS256')
-        except Exception as e:
-            raise RuntimeError("Failed to generate GitHub App token: Check format of GITHUB_APP_PRIVATE_KEY") from e
-
     def get_request_headers(self, **kwargs):
-        app_token = self._get_github_app_token()
+        app_token = github_app_token()
         return {
             'Authorization': f'Bearer {app_token}',
             'Accept': 'application/vnd.github.v3+json'
