@@ -101,12 +101,10 @@ def github_app_query_installation_token_any():
 # `GitHubAppInstallation` in `models.py`.
 class GitHubAppInstallationClass:
     access_token: Optional[str] = None
-    github_app: 'GitHubApp' # quotes indicate forward declaration
     installation_id: int
     installation_json: Optional[Dict[str, Any]] = None
 
     def __init__(self, installation_id: int, installation_json: Optional[Dict[str, Any]] = None):
-        self.github_app = GitHubApp()
         self.installation_id = installation_id
         self.installation_json = installation_json
 
@@ -400,13 +398,3 @@ class GitHubAppInstallationClass:
                     issues.append(issue_data)
 
         return issues
-
-class GitHubApp:
-    """Shared GitHub App authentication utilities"""
-
-    def __init__(self):
-        self.app_id = settings.GITHUB_APP_ID
-        self.private_key = settings.GITHUB_APP_PRIVATE_KEY
-
-        if not self.app_id or not self.private_key:
-            logger.warning("GitHub App credentials not configured. GitHub App features will not be available.")
