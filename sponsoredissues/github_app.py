@@ -109,6 +109,15 @@ def github_app_query_installation_token_any():
 
     return access_token
 
+def github_app_installation_query_json(installation_id):
+    response = requests.get(
+        f'https://api.github.com/app/installations/{installation_id}',
+        headers=github_app_request_headers(),
+        timeout=30
+    )
+    response.raise_for_status()
+    return response.json()
+
 # Note: Added "Class" suffix to prevent name collision with
 # `GitHubAppInstallation` in `models.py`.
 class GitHubAppInstallationClass:
@@ -132,20 +141,6 @@ class GitHubAppInstallationClass:
     def get_github_account_name(self):
         assert self.installation_json
         return self.installation_json['account']['login']
-
-    def query_json(self):
-        if self.installation_json:
-            return self.installation_json
-
-        response = requests.get(
-            f'https://api.github.com/app/installations/{self.installation_id}',
-            headers=github_app_request_headers(),
-            timeout=30
-        )
-        response.raise_for_status()
-
-        self.installation_json = response.json()
-        return self.installation_json
 
     def query_repos(self, installation_token):
         data = github_api(f'/installation/repositories', installation_token)

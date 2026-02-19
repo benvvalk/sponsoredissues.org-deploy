@@ -3,7 +3,7 @@ import logging
 from django.utils import timezone
 from requests.exceptions import HTTPError
 from sponsoredissues.github_api import github_app_installation_is_suspended, github_issue_has_sponsoredissues_label
-from sponsoredissues.github_app import github_app_installation_query_token, GitHubAppInstallationClass
+from sponsoredissues.github_app import github_app_installation_query_json, github_app_installation_query_token, GitHubAppInstallationClass
 from sponsoredissues.logging import PrefixLoggerAdapter
 from sponsoredissues.models import GitHubAppInstallation, GitHubIssue, GitHubRepo
 
@@ -28,7 +28,7 @@ def github_sync_app_installation(installation_id, base_logger=default_logger):
 
     try:
         logger.info(f'querying JSON data')
-        installation_json = installation_api.query_json()
+        installation_json = github_app_installation_query_json(installation_id)
     except HTTPError as e:
         # We will get HTTP 404 if the maintainer has uninstalled the
         # "sponsoredissues-maintainer" GitHub App, in which case
@@ -64,16 +64,15 @@ def github_sync_app_installation(installation_id, base_logger=default_logger):
     if created:
         logger.info(f'added (empty) installation to DB')
 
-    github_sync_app_installation_repos(installation_token, installation_api, logger)
-    github_sync_app_installation_issues(installation_token, installation_api, logger)
+    github_sync_app_installation_repos(installation_token, installation_json, installation_api, logger)
+    github_sync_app_installation_issues(installation_token, installation_json, installation_api, logger)
 
     installation.updated_at = timezone.now()
     installation.save()
     logger.info(f'successfully synced installation')
 
-def github_sync_app_installation_repos(installation_token, installation_api, logger=default_logger):
+def github_sync_app_installation_repos(installation_token, installation_json, installation_api, logger=default_logger):
     """Sync repos for a single GitHub App installation"""
-    installation_json = installation_api.query_json()
     installation_url = installation_json['html_url']
 
     installation = GitHubAppInstallation.objects.get(url=installation_url)
@@ -110,9 +109,8 @@ def github_sync_app_installation_repos(installation_token, installation_api, log
 
     logger.info(f'repo sync stats: +{len(repo_urls_to_add)} ~{len(repo_urls_to_update)} -{len(repo_urls_to_remove)}')
 
-def github_sync_app_installation_issues(installation_token, installation_api, logger=default_logger):
+def github_sync_app_installation_issues(installation_token, installation_json, installation_api, logger=default_logger):
     """Sync issues for a single GitHub App installation"""
-    installation_json = installation_api.query_json()
     installation_url = installation_json['html_url']
     github_username = installation_json['account']['login']
 
