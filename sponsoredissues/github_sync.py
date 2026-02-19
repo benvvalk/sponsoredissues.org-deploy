@@ -3,7 +3,7 @@ import logging
 from django.utils import timezone
 from requests.exceptions import HTTPError
 from sponsoredissues.github_api import github_app_installation_is_suspended, github_issue_has_sponsoredissues_label
-from sponsoredissues.github_app import github_app_installation_query_json, github_app_installation_query_issues_with_sponsoredissues_label, github_app_installation_query_token, GitHubAppInstallationClass
+from sponsoredissues.github_app import github_app_installation_query_json, github_app_installation_query_issues_with_sponsoredissues_label, github_app_installation_query_issue_urls, github_app_installation_query_token, GitHubAppInstallationClass
 from sponsoredissues.logging import PrefixLoggerAdapter
 from sponsoredissues.models import GitHubAppInstallation, GitHubIssue, GitHubRepo
 
@@ -194,7 +194,7 @@ def github_sync_app_installation_issues(installation_token, installation_json, i
     issues_from_github_with_label = github_app_installation_query_issues_with_sponsoredissues_label(installation_token, github_username)
 
     logger.info(f'querying GitHub for issues with funding')
-    issues_from_github_with_funding = installation_api.query_issue_urls(installation_token, funded_issue_urls_in_db)
+    issues_from_github_with_funding = github_app_installation_query_issue_urls(installation_token, funded_issue_urls_in_db)
 
     # Merge results from two queries above
     issues_from_github = {issue['html_url']: issue for issue in issues_from_github_with_label}

@@ -307,6 +307,63 @@ def _github_app_installation_build_query_for_issue_urls(issue_urls):
     """
     return query
 
+def github_app_installation_query_issue_urls(installation_token, issue_urls):
+    """
+    Get latest issue data queries for GitHub issues that have received
+    non-zero user funding on sponsoredissues.org.
+    """
+    from itertools import islice
+
+    # Query in batches to avoid exceeding GitHub API limits.
+    queries = []
+    iterator = iter(issue_urls)
+    while True:
+        batch = list(islice(iterator, 100))
+        if not batch:
+            break
+        query = _github_app_installation_build_query_for_issue_urls(batch)
+        queries.append(query)
+
+    issues = []
+    for query in queries:
+        try:
+            data = github_graphql(query, installation_token, timeout=30)
+        except requests.RequestException as e:
+            logger.error(f'GraphQL request failed: {e}')
+            continue
+
+        for i in range(len(data)):
+            repo = data.get(f'repo{i}')
+            for j in range(len(repo)):
+                issue = repo.get(f'issue{j}')
+                # Convert GraphQL response to REST API format for compatibility
+                issue_data = {
+                    'number': issue['number'],
+                    'title': issue['title'],
+                    'body': issue['body'],
+                    'repository': {
+                        'html_url': issue['repository']['homepageUrl'],
+                        'url': issue['repository']['url'],
+                    },
+                    'state': issue['state'].lower(),
+                    'html_url': issue['url'],
+                    'created_at': issue['createdAt'],
+                    'updated_at': issue['updatedAt'],
+                    'labels': [
+                        {
+                            'name': label['name'],
+                            'color': label['color']
+                        }
+                        for label in issue.get('labels', {}).get('nodes', [])
+                    ],
+                    'user': {
+                        'login': issue.get('author', {}).get('login', '')
+                    }
+                }
+                issues.append(issue_data)
+
+    return issues
+
 # Note: Added "Class" suffix to prevent name collision with
 # `GitHubAppInstallation` in `models.py`.
 class GitHubAppInstallationClass:
@@ -330,60 +387,3 @@ class GitHubAppInstallationClass:
     def query_repos(self, installation_token):
         data = github_api(f'/installation/repositories', installation_token)
         return data['repositories']
-
-    def query_issue_urls(self, installation_token, issue_urls):
-        """
-        Get latest issue data queries for GitHub issues that have received
-        non-zero user funding on sponsoredissues.org.
-        """
-        from itertools import islice
-
-        # Query in batches to avoid exceeding GitHub API limits.
-        queries = []
-        iterator = iter(issue_urls)
-        while True:
-            batch = list(islice(iterator, 100))
-            if not batch:
-                break
-            query = _github_app_installation_build_query_for_issue_urls(batch)
-            queries.append(query)
-
-        issues = []
-        for query in queries:
-            try:
-                data = github_graphql(query, installation_token, timeout=30)
-            except requests.RequestException as e:
-                logger.error(f'GraphQL request failed: {e}')
-                continue
-
-            for i in range(len(data)):
-                repo = data.get(f'repo{i}')
-                for j in range(len(repo)):
-                    issue = repo.get(f'issue{j}')
-                    # Convert GraphQL response to REST API format for compatibility
-                    issue_data = {
-                        'number': issue['number'],
-                        'title': issue['title'],
-                        'body': issue['body'],
-                        'repository': {
-                            'html_url': issue['repository']['homepageUrl'],
-                            'url': issue['repository']['url'],
-                        },
-                        'state': issue['state'].lower(),
-                        'html_url': issue['url'],
-                        'created_at': issue['createdAt'],
-                        'updated_at': issue['updatedAt'],
-                        'labels': [
-                            {
-                                'name': label['name'],
-                                'color': label['color']
-                            }
-                            for label in issue.get('labels', {}).get('nodes', [])
-                        ],
-                        'user': {
-                            'login': issue.get('author', {}).get('login', '')
-                        }
-                    }
-                    issues.append(issue_data)
-
-        return issues

@@ -172,7 +172,7 @@ class SyncIssuesForInstallationTest(TestCase):
             app_installation=self.installation,
         )
 
-    @patch.object(GitHubAppInstallationClass, 'query_issue_urls')
+    @patch('sponsoredissues.github_sync.github_app_installation_query_issue_urls')
     @patch('sponsoredissues.github_sync.github_app_installation_query_issues_with_sponsoredissues_label')
     def test_add_new_issue_with_label(self, mock_query_issues_with_label, mock_query_issues_with_funding):
         """Test adding a new issue with sponsoredissues.org label."""
@@ -192,7 +192,7 @@ class SyncIssuesForInstallationTest(TestCase):
         self.assertEqual(issue.data['title'], issue_json['title'])
         self.assertEqual(issue.repo, self.repo)
 
-    @patch.object(GitHubAppInstallationClass, 'query_issue_urls')
+    @patch('sponsoredissues.github_sync.github_app_installation_query_issue_urls')
     @patch('sponsoredissues.github_sync.github_app_installation_query_issues_with_sponsoredissues_label')
     def test_update_existing_issue(self, mock_query_issues_with_label, mock_query_issues_with_funding):
         """Test updating an existing issue's data."""
@@ -225,7 +225,7 @@ class SyncIssuesForInstallationTest(TestCase):
         self.assertEqual(issue.data['body'], 'New body')
         self.assertGreater(issue.updated_at, original_updated_at)
 
-    @patch.object(GitHubAppInstallationClass, 'query_issue_urls')
+    @patch('sponsoredissues.github_sync.github_app_installation_query_issue_urls')
     @patch('sponsoredissues.github_sync.github_app_installation_query_issues_with_sponsoredissues_label')
     def test_issue_assigned_to_correct_repo(self, mock_query_issues_with_label, mock_query_issues_with_funding):
         """Test that issues are correctly assigned to their parent repository."""
@@ -253,7 +253,7 @@ class SyncIssuesForInstallationTest(TestCase):
         self.assertEqual(issue1.repo, repo1)
         self.assertEqual(issue2.repo, repo2)
 
-    @patch.object(GitHubAppInstallationClass, 'query_issue_urls')
+    @patch('sponsoredissues.github_sync.github_app_installation_query_issue_urls')
     @patch('sponsoredissues.github_sync.github_app_installation_query_issues_with_sponsoredissues_label')
     def test_mixed_add_update_remove_operations(self, mock_query_issues_with_label, mock_query_issues_with_funding):
         """Test mixed operations: add new issue, update existing, remove old."""
@@ -296,7 +296,7 @@ class SyncIssuesForInstallationTest(TestCase):
         # Check existing issue removed
         self.assertFalse(GitHubIssue.objects.filter(url=removed_issue_json['html_url']).exists())
 
-    @patch.object(GitHubAppInstallationClass, 'query_issue_urls')
+    @patch('sponsoredissues.github_sync.github_app_installation_query_issue_urls')
     @patch('sponsoredissues.github_sync.github_app_installation_query_issues_with_sponsoredissues_label')
     def test_issue_state_change_open_to_closed(self, mock_query_issues_with_label, mock_query_issues_with_funding):
         """Test that issue state changes (open to closed) are properly updated."""
@@ -324,7 +324,7 @@ class SyncIssuesForInstallationTest(TestCase):
         # Verify state was updated to closed
         self.assertEqual(issue.data['state'], 'closed')
 
-    @patch.object(GitHubAppInstallationClass, 'query_issue_urls')
+    @patch('sponsoredissues.github_sync.github_app_installation_query_issue_urls')
     @patch('sponsoredissues.github_sync.github_app_installation_query_issues_with_sponsoredissues_label')
     def test_preserve_funded_issues(self, mock_query_issues_with_label, mock_query_issues_with_funding):
         """Test removing an unfunded issue when sponsoredissues.org label is removed."""
