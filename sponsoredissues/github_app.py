@@ -118,6 +118,127 @@ def github_app_installation_query_json(installation_id):
     response.raise_for_status()
     return response.json()
 
+def github_app_installation_query_issues_with_sponsoredissues_label(installation_token, github_username):
+    """Query user's public repositories and issues with sponsoredissues.org label"""
+    query = """
+    query($username: String!, $issueFirst: Int!, $cursor: String) {
+        user(login: $username) {
+            repositories(
+                first: 30
+                after: $cursor
+                privacy: PUBLIC
+                orderBy: {field: UPDATED_AT, direction: DESC}
+            ) {
+                pageInfo {
+                    hasNextPage
+                    endCursor
+                }
+                nodes {
+                    name
+                    owner {
+                        login
+                    }
+                    issues(
+                        first: $issueFirst
+                        states: [OPEN, CLOSED]
+                        labels: ["sponsoredissues.org"]
+                    ) {
+                        nodes {
+                            number
+                            title
+                            body
+                            repository {
+                                homepageUrl
+                                url
+                            }
+                            state
+                            url
+                            createdAt
+                            updatedAt
+                            labels(first: 20) {
+                                nodes {
+                                    name
+                                    color
+                                }
+                            }
+                            author {
+                                login
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+    """
+
+    variables = {
+        'username': github_username,
+        'issueFirst': 100,  # Get up to 100 issues per repo
+        'cursor': None
+    }
+
+    issues = []
+    repos_processed = 0
+    page_info = {'hasNextPage': True, 'endCursor': None}
+
+    while page_info.get('hasNextPage'):
+        variables['cursor'] = page_info.get('endCursor')
+
+        logger.info(f'Querying repos (processed {repos_processed} repos so far)...')
+
+        data = github_graphql(query, installation_token, variables=variables, timeout=30)
+
+        user_data = data.get('user')
+        if not user_data:
+            break
+
+        repositories = user_data.get('repositories', {})
+        repos = repositories.get('nodes', [])
+
+        # Process issues from each repository
+        for repo in repos:
+            repo_name = repo['name']
+            owner_login = repo['owner']['login']
+            repo_issues = repo.get('issues', {}).get('nodes', [])
+
+            if repo_issues:
+                logger.info(f'  {owner_login}/{repo_name}: {len(repo_issues)} issues')
+
+            for issue in repo_issues:
+                # Convert GraphQL response to REST API format for compatibility
+                issue_data = {
+                    'number': issue['number'],
+                    'title': issue['title'],
+                    'body': issue['body'],
+                    'state': issue['state'].lower(),
+                    'repository': {
+                        'html_url': issue['repository']['homepageUrl'],
+                        'url': issue['repository']['url'],
+                    },
+                    'html_url': issue['url'],
+                    'created_at': issue['createdAt'],
+                    'updated_at': issue['updatedAt'],
+                    'labels': [
+                        {
+                            'name': label['name'],
+                            'color': label['color']
+                        }
+                        for label in issue.get('labels', {}).get('nodes', [])
+                    ],
+                    'user': {
+                        'login': issue.get('author', {}).get('login', '')
+                    }
+                }
+                issues.append(issue_data)
+
+        repos_processed += len(repos)
+
+        # Update info about next page of query results (if any)
+        page_info = repositories.get('pageInfo')
+
+    return issues
+
 # Note: Added "Class" suffix to prevent name collision with
 # `GitHubAppInstallation` in `models.py`.
 class GitHubAppInstallationClass:
@@ -141,127 +262,6 @@ class GitHubAppInstallationClass:
     def query_repos(self, installation_token):
         data = github_api(f'/installation/repositories', installation_token)
         return data['repositories']
-
-    def query_issues_with_sponsoredissues_label(self, installation_token, github_username):
-        """Query user's public repositories and issues with sponsoredissues.org label"""
-        query = """
-        query($username: String!, $issueFirst: Int!, $cursor: String) {
-            user(login: $username) {
-                repositories(
-                    first: 30
-                    after: $cursor
-                    privacy: PUBLIC
-                    orderBy: {field: UPDATED_AT, direction: DESC}
-                ) {
-                    pageInfo {
-                        hasNextPage
-                        endCursor
-                    }
-                    nodes {
-                        name
-                        owner {
-                            login
-                        }
-                        issues(
-                            first: $issueFirst
-                            states: [OPEN, CLOSED]
-                            labels: ["sponsoredissues.org"]
-                        ) {
-                            nodes {
-                                number
-                                title
-                                body
-                                repository {
-                                    homepageUrl
-                                    url
-                                }
-                                state
-                                url
-                                createdAt
-                                updatedAt
-                                labels(first: 20) {
-                                    nodes {
-                                        name
-                                        color
-                                    }
-                                }
-                                author {
-                                    login
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-        }
-        """
-
-        variables = {
-            'username': github_username,
-            'issueFirst': 100,  # Get up to 100 issues per repo
-            'cursor': None
-        }
-
-        issues = []
-        repos_processed = 0
-        page_info = {'hasNextPage': True, 'endCursor': None}
-
-        while page_info.get('hasNextPage'):
-            variables['cursor'] = page_info.get('endCursor')
-
-            logger.info(f'Querying repos (processed {repos_processed} repos so far)...')
-
-            data = github_graphql(query, installation_token, variables=variables, timeout=30)
-
-            user_data = data.get('user')
-            if not user_data:
-                break
-
-            repositories = user_data.get('repositories', {})
-            repos = repositories.get('nodes', [])
-
-            # Process issues from each repository
-            for repo in repos:
-                repo_name = repo['name']
-                owner_login = repo['owner']['login']
-                repo_issues = repo.get('issues', {}).get('nodes', [])
-
-                if repo_issues:
-                    logger.info(f'  {owner_login}/{repo_name}: {len(repo_issues)} issues')
-
-                for issue in repo_issues:
-                    # Convert GraphQL response to REST API format for compatibility
-                    issue_data = {
-                        'number': issue['number'],
-                        'title': issue['title'],
-                        'body': issue['body'],
-                        'state': issue['state'].lower(),
-                        'repository': {
-                            'html_url': issue['repository']['homepageUrl'],
-                            'url': issue['repository']['url'],
-                        },
-                        'html_url': issue['url'],
-                        'created_at': issue['createdAt'],
-                        'updated_at': issue['updatedAt'],
-                        'labels': [
-                            {
-                                'name': label['name'],
-                                'color': label['color']
-                            }
-                            for label in issue.get('labels', {}).get('nodes', [])
-                        ],
-                        'user': {
-                            'login': issue.get('author', {}).get('login', '')
-                        }
-                    }
-                    issues.append(issue_data)
-
-            repos_processed += len(repos)
-
-            # Update info about next page of query results (if any)
-            page_info = repositories.get('pageInfo')
-
-        return issues
 
     def _build_query_for_issue_urls(self, issue_urls):
         """

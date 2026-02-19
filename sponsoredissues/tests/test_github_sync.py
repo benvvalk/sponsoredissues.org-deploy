@@ -173,7 +173,7 @@ class SyncIssuesForInstallationTest(TestCase):
         )
 
     @patch.object(GitHubAppInstallationClass, 'query_issue_urls')
-    @patch.object(GitHubAppInstallationClass, 'query_issues_with_sponsoredissues_label')
+    @patch('sponsoredissues.github_sync.github_app_installation_query_issues_with_sponsoredissues_label')
     def test_add_new_issue_with_label(self, mock_query_issues_with_label, mock_query_issues_with_funding):
         """Test adding a new issue with sponsoredissues.org label."""
         # Mock the API response with one new issue
@@ -193,7 +193,7 @@ class SyncIssuesForInstallationTest(TestCase):
         self.assertEqual(issue.repo, self.repo)
 
     @patch.object(GitHubAppInstallationClass, 'query_issue_urls')
-    @patch.object(GitHubAppInstallationClass, 'query_issues_with_sponsoredissues_label')
+    @patch('sponsoredissues.github_sync.github_app_installation_query_issues_with_sponsoredissues_label')
     def test_update_existing_issue(self, mock_query_issues_with_label, mock_query_issues_with_funding):
         """Test updating an existing issue's data."""
         # Create an existing issue in the database
@@ -226,7 +226,7 @@ class SyncIssuesForInstallationTest(TestCase):
         self.assertGreater(issue.updated_at, original_updated_at)
 
     @patch.object(GitHubAppInstallationClass, 'query_issue_urls')
-    @patch.object(GitHubAppInstallationClass, 'query_issues_with_sponsoredissues_label')
+    @patch('sponsoredissues.github_sync.github_app_installation_query_issues_with_sponsoredissues_label')
     def test_issue_assigned_to_correct_repo(self, mock_query_issues_with_label, mock_query_issues_with_funding):
         """Test that issues are correctly assigned to their parent repository."""
         # Create a second repo
@@ -254,7 +254,7 @@ class SyncIssuesForInstallationTest(TestCase):
         self.assertEqual(issue2.repo, repo2)
 
     @patch.object(GitHubAppInstallationClass, 'query_issue_urls')
-    @patch.object(GitHubAppInstallationClass, 'query_issues_with_sponsoredissues_label')
+    @patch('sponsoredissues.github_sync.github_app_installation_query_issues_with_sponsoredissues_label')
     def test_mixed_add_update_remove_operations(self, mock_query_issues_with_label, mock_query_issues_with_funding):
         """Test mixed operations: add new issue, update existing, remove old."""
         # Set up test data
@@ -297,7 +297,7 @@ class SyncIssuesForInstallationTest(TestCase):
         self.assertFalse(GitHubIssue.objects.filter(url=removed_issue_json['html_url']).exists())
 
     @patch.object(GitHubAppInstallationClass, 'query_issue_urls')
-    @patch.object(GitHubAppInstallationClass, 'query_issues_with_sponsoredissues_label')
+    @patch('sponsoredissues.github_sync.github_app_installation_query_issues_with_sponsoredissues_label')
     def test_issue_state_change_open_to_closed(self, mock_query_issues_with_label, mock_query_issues_with_funding):
         """Test that issue state changes (open to closed) are properly updated."""
         # Create an existing open issue
@@ -325,7 +325,7 @@ class SyncIssuesForInstallationTest(TestCase):
         self.assertEqual(issue.data['state'], 'closed')
 
     @patch.object(GitHubAppInstallationClass, 'query_issue_urls')
-    @patch.object(GitHubAppInstallationClass, 'query_issues_with_sponsoredissues_label')
+    @patch('sponsoredissues.github_sync.github_app_installation_query_issues_with_sponsoredissues_label')
     def test_preserve_funded_issues(self, mock_query_issues_with_label, mock_query_issues_with_funding):
         """Test removing an unfunded issue when sponsoredissues.org label is removed."""
         # Create an existing unfunded issue in the database
@@ -351,8 +351,9 @@ class SyncIssuesForInstallationTest(TestCase):
 
         # Mock the API response.
         # Simulate removal of `sponsoredissues.org` label from both
-        # issues, by returning empty list from
-        # mocked `query_issues_with_sponsoredissues_label` method.
+        # issues, by returning empty list from mocked
+        # `github_app_installation_query_issues_with_sponsoredissues_label`
+        # method.
         mock_query_issues_with_label.return_value = []
         mock_query_issues_with_funding.return_value = []
 
