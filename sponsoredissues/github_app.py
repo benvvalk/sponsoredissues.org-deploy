@@ -364,6 +364,10 @@ def github_app_installation_query_issue_urls(installation_token, issue_urls):
 
     return issues
 
+def github_app_installation_query_repos(installation_token):
+    data = github_api(f'/installation/repositories', installation_token)
+    return data['repositories']
+
 # Note: Added "Class" suffix to prevent name collision with
 # `GitHubAppInstallation` in `models.py`.
 class GitHubAppInstallationClass:
@@ -383,7 +387,3 @@ class GitHubAppInstallationClass:
     @classmethod
     def from_id(cls, installation_id):
         return cls(installation_id)
-
-    def query_repos(self, installation_token):
-        data = github_api(f'/installation/repositories', installation_token)
-        return data['repositories']

@@ -3,7 +3,7 @@ import logging
 from django.utils import timezone
 from requests.exceptions import HTTPError
 from sponsoredissues.github_api import github_app_installation_is_suspended, github_issue_has_sponsoredissues_label
-from sponsoredissues.github_app import github_app_installation_query_json, github_app_installation_query_issues_with_sponsoredissues_label, github_app_installation_query_issue_urls, github_app_installation_query_token, GitHubAppInstallationClass
+from sponsoredissues.github_app import github_app_installation_query_json, github_app_installation_query_issues_with_sponsoredissues_label, github_app_installation_query_issue_urls, github_app_installation_query_repos, github_app_installation_query_token, GitHubAppInstallationClass
 from sponsoredissues.logging import PrefixLoggerAdapter
 from sponsoredissues.models import GitHubAppInstallation, GitHubIssue, GitHubRepo
 
@@ -80,7 +80,7 @@ def github_sync_app_installation_repos(installation_token, installation_json, in
 
     # query currently enabled repositories for app installation
     logger.info(f'querying GitHub for enabled repos')
-    repos_from_github = installation_api.query_repos(installation_token)
+    repos_from_github = github_app_installation_query_repos(installation_token)
     logger.info(f'found {len(repos_from_github)} enabled repos')
 
     # Get current repo URLs for this installation's account

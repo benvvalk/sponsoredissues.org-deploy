@@ -80,7 +80,7 @@ class SyncReposForInstallationTest(TestCase):
         installation_url = self.installation_json['html_url']
         self.installation = GitHubAppInstallation.objects.create(url=installation_url)
 
-    @patch.object(GitHubAppInstallationClass, 'query_repos')
+    @patch('sponsoredissues.github_sync.github_app_installation_query_repos')
     def test_add_new_public_repo(self, mock_query_repos):
         """Test adding a new public repository."""
         repo_json = MockData.repo_json()
@@ -93,7 +93,7 @@ class SyncReposForInstallationTest(TestCase):
         repo = GitHubRepo.objects.first()
         self.assertEqual(repo.url, repo_json['html_url'])
 
-    @patch.object(GitHubAppInstallationClass, 'query_repos')
+    @patch('sponsoredissues.github_sync.github_app_installation_query_repos')
     def test_update_existing_repo(self, mock_query_repos):
         """Test updating an existing repository's timestamp."""
         # Create an existing repo in the database
@@ -116,7 +116,7 @@ class SyncReposForInstallationTest(TestCase):
         repo = GitHubRepo.objects.get(url=repo_url)
         self.assertGreater(repo.updated_at, original_updated_at)
 
-    @patch.object(GitHubAppInstallationClass, 'query_repos')
+    @patch('sponsoredissues.github_sync.github_app_installation_query_repos')
     def test_remove_repo_no_longer_accessible(self, mock_query_repos):
         """Test removing a repository that is no longer accessible."""
         # Create an existing repo in the database
@@ -134,7 +134,7 @@ class SyncReposForInstallationTest(TestCase):
         self.assertEqual(GitHubRepo.objects.count(), 0)
         self.assertFalse(GitHubRepo.objects.filter(url=repo_url).exists())
 
-    @patch.object(GitHubAppInstallationClass, 'query_repos')
+    @patch('sponsoredissues.github_sync.github_app_installation_query_repos')
     def test_skip_private_repos(self, mock_query_repos):
         """Test that private repositories are skipped and not added to database."""
         # Mock the API response with one private repo
