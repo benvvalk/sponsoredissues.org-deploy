@@ -250,12 +250,11 @@ def github_sync_app_installation_issues(installation_token, installation_json, l
 
     logger.info(f'issue sync stats: +{len(issue_urls_to_add)} ~{len(issue_urls_to_update)} -{len(issue_urls_to_remove)}')
 
-def github_sync_issue(issue_json):
+def github_sync_issue(issue_json, logger=default_logger):
     """
     Add, update, or remove a GitHubIssue from the database, given the
     the latest JSON issue data from GitHub.
     """
-    logger = default_logger
     issue_url = issue_json['html_url']
     issue_state = issue_json['state']
 
