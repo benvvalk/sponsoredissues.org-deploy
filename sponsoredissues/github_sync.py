@@ -191,7 +191,7 @@ def github_sync_app_installation_issues(installation_token, installation_json, i
     # Remove Funds" button disabled.
 
     logger.info(f'querying GitHub for issues with "sponsoredissues.org" label')
-    issues_from_github_with_label = installation_api.query_issues_with_sponsoredissues_label(installation_token)
+    issues_from_github_with_label = installation_api.query_issues_with_sponsoredissues_label(installation_token, github_username)
 
     logger.info(f'querying GitHub for issues with funding')
     issues_from_github_with_funding = installation_api.query_issue_urls(installation_token, funded_issue_urls_in_db)

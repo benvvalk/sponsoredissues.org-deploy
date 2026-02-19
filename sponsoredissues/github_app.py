@@ -138,15 +138,11 @@ class GitHubAppInstallationClass:
     def from_id(cls, installation_id):
         return cls(installation_id)
 
-    def get_github_account_name(self):
-        assert self.installation_json
-        return self.installation_json['account']['login']
-
     def query_repos(self, installation_token):
         data = github_api(f'/installation/repositories', installation_token)
         return data['repositories']
 
-    def query_issues_with_sponsoredissues_label(self, installation_token):
+    def query_issues_with_sponsoredissues_label(self, installation_token, github_username):
         """Query user's public repositories and issues with sponsoredissues.org label"""
         query = """
         query($username: String!, $issueFirst: Int!, $cursor: String) {
@@ -201,7 +197,7 @@ class GitHubAppInstallationClass:
         """
 
         variables = {
-            'username': self.get_github_account_name(),
+            'username': github_username,
             'issueFirst': 100,  # Get up to 100 issues per repo
             'cursor': None
         }
