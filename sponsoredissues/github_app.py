@@ -239,6 +239,74 @@ def github_app_installation_query_issues_with_sponsoredissues_label(installation
 
     return issues
 
+def _github_app_installation_build_query_for_issue_urls(issue_urls):
+    """
+    Build a GitHub GraphQL query that gets the latest data for
+    given issue URLs.
+    """
+    from urllib.parse import urlparse
+
+    # Build a dictionary that groups issues by repo.
+    repos = dict()
+    for issue_url in issue_urls:
+        url_path = urlparse(issue_url).path.strip('/')
+        repo_url = '/'.join(url_path.split('/')[:-2])
+        if repo_url not in repos:
+            repos[repo_url] = []
+        repos[repo_url].append(issue_url)
+
+    # Monotonically-increasing indices for GraphQL aliases.
+    repo_index = 0
+    issue_index = 0
+
+    query = """query {"""
+    for (repo_url, issue_urls) in repos.items():
+        path = urlparse(repo_url).path.strip('/')
+        owner = path.split('/')[-2]
+        repo_name = path.split('/')[-1]
+
+        query += f"""
+        repo{repo_index}: repository(owner: "{owner}", name: "{repo_name}") {{"""
+        repo_index += 1
+
+        for issue_url in issue_urls:
+            path = urlparse(issue_url).path.strip('/')
+            issue_number = path.split('/')[-1]
+
+            query += f"""
+            issue{issue_index}: issue(number: {issue_number}) {{"""
+            query += """
+                number
+                title
+                body
+                repository {
+                    homepageUrl
+                    url
+                }
+                state
+                url
+                createdAt
+                updatedAt
+                labels(first: 30) {
+                    nodes {
+                        name
+                        color
+                    }
+                }
+                author {
+                    login
+                }
+            }
+            """
+            issue_index += 1
+        query += """
+        }
+        """
+    query += """
+    }
+    """
+    return query
+
 # Note: Added "Class" suffix to prevent name collision with
 # `GitHubAppInstallation` in `models.py`.
 class GitHubAppInstallationClass:
@@ -263,74 +331,6 @@ class GitHubAppInstallationClass:
         data = github_api(f'/installation/repositories', installation_token)
         return data['repositories']
 
-    def _build_query_for_issue_urls(self, issue_urls):
-        """
-        Build a GitHub GraphQL query that gets the latest data for
-        given issue URLs.
-        """
-        from urllib.parse import urlparse
-
-        # Build a dictionary that groups issues by repo.
-        repos = dict()
-        for issue_url in issue_urls:
-            url_path = urlparse(issue_url).path.strip('/')
-            repo_url = '/'.join(url_path.split('/')[:-2])
-            if repo_url not in repos:
-                repos[repo_url] = []
-            repos[repo_url].append(issue_url)
-
-        # Monotonically-increasing indices for GraphQL aliases.
-        repo_index = 0
-        issue_index = 0
-
-        query = """query {"""
-        for (repo_url, issue_urls) in repos.items():
-            path = urlparse(repo_url).path.strip('/')
-            owner = path.split('/')[-2]
-            repo_name = path.split('/')[-1]
-
-            query += f"""
-            repo{repo_index}: repository(owner: "{owner}", name: "{repo_name}") {{"""
-            repo_index += 1
-
-            for issue_url in issue_urls:
-                path = urlparse(issue_url).path.strip('/')
-                issue_number = path.split('/')[-1]
-
-                query += f"""
-                issue{issue_index}: issue(number: {issue_number}) {{"""
-                query += """
-                    number
-                    title
-                    body
-                    repository {
-                        homepageUrl
-                        url
-                    }
-                    state
-                    url
-                    createdAt
-                    updatedAt
-                    labels(first: 30) {
-                        nodes {
-                            name
-                            color
-                        }
-                    }
-                    author {
-                        login
-                    }
-                }
-                """
-                issue_index += 1
-            query += """
-            }
-            """
-        query += """
-        }
-        """
-        return query
-
     def query_issue_urls(self, installation_token, issue_urls):
         """
         Get latest issue data queries for GitHub issues that have received
@@ -345,7 +345,7 @@ class GitHubAppInstallationClass:
             batch = list(islice(iterator, 100))
             if not batch:
                 break
-            query = self._build_query_for_issue_urls(batch)
+            query = _github_app_installation_build_query_for_issue_urls(batch)
             queries.append(query)
 
         issues = []
