@@ -362,23 +362,3 @@ def github_app_installation_query_issue_urls(installation_token, issue_urls):
 def github_app_installation_query_repos(installation_token):
     data = github_api(f'/installation/repositories', installation_token)
     return data['repositories']
-
-# Note: Added "Class" suffix to prevent name collision with
-# `GitHubAppInstallation` in `models.py`.
-class GitHubAppInstallationClass:
-    access_token: Optional[str] = None
-    installation_id: int
-    installation_json: Optional[Dict[str, Any]] = None
-
-    def __init__(self, installation_id: int, installation_json: Optional[Dict[str, Any]] = None):
-        self.installation_id = installation_id
-        self.installation_json = installation_json
-
-    @classmethod
-    def from_json(cls, installation_json):
-        installation_id = int(installation_json['id'])
-        return cls(installation_id, installation_json)
-
-    @classmethod
-    def from_id(cls, installation_id):
-        return cls(installation_id)
