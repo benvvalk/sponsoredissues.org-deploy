@@ -172,12 +172,14 @@ class SyncIssuesForInstallationTest(TestCase):
             app_installation=self.installation,
         )
 
+    @patch.object(GitHubAppInstallationClass, 'query_issue_urls')
     @patch.object(GitHubAppInstallationClass, 'query_issues_with_sponsoredissues_label')
-    def test_add_new_issue_with_label(self, mock_query_issues):
+    def test_add_new_issue_with_label(self, mock_query_issues_with_label, mock_query_issues_with_funding):
         """Test adding a new issue with sponsoredissues.org label."""
         # Mock the API response with one new issue
         issue_json : Final = MockData.issue_json()
-        mock_query_issues.return_value = [ issue_json ]
+        mock_query_issues_with_label.return_value = [ issue_json ]
+        mock_query_issues_with_funding.return_value = []
 
         # Call the method
         github_sync_app_installation_issues(MockData.APP_INSTALLATION_TOKEN, self.installation_api)
@@ -190,8 +192,9 @@ class SyncIssuesForInstallationTest(TestCase):
         self.assertEqual(issue.data['title'], issue_json['title'])
         self.assertEqual(issue.repo, self.repo)
 
+    @patch.object(GitHubAppInstallationClass, 'query_issue_urls')
     @patch.object(GitHubAppInstallationClass, 'query_issues_with_sponsoredissues_label')
-    def test_update_existing_issue(self, mock_query_issues):
+    def test_update_existing_issue(self, mock_query_issues_with_label, mock_query_issues_with_funding):
         """Test updating an existing issue's data."""
         # Create an existing issue in the database
         existing_issue_json : Final = MockData.issue_json()
@@ -209,7 +212,8 @@ class SyncIssuesForInstallationTest(TestCase):
         updated_issue_json = existing_issue_json.copy()
         updated_issue_json['title'] = 'New Title'
         updated_issue_json['body'] = 'New body'
-        mock_query_issues.return_value = [ updated_issue_json ]
+        mock_query_issues_with_label.return_value = [ updated_issue_json ]
+        mock_query_issues_with_funding.return_value = []
 
         # Call the method
         github_sync_app_installation_issues(MockData.APP_INSTALLATION_TOKEN, self.installation_api)
@@ -221,8 +225,9 @@ class SyncIssuesForInstallationTest(TestCase):
         self.assertEqual(issue.data['body'], 'New body')
         self.assertGreater(issue.updated_at, original_updated_at)
 
+    @patch.object(GitHubAppInstallationClass, 'query_issue_urls')
     @patch.object(GitHubAppInstallationClass, 'query_issues_with_sponsoredissues_label')
-    def test_issue_assigned_to_correct_repo(self, mock_query_issues):
+    def test_issue_assigned_to_correct_repo(self, mock_query_issues_with_label, mock_query_issues_with_funding):
         """Test that issues are correctly assigned to their parent repository."""
         # Create a second repo
         repo1 = self.repo
@@ -235,7 +240,8 @@ class SyncIssuesForInstallationTest(TestCase):
         # Mock API response with issues from different repos
         issue1_json = MockData.issue_json()
         issue2_json = MockData.issue_json(repo_name=repo2_name)
-        mock_query_issues.return_value = [issue1_json, issue2_json]
+        mock_query_issues_with_label.return_value = [issue1_json, issue2_json]
+        mock_query_issues_with_funding.return_value = []
 
         # Call the method
         github_sync_app_installation_issues(MockData.APP_INSTALLATION_TOKEN, self.installation_api)
@@ -247,8 +253,9 @@ class SyncIssuesForInstallationTest(TestCase):
         self.assertEqual(issue1.repo, repo1)
         self.assertEqual(issue2.repo, repo2)
 
+    @patch.object(GitHubAppInstallationClass, 'query_issue_urls')
     @patch.object(GitHubAppInstallationClass, 'query_issues_with_sponsoredissues_label')
-    def test_mixed_add_update_remove_operations(self, mock_query_issues):
+    def test_mixed_add_update_remove_operations(self, mock_query_issues_with_label, mock_query_issues_with_funding):
         """Test mixed operations: add new issue, update existing, remove old."""
         # Set up test data
         existing_issue_json = MockData.issue_json(issue_number=1)
@@ -270,7 +277,8 @@ class SyncIssuesForInstallationTest(TestCase):
         # Mock API response: update issue, add issue, remove issue
         updated_issue_json = existing_issue_json.copy()
         updated_issue_json['title'] = 'Updated Issue 1'
-        mock_query_issues.return_value = [updated_issue_json, new_issue_json]
+        mock_query_issues_with_label.return_value = [updated_issue_json, new_issue_json]
+        mock_query_issues_with_funding.return_value = []
 
         # Call the method
         github_sync_app_installation_issues(MockData.APP_INSTALLATION_TOKEN, self.installation_api)
@@ -288,8 +296,9 @@ class SyncIssuesForInstallationTest(TestCase):
         # Check existing issue removed
         self.assertFalse(GitHubIssue.objects.filter(url=removed_issue_json['html_url']).exists())
 
+    @patch.object(GitHubAppInstallationClass, 'query_issue_urls')
     @patch.object(GitHubAppInstallationClass, 'query_issues_with_sponsoredissues_label')
-    def test_issue_state_change_open_to_closed(self, mock_query_issues):
+    def test_issue_state_change_open_to_closed(self, mock_query_issues_with_label, mock_query_issues_with_funding):
         """Test that issue state changes (open to closed) are properly updated."""
         # Create an existing open issue
         issue_json = MockData.issue_json()
@@ -302,7 +311,8 @@ class SyncIssuesForInstallationTest(TestCase):
         # Mock API response with the same issue but now closed
         closed_issue_json = issue_json.copy()
         closed_issue_json['state'] = 'closed'
-        mock_query_issues.return_value = [closed_issue_json]
+        mock_query_issues_with_label.return_value = [closed_issue_json]
+        mock_query_issues_with_funding.return_value = []
 
         # Call the method
         github_sync_app_installation_issues(MockData.APP_INSTALLATION_TOKEN, self.installation_api)
@@ -314,8 +324,9 @@ class SyncIssuesForInstallationTest(TestCase):
         # Verify state was updated to closed
         self.assertEqual(issue.data['state'], 'closed')
 
+    @patch.object(GitHubAppInstallationClass, 'query_issue_urls')
     @patch.object(GitHubAppInstallationClass, 'query_issues_with_sponsoredissues_label')
-    def test_preserve_funded_issues(self, mock_query_issues):
+    def test_preserve_funded_issues(self, mock_query_issues_with_label, mock_query_issues_with_funding):
         """Test removing an unfunded issue when sponsoredissues.org label is removed."""
         # Create an existing unfunded issue in the database
         unfunded_issue_json = MockData.issue_json(issue_number=3)
@@ -342,7 +353,8 @@ class SyncIssuesForInstallationTest(TestCase):
         # Simulate removal of `sponsoredissues.org` label from both
         # issues, by returning empty list from
         # mocked `query_issues_with_sponsoredissues_label` method.
-        mock_query_issues.return_value = []
+        mock_query_issues_with_label.return_value = []
+        mock_query_issues_with_funding.return_value = []
 
         # Call the method
         github_sync_app_installation_issues(MockData.APP_INSTALLATION_TOKEN, self.installation_api)
