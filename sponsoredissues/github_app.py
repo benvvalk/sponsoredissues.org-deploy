@@ -69,9 +69,7 @@ def github_app_query_installations(target_installation_id: Optional[int] = None)
         if target_installation_id:
             installation_jsons = [i for i in installation_jsons if i['id'] == target_installation_id]
 
-        installations = [ GitHubAppInstallationClass.from_json(i) for i in installation_jsons ]
-
-        return installations
+        return installation_jsons
 
     except requests.RequestException as e:
         logger.error(f'Failed to get GitHub App installations: {e}')
@@ -93,16 +91,13 @@ def github_app_query_installation_token_any():
     Attempts to get token from any available installation.
     Returns None if no installations are available.
     """
-    installations = github_app_query_installations()
-    if not installations:
+    installation_jsons = github_app_query_installations()
+    if not installation_jsons:
         logger.warning("No GitHub App installations available")
         return None
 
     # Use the first available installation
-    installation_json = installations[0].installation_json
-    assert installation_json
-    installation_id = installation_json['id']
-    access_token = github_app_installation_query_token(installation_id)
+    access_token = github_app_installation_query_token(installation_jsons[0]['id'])
     if not access_token:
         logger.warning("Failed to get GitHub App access token")
         return None
