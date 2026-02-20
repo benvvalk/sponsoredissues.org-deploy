@@ -1,6 +1,7 @@
 import logging
 
 from django.utils import timezone
+from enum import Enum
 from requests.exceptions import HTTPError
 from sponsoredissues.github_api import github_app_installation_is_suspended, github_issue_has_sponsoredissues_label
 from sponsoredissues.github_app import github_app_installation_query_json, github_app_installation_query_issues_with_sponsoredissues_label, github_app_installation_query_issue_urls, github_app_installation_query_repos, github_app_installation_query_token
@@ -8,6 +9,16 @@ from sponsoredissues.logging import PrefixLoggerAdapter
 from sponsoredissues.models import GitHubAppInstallation, GitHubIssue, GitHubRepo
 
 default_logger = logging.getLogger(__name__)
+
+class SyncResult(Enum):
+    """
+    What happened to an individual issue in the database, after the latest
+    JSON data for the issue from GitHub.
+    """
+    ADDED = 0
+    UPDATED = 1
+    REMOVED = 2
+    IGNORED = 3
 
 def github_sync_app_installation_remove(installation, logger=default_logger):
     installation_url = installation.url
@@ -250,7 +261,7 @@ def github_sync_app_installation_issues(installation_token, installation_json, l
 
     logger.info(f'issue sync stats: +{len(issue_urls_to_add)} ~{len(issue_urls_to_update)} -{len(issue_urls_to_remove)}')
 
-def github_sync_issue(issue_json, logger=default_logger):
+def github_sync_issue(issue_json, logger=default_logger) -> SyncResult:
     """
     Add, update, or remove a GitHubIssue from the database, given the
     the latest JSON issue data from GitHub.
@@ -322,13 +333,20 @@ def github_sync_issue(issue_json, logger=default_logger):
             repo=github_repo
         )
         logger.info(f"added issue: {issue_url}")
+        return SyncResult.ADDED
     elif should_exist and github_issue:
         # Update existing issue
         github_issue.data = issue_json
         github_issue.repo = github_repo
         github_issue.save()
         logger.info(f"updated issue: {issue_url}")
+        return SyncResult.UPDATED
     elif not should_exist and github_issue:
         # Delete issue (closed or label removed)
         github_issue.delete()
         logger.info(f"deleted issue: {issue_url} (issue closed or label removed, and issue does not have existing funding)")
+        return SyncResult.REMOVED
+    else:
+        # Final case: Issue does not exist in database and should not
+        # be added. (i.e. `not should_exist and not github_issue`)
+        return SyncResult.IGNORED
