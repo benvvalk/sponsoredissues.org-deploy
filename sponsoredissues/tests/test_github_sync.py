@@ -296,8 +296,8 @@ class SyncIssuesForInstallationTest(TestCase):
 
     @patch('sponsoredissues.github_sync.github_app_installation_query_issue_urls')
     @patch('sponsoredissues.github_sync.github_app_installation_query_issues_with_sponsoredissues_label')
-    def test_issue_state_change_open_to_closed(self, mock_query_issues_with_label, mock_query_issues_with_funding):
-        """Test that issue state changes (open to closed) are properly updated."""
+    def test_issue_remove_closed_issue_without_funding(self, mock_query_issues_with_label, mock_query_issues_with_funding):
+        """Test that an unfunded issue is removed when closed."""
         # Create an existing open issue
         issue_json = MockData.issue_json()
         GitHubIssue.objects.create(
@@ -315,12 +315,43 @@ class SyncIssuesForInstallationTest(TestCase):
         # Call the method
         github_sync_app_installation_issues(MockData.APP_INSTALLATION_TOKEN, self.installation_json)
 
-        # Verify issue still exists (not deleted)
-        self.assertEqual(GitHubIssue.objects.count(), 1)
-        issue = GitHubIssue.objects.get(url=issue_json['html_url'])
+        # Verify issue was deleted
+        self.assertEqual(GitHubIssue.objects.count(), 0)
 
-        # Verify state was updated to closed
-        self.assertEqual(issue.data['state'], 'closed')
+    @patch('sponsoredissues.github_sync.github_app_installation_query_issue_urls')
+    @patch('sponsoredissues.github_sync.github_app_installation_query_issues_with_sponsoredissues_label')
+    def test_issue_preserve_closed_issue_with_funding(self, mock_query_issues_with_label, mock_query_issues_with_funding):
+        """Test that an funded issue is kept when closed."""
+        # Create an existing open issue
+        open_issue_json = MockData.issue_json()
+        funded_issue = GitHubIssue.objects.create(
+            url=open_issue_json['html_url'],
+            data=open_issue_json,
+            repo=self.repo
+        )
+        # Add funding to the issue
+        SponsorAmount.objects.create(
+            cents_usd=1000,
+            sponsor_user=self.user,
+            target_github_issue=funded_issue
+        )
+
+        # Mock API response with the same issue but now closed
+        closed_issue_json = open_issue_json.copy()
+        closed_issue_json['state'] = 'closed'
+        mock_query_issues_with_label.return_value = [closed_issue_json]
+        mock_query_issues_with_funding.return_value = []
+
+        # Call the method
+        github_sync_app_installation_issues(MockData.APP_INSTALLATION_TOKEN, self.installation_json)
+
+        # Verify issue closed issue still exists
+        self.assertEqual(GitHubIssue.objects.count(), 1)
+        issue = GitHubIssue.objects.first()
+        assert issue
+        self.assertEqual(issue.url, open_issue_json['html_url'])
+        self.assertEqual(issue.data['title'], open_issue_json['title'])
+        self.assertEqual(issue.repo, self.repo)
 
     @patch('sponsoredissues.github_sync.github_app_installation_query_issue_urls')
     @patch('sponsoredissues.github_sync.github_app_installation_query_issues_with_sponsoredissues_label')

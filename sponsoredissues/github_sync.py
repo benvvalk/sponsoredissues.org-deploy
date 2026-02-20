@@ -121,7 +121,6 @@ def github_sync_app_installation_repos(installation_token, installation_json, lo
 
 def github_sync_app_installation_issues(installation_token, installation_json, logger=default_logger):
     """Sync issues for a single GitHub App installation"""
-    installation_url = installation_json['html_url']
     github_username = installation_json['account']['login']
 
     # Get all issues in DB related to app installation.
@@ -212,54 +211,51 @@ def github_sync_app_installation_issues(installation_token, installation_json, l
     issue_urls_from_github = issues_from_github.keys()
     logger.info(f'retrieved latest data for {len(issue_urls_from_github)} issues')
 
-    # Identify the subset of issues that belong to enabled repos, i.e.
-    # repos that are currently selected under Profile -> Settings ->
-    # Application -> sponsoredissues-maintainer –> "Only select
-    # repositories" (radio button). If the radio button is set to "All
-    # repositories" instead (the default), then all issues belong to
-    # enabled repos.
+    # Create or update issues that are either funded or "active".
     #
-    # In our database, the set of enabled repos is represented by the
-    # list of repos that currently exist in the `GitHubRepo`
-    # table. (We always sync `GitHubRepo` table with GitHub,
-    # immediately before we call this method to sync the issues.)
+    # For an issue to be "active", all of the following must be true:
+    #
+    # (1) The issue must be open, *AND*
+    # (2) The issue must have the "sponsoredissues.org" label, *AND*
+    # (3) The "sponsoredissues-maintainer" GitHub App must be enabled
+    # on the repo that contains the issue.
 
-    installation_in_db = GitHubAppInstallation.objects.get(url=installation_url)
-    enabled_repos_in_db = GitHubRepo.objects.filter(app_installation=installation_in_db)
-    enabled_repo_urls = set(enabled_repos_in_db.distinct().values_list('url', flat=True))
-    issue_urls_from_github_with_enabled_repos = {
-        issue['html_url'] for issue in issues_from_github.values() \
-        if issue['repository']['html_url'] in enabled_repo_urls
-    }
+    issue_urls_added = set()
+    issue_urls_updated = set()
+    issue_urls_removed = set()
 
-    # Use set arithmetic to determine which issues need to be
-    # added/updated/removed in the database.
+    for issue_url in issue_urls_from_github:
+        result = github_sync_issue(issues_from_github[issue_url])
+        if result is SyncResult.ADDED:
+            issue_urls_added.add(issue_url)
+        elif result is SyncResult.UPDATED:
+            issue_urls_updated.add(issue_url)
+        elif result is SyncResult.REMOVED:
+            issue_urls_removed.add(issue_url)
 
-    issue_urls_to_add = issue_urls_from_github_with_enabled_repos - issue_urls_in_db
-    issue_urls_to_update = issue_urls_from_github & issue_urls_in_db
-    issue_urls_to_remove = issue_urls_in_db - funded_issue_urls_in_db - issue_urls_from_github_with_enabled_repos
+    # Remove issues from database that were not included in the GitHub
+    # query results for labeled/funded issues above
+    # (i.e. `issue_urls_from_github`).
+    #
+    # An issue could be missing from the GitHub query results for
+    # many reasons, including:
+    #
+    # (1) The maintainer removed the "sponsoredissues.org" label.
+    # (2) The maintainer deleted the issue on GitHub. (This
+    # corresponds to the red "Delete issue" link in the
+    # bottom right corner of the GitHub issue page.)
+    # (3) The maintainer deleted the repo that contains the issue.
 
-    for issue_url in issue_urls_to_add:
-        GitHubIssue.objects.create(
-            url=issue_url,
-            data=issues_from_github[issue_url],
-            repo=GitHubRepo.get_by_issue_url(issue_url)
-        )
-        logger.info(f'added issue {issue_url}')
-
-    for issue_url in issue_urls_to_update:
-        GitHubIssue.objects.filter(url=issue_url).update(
-            data=issues_from_github[issue_url],
-            repo=GitHubRepo.get_by_issue_url(issue_url),
-            updated_at=timezone.now()
-        )
-        logger.info(f'updated issue {issue_url}')
+    issue_urls_to_remove = (issue_urls_in_db
+                        - funded_issue_urls_in_db
+                        - issue_urls_from_github)
 
     for issue_url in issue_urls_to_remove:
         GitHubIssue.objects.get(url=issue_url).delete()
+        issue_urls_removed.add(issue_url)
         logger.info(f'removed issue {issue_url}')
 
-    logger.info(f'issue sync stats: +{len(issue_urls_to_add)} ~{len(issue_urls_to_update)} -{len(issue_urls_to_remove)}')
+    logger.info(f'issue sync stats: +{len(issue_urls_added)} ~{len(issue_urls_updated)} -{len(issue_urls_removed)}')
 
 def github_sync_issue(issue_json, logger=default_logger) -> SyncResult:
     """
