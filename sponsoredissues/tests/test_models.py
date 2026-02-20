@@ -558,3 +558,65 @@ class GitHubAppInstallationDeleteTest(TestCase):
         # Verify funded issue still exists
         self.assertTrue(GitHubIssue.objects.filter(url=funded_issue.url).exists())
         self.assertEqual(GitHubIssue.objects.count(), 1)
+
+class GithubIssueTest(TestCase):
+    def setUp(self):
+        """Set up test fixtures."""
+        # Create test user for funded issues
+        self.user = User.objects.create_user(username='testuser', email='test@example.com')
+
+        # Create test installation
+        self.installation = GitHubAppInstallation.objects.create(
+            url='https://github.com/installation/12345'
+        )
+
+        # Create test repos
+        self.repo = GitHubRepo.objects.create(
+            url='https://github.com/testuser/repo1',
+            app_installation=self.installation
+        )
+
+    def test_delete_force_with_funded_issue(self):
+        # create funded issue
+        funded_issue_data = {
+            'number': 3,
+            'title': 'Funded Issue 1',
+            'state': 'open',
+            'url': 'https://github.com/testuser/repo1/issues/3',
+        }
+        funded_issue = GitHubIssue.objects.create(
+            url='https://github.com/testuser/repo1/issues/3',
+            data=funded_issue_data,
+            repo=self.repo
+        )
+        SponsorAmount.objects.create(
+            cents_usd=1000,
+            sponsor_user=self.user,
+            target_github_issue=funded_issue
+        )
+
+        # call the method
+        funded_issue.delete_force()
+
+        # confirm issue was deleted
+        self.assertEqual(GitHubIssue.objects.count(), 0)
+
+    def test_delete_force_with_unfunded_issue(self):
+        # create funded issue
+        issue_data = {
+            'number': 3,
+            'title': 'Funded Issue 1',
+            'state': 'open',
+            'url': 'https://github.com/testuser/repo1/issues/3',
+        }
+        issue = GitHubIssue.objects.create(
+            url='https://github.com/testuser/repo1/issues/3',
+            data=issue_data,
+            repo=self.repo
+        )
+
+        # call the method
+        issue.delete_force()
+
+        # confirm issue was deleted
+        self.assertEqual(GitHubIssue.objects.count(), 0)

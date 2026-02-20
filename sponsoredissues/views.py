@@ -524,6 +524,12 @@ def github_webhook(request):
         if action in ['opened', 'reopened', 'closed', 'labeled', 'unlabeled', 'edited']:
             github_sync_issue(issue_data)
             return HttpResponse(f"Processed event: event_type={event_type}, action={action}", status=200)
+        elif action == 'deleted':
+            issue = GitHubIssue.objects.filter(url=issue_data['html_url']).first()
+            if issue:
+                # forcefully delete the issue and associated funding data (if any)
+                issue.delete_force()
+            return HttpResponse(f"Processed event: event_type={event_type}, action={action}", status=200)
         else:
             logger.info(f"Ignoring unsupported action: {action}")
             return HttpResponse(f"Ignored event: event_type={event_type}, action={action}", status=200)

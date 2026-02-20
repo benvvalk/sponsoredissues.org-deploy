@@ -213,6 +213,22 @@ class GitHubIssue(models.Model):
     def __str__(self):
         return self.url
 
+    def delete_force(self):
+        """
+        Delete this issue from the database, along with its associated
+        funding data (if any).
+
+        Normally, attempting to delete an issue with funding data will
+        throw an error due to the `on_delete=models.PROTECT`
+        constraint on `SponsorAmount.target_github_issue`. However,
+        there are rare circumstances where we actually do want to
+        delete an issue and all of its associated funding data (if
+        any), e.g.  when the maintainer clicks the red `Delete issue`
+        link in the bottom right corner of the GitHub issue page.
+        """
+        SponsorAmount.objects.filter(target_github_issue=self).delete()
+        self.delete()
+
     def is_funded(self):
         """
         Return true if this issue has a non-zero amount of funding
