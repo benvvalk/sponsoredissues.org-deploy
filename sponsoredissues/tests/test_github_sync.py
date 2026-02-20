@@ -89,6 +89,7 @@ class SyncReposForInstallationTest(TestCase):
         # Verify the repo was created in the database
         self.assertEqual(GitHubRepo.objects.count(), 1)
         repo = GitHubRepo.objects.first()
+        assert repo
         self.assertEqual(repo.url, repo_json['html_url'])
 
     @patch('sponsoredissues.github_sync.github_app_installation_query_repos')
