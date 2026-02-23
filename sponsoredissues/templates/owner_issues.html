@@ -296,6 +296,10 @@
         display: inline-block;
     }
 
+    .rank .tie {
+        font-size: 1.0rem;
+    }
+
 
     .issue-main {
         flex: 1;
@@ -700,7 +704,14 @@
         {% for issue in issues %}
         <div class="issue-item{% if issue.is_selected %} is_selected{% endif %}{% if not issue.github_app_enabled_on_repo or not issue.has_sponsoredissues_label %} frozen{% endif %}" id="issue-{{ issue.number }}" >
             <div class="rank-section">
-                <div class="rank">#{{ issue.rank }}</div>
+                <div class="rank">
+                    <div>
+                        #{{ issue.rank }}
+                        {% if issue.is_tie %}
+                        <span class="tie">(tie)</span>
+                        {% endif %}
+                    </div>
+                </div>
             </div>
             <div class="issue-main">
                 <div class="issue-title"><a href="https://github.com/{{ owner }}/{{ issue.repo }}" class="repo-prefix" target="_blank">{{ owner }}/{{ issue.repo }}</a>: <a href="https://github.com/{{ owner }}/{{ issue.repo }}/issues/{{ issue.number }}" target="_blank">{{ issue.title }}</a></div>
