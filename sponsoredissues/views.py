@@ -278,8 +278,20 @@ def owner_issues(request, owner, repo=None, issue_number=None):
     parsed_issues.sort(key=lambda issue: issue['donation_total_cents'], reverse=True)
 
     # Update ranks after sorting
+    rank = 1
     for i, issue in enumerate(parsed_issues):
-        issue['rank'] = i + 1
+        prev_issue = parsed_issues[i - 1] if i > 0 else None
+        next_issue = parsed_issues[i + 1] if i < len(parsed_issues) - 1 else None
+        is_tie = False
+        if prev_issue:
+            if prev_issue['donation_total_cents'] == issue['donation_total_cents']:
+                is_tie = True
+            else:
+                rank += 1
+        if next_issue and next_issue['donation_total_cents'] == issue['donation_total_cents']:
+            is_tie = True
+        issue['is_tie'] = is_tie
+        issue['rank'] = rank
 
     # Calculate sponsor dollars for current user and repo owner
     total_sponsor_cents = 0
