@@ -281,10 +281,6 @@ def owner_issues(request, owner, repo=None, issue_number=None):
     for i, issue in enumerate(parsed_issues):
         issue['rank'] = i + 1
 
-    # Calculate repository stats
-    open_issues_count = sum(1 for issue in parsed_issues if issue['state'] == 'open')
-    total_issues_count = len(parsed_issues)
-
     # Calculate sponsor dollars for current user and repo owner
     total_sponsor_cents = 0
     allocated_sponsor_cents = 0
