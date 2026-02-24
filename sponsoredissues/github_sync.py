@@ -70,7 +70,10 @@ def github_sync_app_installation(installation_id, base_logger=default_logger):
             github_sync_app_installation_remove(installation, logger)
         return
 
-    installation, created = GitHubAppInstallation.objects.get_or_create(url=installation_url)
+    installation, created = GitHubAppInstallation.objects.update_or_create(
+        url=installation_url,
+        defaults={'data': installation_json}
+    )
     if created:
         logger.info(f'added (empty) installation to DB')
 

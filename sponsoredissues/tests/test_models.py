@@ -14,7 +14,8 @@ class GitHubAppInstallationDeleteTest(TestCase):
 
         # Create test installation
         self.installation = GitHubAppInstallation.objects.create(
-            url='https://github.com/installation/12345'
+            url='https://github.com/installation/12345',
+            data='{}'
         )
 
         # Create test repos
@@ -83,7 +84,8 @@ class GitHubAppInstallationDeleteTest(TestCase):
         """Test that unfunded issues are deleted when calling delete() on a QuerySet."""
         # Create a second installation
         installation2 = GitHubAppInstallation.objects.create(
-            url='https://github.com/installation/67890'
+            url='https://github.com/installation/67890',
+            data='{}'
         )
         repo3 = GitHubRepo.objects.create(
             url='https://github.com/testuser/repo3',
@@ -265,7 +267,8 @@ class GitHubAppInstallationDeleteTest(TestCase):
         """Test that the delete handler only deletes issues for the correct installation."""
         # Create a second installation with its own repos and issues
         installation2 = GitHubAppInstallation.objects.create(
-            url='https://github.com/installation/67890'
+            url='https://github.com/installation/67890',
+            data='{}'
         )
         repo3 = GitHubRepo.objects.create(
             url='https://github.com/testuser/repo3',
@@ -431,7 +434,8 @@ class GitHubAppInstallationDeleteTest(TestCase):
         """Test that delete() on a queryset includes unfunded issues in deleted_by_model dict."""
         # Create a second installation
         installation2 = GitHubAppInstallation.objects.create(
-            url='https://github.com/installation/67890'
+            url='https://github.com/installation/67890',
+            data='{}'
         )
         repo3 = GitHubRepo.objects.create(
             url='https://github.com/testuser/repo3',
@@ -567,7 +571,8 @@ class GithubIssueTest(TestCase):
 
         # Create test installation
         self.installation = GitHubAppInstallation.objects.create(
-            url='https://github.com/installation/12345'
+            url='https://github.com/installation/12345',
+            data='{}'
         )
 
         # Create test repos

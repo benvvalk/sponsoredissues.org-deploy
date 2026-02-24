@@ -74,9 +74,12 @@ class SyncReposForInstallationTest(TestCase):
     def setUp(self):
         """Set up test fixtures."""
         # Mock installation data
-        self.installation_json = MockData.installation_json()
-        installation_url = self.installation_json['html_url']
-        self.installation = GitHubAppInstallation.objects.create(url=installation_url)
+        installation_json = MockData.installation_json()
+        installation_url = installation_json['html_url']
+        self.installation = GitHubAppInstallation.objects.create(
+            url=installation_url,
+            data=installation_json
+        )
 
     @patch('sponsoredissues.github_sync.github_app_installation_query_repos')
     def test_add_new_public_repo(self, mock_query_repos):
@@ -84,7 +87,7 @@ class SyncReposForInstallationTest(TestCase):
         repo_json = MockData.repo_json()
         mock_query_repos.return_value = [ repo_json ]
 
-        github_sync_app_installation_repos(MockData.APP_INSTALLATION_TOKEN, self.installation_json)
+        github_sync_app_installation_repos(MockData.APP_INSTALLATION_TOKEN, self.installation.data)
 
         # Verify the repo was created in the database
         self.assertEqual(GitHubRepo.objects.count(), 1)
@@ -108,7 +111,7 @@ class SyncReposForInstallationTest(TestCase):
         mock_query_repos.return_value = [ repo_json ]
 
         # Call the method
-        github_sync_app_installation_repos(MockData.APP_INSTALLATION_TOKEN, self.installation_json)
+        github_sync_app_installation_repos(MockData.APP_INSTALLATION_TOKEN, self.installation.data)
 
         # Verify repo still exists and was updated
         self.assertEqual(GitHubRepo.objects.count(), 1)
@@ -127,7 +130,7 @@ class SyncReposForInstallationTest(TestCase):
         mock_query_repos.return_value = []
 
         # Call the method
-        github_sync_app_installation_repos(MockData.APP_INSTALLATION_TOKEN, self.installation_json)
+        github_sync_app_installation_repos(MockData.APP_INSTALLATION_TOKEN, self.installation.data)
 
         # Verify repo was deleted from database
         self.assertEqual(GitHubRepo.objects.count(), 0)
@@ -141,7 +144,7 @@ class SyncReposForInstallationTest(TestCase):
         mock_query_repos.return_value = [ repo_json ]
 
         # Call the method
-        github_sync_app_installation_repos(MockData.APP_INSTALLATION_TOKEN, self.installation_json)
+        github_sync_app_installation_repos(MockData.APP_INSTALLATION_TOKEN, self.installation.data)
 
         # Verify no repo was created
         self.assertEqual(GitHubRepo.objects.count(), 0)
@@ -159,9 +162,12 @@ class SyncIssuesForInstallationTest(TestCase):
         )
 
         # Mock installation
-        self.installation_json = MockData.installation_json()
-        installation_url = self.installation_json['html_url']
-        self.installation = GitHubAppInstallation.objects.create(url=installation_url)
+        installation_json = MockData.installation_json()
+        installation_url = installation_json['html_url']
+        self.installation = GitHubAppInstallation.objects.create(
+            url=installation_url,
+            data=installation_json
+        )
 
         # Mock repo
         repo_json = MockData.repo_json()
@@ -180,7 +186,7 @@ class SyncIssuesForInstallationTest(TestCase):
         mock_query_issues_with_funding.return_value = []
 
         # Call the method
-        github_sync_app_installation_issues(MockData.APP_INSTALLATION_TOKEN, self.installation_json)
+        github_sync_app_installation_issues(MockData.APP_INSTALLATION_TOKEN, self.installation.data)
 
         # Verify the issue was created in the database
         self.assertEqual(GitHubIssue.objects.count(), 1)
@@ -214,7 +220,7 @@ class SyncIssuesForInstallationTest(TestCase):
         mock_query_issues_with_funding.return_value = []
 
         # Call the method
-        github_sync_app_installation_issues(MockData.APP_INSTALLATION_TOKEN, self.installation_json)
+        github_sync_app_installation_issues(MockData.APP_INSTALLATION_TOKEN, self.installation.data)
 
         # Verify issue still exists and was updated
         self.assertEqual(GitHubIssue.objects.count(), 1)
@@ -242,7 +248,7 @@ class SyncIssuesForInstallationTest(TestCase):
         mock_query_issues_with_funding.return_value = []
 
         # Call the method
-        github_sync_app_installation_issues(MockData.APP_INSTALLATION_TOKEN, self.installation_json)
+        github_sync_app_installation_issues(MockData.APP_INSTALLATION_TOKEN, self.installation.data)
 
         # Verify both issues were created with correct repo assignments
         self.assertEqual(GitHubIssue.objects.count(), 2)
@@ -279,7 +285,7 @@ class SyncIssuesForInstallationTest(TestCase):
         mock_query_issues_with_funding.return_value = []
 
         # Call the method
-        github_sync_app_installation_issues(MockData.APP_INSTALLATION_TOKEN, self.installation_json)
+        github_sync_app_installation_issues(MockData.APP_INSTALLATION_TOKEN, self.installation.data)
 
         # Verify operations
         self.assertEqual(GitHubIssue.objects.count(), 2)  # issue1 and issue3
@@ -313,7 +319,7 @@ class SyncIssuesForInstallationTest(TestCase):
         mock_query_issues_with_funding.return_value = []
 
         # Call the method
-        github_sync_app_installation_issues(MockData.APP_INSTALLATION_TOKEN, self.installation_json)
+        github_sync_app_installation_issues(MockData.APP_INSTALLATION_TOKEN, self.installation.data)
 
         # Verify issue was deleted
         self.assertEqual(GitHubIssue.objects.count(), 0)
@@ -343,7 +349,7 @@ class SyncIssuesForInstallationTest(TestCase):
         mock_query_issues_with_funding.return_value = []
 
         # Call the method
-        github_sync_app_installation_issues(MockData.APP_INSTALLATION_TOKEN, self.installation_json)
+        github_sync_app_installation_issues(MockData.APP_INSTALLATION_TOKEN, self.installation.data)
 
         # Verify issue closed issue still exists
         self.assertEqual(GitHubIssue.objects.count(), 1)
@@ -387,7 +393,7 @@ class SyncIssuesForInstallationTest(TestCase):
         mock_query_issues_with_funding.return_value = []
 
         # Call the method
-        github_sync_app_installation_issues(MockData.APP_INSTALLATION_TOKEN, self.installation_json)
+        github_sync_app_installation_issues(MockData.APP_INSTALLATION_TOKEN, self.installation.data)
 
         # Verify funded was preserved and unfunded issue was deleted
         self.assertTrue(GitHubIssue.objects.filter(url=funded_issue_json['html_url']).exists())
@@ -411,7 +417,10 @@ class SyncAppInstallationTest(TestCase):
             installation_id = 99999,
             suspended_at = '2024-01-01T00:00:00Z'
         )
-        suspended_installation = GitHubAppInstallation.objects.create(url=suspended_installation_json['html_url'])
+        suspended_installation = GitHubAppInstallation.objects.create(
+            url=suspended_installation_json['html_url'],
+            data=suspended_installation_json
+        )
 
         # Create repos and issues for the suspended account
         repo1_name = 'repo1'
@@ -483,7 +492,10 @@ class SyncAppInstallationTest(TestCase):
             user_name = suspended_user_name,
             suspended_at = '2024-01-01T00:00:00Z'
         )
-        suspended_installation = GitHubAppInstallation.objects.create(url=suspended_installation_json['html_url'])
+        suspended_installation = GitHubAppInstallation.objects.create(
+            url=suspended_installation_json['html_url'],
+            data=suspended_installation_json
+        )
 
         suspended_repo_name = 'repo1'
         suspended_repo = GitHubRepo.objects.create(
@@ -507,7 +519,8 @@ class SyncAppInstallationTest(TestCase):
             user_name = active_user_name
         )
         active_installation = GitHubAppInstallation.objects.create(
-            url=active_installation_json['html_url']
+            url=active_installation_json['html_url'],
+            data=active_installation_json
         )
 
         active_repo_name = 'repo1'
@@ -556,7 +569,10 @@ class SyncIssueTest(TestCase):
         # Mock installation
         installation_json = MockData.installation_json()
         installation_url = installation_json['html_url']
-        self.installation = GitHubAppInstallation.objects.create(url=installation_url)
+        self.installation = GitHubAppInstallation.objects.create(
+            url=installation_url,
+            data=installation_json
+        )
 
         # Mock repo
         repo_json = MockData.repo_json()

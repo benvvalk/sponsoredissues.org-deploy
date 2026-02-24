@@ -92,6 +92,7 @@ class GitHubAppInstallation(models.Model):
     uninstalled or suspended the app.
     """
     url = models.URLField(primary_key=True, max_length=500)
+    data = models.JSONField()
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
