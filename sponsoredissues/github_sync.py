@@ -51,7 +51,7 @@ def github_sync_app_installation(installation_id, base_logger=default_logger):
         # HTTP 404 happened for some other reason (e.g. a general
         # GitHub API outage).
         if e.response.status_code == 404 and installation:
-            logger.info('received HTTP 404, skipping sync')
+            logger.info('query for installation JSON returned HTTP 404, skipping sync')
             return
         else:
             raise
