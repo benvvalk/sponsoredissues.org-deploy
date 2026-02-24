@@ -303,7 +303,7 @@ def owner_issues(request, owner, repo=None, issue_number=None):
             unallocated_sponsor_cents = total_sponsor_cents - allocated_sponsor_cents
         except requests.RequestException as e:
             logger.error(f'GraphQL request failed: {e}')
-            messages.error('Failed to query your sponsor data from GitHub (GitHub outage?)')
+            messages.error(request, 'Failed to query your sponsor data from GitHub (GitHub outage?)')
 
     context = {
         'owner': owner,
