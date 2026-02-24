@@ -211,6 +211,10 @@ class GitHubIssue(models.Model):
         verbose_name = 'GitHub Issue'
         verbose_name_plural = 'GitHub Issues'
 
+    @staticmethod
+    def get_by_repo_url(repo_url):
+        return GitHubIssue.objects.filter(url__startswith=f'{repo_url}/')
+
     def __str__(self):
         return self.url
 

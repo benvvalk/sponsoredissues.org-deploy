@@ -11,11 +11,10 @@ from django.http import HttpResponse, HttpResponseBadRequest, HttpResponseForbid
 from django.utils import timezone
 from datetime import timedelta
 from pprint import pformat
-from .models import GitHubAppInstallation, GitHubIssue, SponsorAmount
+from .models import GitHubAppInstallation, GitHubIssue, GitHubRepo, SponsorAmount
 from .github_api import github_issue_has_sponsoredissues_label
 from .github_sync import github_sync_issue
 from .github_sponsors import GitHubSponsorService
-from .github_validation_service import GitHubValidationService
 from .tasks import task_sync_github_app_installation
 import json
 import hmac
@@ -168,27 +167,29 @@ def faq(request):
     return render(request, 'faq.html')
 
 def owner_issues(request, owner, repo=None, issue_number=None):
-    # Validate that the GitHub resources exist before showing content
-    validation_service = GitHubValidationService()
+    # Existence check for app installation: Return HTTP 404 unless our
+    # database shows that `owner` has installed the
+    # "sponsoredissues-maintainer" GitHub App.
+    if not GitHubAppInstallation.objects.filter(data__account__login=owner).exists():
+        raise Http404(f'GitHub account "{owner}" has not installed the "sponsoredissues-maintainer" GitHub App')
 
-    # Step 1: Validate the owner (GitHub user) exists
-    if not validation_service.validate_user_exists(owner):
-        raise Http404(f"GitHub user '{owner}' not found")
+    # Existence check for repo: If optional repo component is included
+    # in URL, validate that either: (1) The
+    # "sponsoredissues-maintainer" GitHub App is enabled on the repo,
+    # or (2) we have one or more "frozen" issues for that repo.
+    if repo:
+        repo_url=f"https://github.com/{owner}/{repo}"
+        if not GitHubRepo.objects.filter(url=repo_url).exists() and not GitHubIssue.get_by_repo_url(repo_url).exists():
+            raise Http404(f'GitHub account "{owner}" has not enabled the "sponsoredissues-maintainer" GitHub App on repo "{owner}/{repo}"')
 
-    # Step 2: If repo specified, validate it exists
-    if repo and not validation_service.validate_repo_exists(owner, repo):
-        raise Http404(f"Repository '{owner}/{repo}' not found on GitHub")
-
-    # Step 3: If issue specified, validate it exists
-    if issue_number and not validation_service.validate_issue_exists(owner, repo, issue_number):
-        raise Http404(f"Issue #{issue_number} not found in {owner}/{repo}")
-
-    # If repo and issue_number are provided, check if the issue exists in our database
-    if repo and issue_number:
-        issue_url_pattern = f"https://github.com/{owner}/{repo}/issues/{issue_number}"
-        exists = GitHubIssue.objects.filter(url=issue_url_pattern, data__state='open').exists()
-        if not exists:
-            messages.error(request, f"{owner}/{repo}#{issue_number} is not a \"sponsorable\" issue. Either the issue has been closed or it does not have the \"sponsoredissues.org\" label on GitHub.")
+    # Existence check for issue number: If optional issue number
+    # component is included in URL, validate that issue exists in
+    # our database.
+    if issue_number:
+        assert repo # this should always be set, due to our URL scheme
+        issue_url=f"https://github.com/{owner}/{repo}/issues/{issue_number}"
+        if not GitHubIssue.objects.filter(url=issue_url, data__state="open").exists():
+            raise Http404(f'GitHub account "{owner}" has not added "sponsoredissues.org" label to issue, or issue is closed.')
 
     # Check if the owner has a GitHub Sponsors profile (otherwise
     # we disable the "Sponsor @{owner}" button in the header
