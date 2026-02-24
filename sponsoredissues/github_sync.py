@@ -77,19 +77,15 @@ def github_sync_app_installation(installation_id, base_logger=default_logger):
     if created:
         logger.info(f'added (empty) installation to DB')
 
-    github_sync_app_installation_repos(installation_token, installation_json, logger)
-    github_sync_app_installation_issues(installation_token, installation_json, logger)
+    github_sync_app_installation_repos(installation_token, installation, logger)
+    github_sync_app_installation_issues(installation_token, installation, logger)
 
     installation.updated_at = timezone.now()
     installation.save()
     logger.info(f'successfully synced installation')
 
-def github_sync_app_installation_repos(installation_token, installation_json, logger=default_logger):
+def github_sync_app_installation_repos(installation_token, installation, logger=default_logger):
     """Sync repos for a single GitHub App installation"""
-    installation_url = installation_json['html_url']
-
-    installation = GitHubAppInstallation.objects.get(url=installation_url)
-    assert installation
 
     # query currently enabled repositories for app installation
     logger.info(f'querying GitHub for enabled repos')
@@ -122,8 +118,9 @@ def github_sync_app_installation_repos(installation_token, installation_json, lo
 
     logger.info(f'repo sync stats: +{len(repo_urls_to_add)} ~{len(repo_urls_to_update)} -{len(repo_urls_to_remove)}')
 
-def github_sync_app_installation_issues(installation_token, installation_json, logger=default_logger):
+def github_sync_app_installation_issues(installation_token, installation, logger=default_logger):
     """Sync issues for a single GitHub App installation"""
+    installation_json = installation.data
     github_username = installation_json['account']['login']
 
     # Get all issues in DB related to app installation.
