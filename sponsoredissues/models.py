@@ -244,7 +244,7 @@ class GitHubIssue(models.Model):
 class IssueSponsorship(models.Model):
     cents_usd = models.IntegerField()
     currency = models.CharField(max_length=3, default='USD')
-    sponsor_user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='sponsor_amounts')
+    sponsor = models.ForeignKey(User, on_delete=models.CASCADE, related_name='sponsor_amounts')
     target_github_issue = models.ForeignKey(GitHubIssue, on_delete=models.PROTECT, related_name='sponsor_amounts')
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
@@ -264,4 +264,4 @@ class IssueSponsorship(models.Model):
         ]
 
     def __str__(self):
-        return f"{self.cents_usd} from {self.sponsor_user.username} for {self.target_github_issue.url}"
+        return f"{self.cents_usd} from {self.sponsor.username} for {self.target_github_issue.url}"

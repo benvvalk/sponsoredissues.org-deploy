@@ -54,7 +54,7 @@ def calculate_trending_issues(limit=10):
         # Calculate recent funding amount and unique sponsor count
         recent_stats = recent_donations.aggregate(
             total_cents=Sum('cents_usd'),
-            unique_sponsors=Count('sponsor_user', distinct=True)
+            unique_sponsors=Count('sponsor', distinct=True)
         )
 
         recent_funding_cents = recent_stats['total_cents'] or 0
@@ -78,7 +78,7 @@ def calculate_trending_issues(limit=10):
         # Get total all-time funding for display
         total_stats = issue.sponsor_amounts.aggregate(
             total_cents=Sum('cents_usd'),
-            total_sponsors=Count('sponsor_user', distinct=True)
+            total_sponsors=Count('sponsor', distinct=True)
         )
 
         try:
@@ -230,7 +230,7 @@ def owner_issues(request, owner, repo=None, issue_number=None):
             user_donation_cents = 0
             if request.user.is_authenticated:
                 user_donation_cents = issue.sponsor_amounts.filter(
-                    sponsor_user=request.user
+                    sponsor=request.user
                 ).aggregate(
                     total=Sum('cents_usd')
                 )['total'] or 0
@@ -343,7 +343,7 @@ def donate_to_issue(request, owner, repo, issue_number):
     # Get the previous amount that the user (sponsor) has allocated to
     # the target GitHub issue, if any.
     existing_donation = IssueSponsorship.objects.filter(
-        sponsor_user=request.user,
+        sponsor=request.user,
         target_github_issue=github_issue,
     ).first()
 
@@ -378,7 +378,7 @@ def donate_to_issue(request, owner, repo, issue_number):
         # Create new donation in database if amount > 0
         IssueSponsorship.objects.create(
             cents_usd=donation_cents,
-            sponsor_user=request.user,
+            sponsor=request.user,
             target_github_issue=github_issue,
         )
         messages.success(request, f"Updated your amount for {owner}/{repo}#{issue_number} to {donation_dollars} USD.")

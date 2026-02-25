@@ -25,13 +25,13 @@ class GitHubSponsorService:
         social_token = SocialToken.objects.get(account=github_account)
         return social_token.token
 
-    def calculate_total_sponsor_cents_given(self, sponsor_user: User, recipient_github_username: str) -> Decimal:
+    def calculate_total_sponsor_cents_given(self, sponsor: User, recipient_github_username: str) -> Decimal:
         """
-        Calculate total sponsor cents given by sponsor_user to recipient_github_username.
+        Calculate total sponsor cents given by sponsor to recipient_github_username.
         This represents the cumulative amount available for allocation.
         """
         # Get access token for the logged-in user
-        access_token = self._get_user_access_token(sponsor_user)
+        access_token = self._get_user_access_token(sponsor)
 
         query = """
         query($recipient_github_username: String!) {
@@ -46,31 +46,31 @@ class GitHubSponsorService:
 
         return data['viewer']['totalSponsorshipAmountAsSponsorInCents']
 
-    def calculate_allocated_sponsor_cents(self, sponsor_user: User, recipient_github_username: str) -> (Decimal, Decimal):
+    def calculate_allocated_sponsor_cents(self, sponsor: User, recipient_github_username: str) -> (Decimal, Decimal):
         """
         Return (allocated_sponsor_cents, total_sponsor_cents), where:
 
         * `allocated_sponsor_cents` is the total number of cents (USD)
-        that `sponsor_user` has assigned to GitHub issues owned by
+        that `sponsor` has assigned to GitHub issues owned by
         `recipient_github_username` (the donee).
 
         * `total_sponsor_cents`: The total number of cents (USD) that
-        `sponsor_user` has donated to `recipient_github_username` (the donee) on
+        `sponsor` has donated to `recipient_github_username` (the donee) on
         GitHub Sponsors, since the beginning of time.
         """
         from .models import IssueSponsorship, GitHubIssue
 
-        # Get all sponsor amounts allocated by `sponsor_user` to
+        # Get all sponsor amounts allocated by `sponsor` to
         # issues owned by `recipient_github_username`.
         allocated_amounts = IssueSponsorship.objects.filter(
-            sponsor_user_id=sponsor_user,
+            sponsor_id=sponsor,
             target_github_issue__url__contains=f"github.com/{recipient_github_username}/"
         ).aggregate(total=Sum('cents_usd'))
         allocated_sponsor_cents = allocated_amounts['total'] or Decimal('0')
 
         # Query GitHub GraphQL API for total cents given by
-        # `sponsor_user` to `recipient_github_username`, since the beginning of time.
-        total_sponsor_cents = self.calculate_total_sponsor_cents_given(sponsor_user, recipient_github_username)
+        # `sponsor` to `recipient_github_username`, since the beginning of time.
+        total_sponsor_cents = self.calculate_total_sponsor_cents_given(sponsor, recipient_github_username)
 
         return (allocated_sponsor_cents, total_sponsor_cents)
 

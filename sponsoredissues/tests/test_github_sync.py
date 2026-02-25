@@ -338,7 +338,7 @@ class SyncIssuesForInstallationTest(TestCase):
         # Add funding to the issue
         IssueSponsorship.objects.create(
             cents_usd=1000,
-            sponsor_user=self.user,
+            sponsor=self.user,
             target_github_issue=funded_issue
         )
 
@@ -380,7 +380,7 @@ class SyncIssuesForInstallationTest(TestCase):
         # Add funding to the issue
         IssueSponsorship.objects.create(
             cents_usd=1000,
-            sponsor_user=self.user,
+            sponsor=self.user,
             target_github_issue=funded_issue
         )
 
@@ -452,7 +452,7 @@ class SyncAppInstallationTest(TestCase):
         # Add funding to the issue
         IssueSponsorship.objects.create(
             cents_usd=1000,
-            sponsor_user=self.user,
+            sponsor=self.user,
             target_github_issue=funded_issue
         )
 
@@ -658,7 +658,7 @@ class SyncIssueTest(TestCase):
         )
         IssueSponsorship.objects.create(
             cents_usd=1000,
-            sponsor_user=self.user,
+            sponsor=self.user,
             target_github_issue=funded_issue
         )
 
@@ -686,7 +686,7 @@ class SyncIssueTest(TestCase):
         )
         IssueSponsorship.objects.create(
             cents_usd=1000,
-            sponsor_user=self.user,
+            sponsor=self.user,
             target_github_issue=funded_issue
         )
 
@@ -713,7 +713,7 @@ class SyncIssueTest(TestCase):
         )
         IssueSponsorship.objects.create(
             cents_usd=1000,
-            sponsor_user=self.user,
+            sponsor=self.user,
             target_github_issue=funded_issue
         )
 
@@ -804,7 +804,7 @@ class SyncIssueTest(TestCase):
         )
         IssueSponsorship.objects.create(
             cents_usd=1000,
-            sponsor_user=self.user,
+            sponsor=self.user,
             target_github_issue=funded_issue
         )
 
