@@ -58,11 +58,11 @@ class GitHubSponsorService:
         `sponsor_user` has donated to `recipient_github_username` (the donee) on
         GitHub Sponsors, since the beginning of time.
         """
-        from .models import SponsorAmount, GitHubIssue
+        from .models import IssueSponsorship, GitHubIssue
 
         # Get all sponsor amounts allocated by `sponsor_user` to
         # issues owned by `recipient_github_username`.
-        allocated_amounts = SponsorAmount.objects.filter(
+        allocated_amounts = IssueSponsorship.objects.filter(
             sponsor_user_id=sponsor_user,
             target_github_issue__url__contains=f"github.com/{recipient_github_username}/"
         ).aggregate(total=Sum('cents_usd'))

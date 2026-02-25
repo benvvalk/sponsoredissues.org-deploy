@@ -4,7 +4,7 @@ from unittest.mock import patch
 import time
 
 from sponsoredissues.github_sync import github_sync_app_installation, github_sync_app_installation_issues, github_sync_app_installation_repos, github_sync_issue
-from sponsoredissues.models import GitHubAppInstallation, GitHubRepo, GitHubIssue, SponsorAmount
+from sponsoredissues.models import GitHubAppInstallation, GitHubRepo, GitHubIssue, IssueSponsorship
 from django.contrib.auth.models import User
 
 class MockData:
@@ -336,7 +336,7 @@ class SyncIssuesForInstallationTest(TestCase):
             repo=self.repo
         )
         # Add funding to the issue
-        SponsorAmount.objects.create(
+        IssueSponsorship.objects.create(
             cents_usd=1000,
             sponsor_user=self.user,
             target_github_issue=funded_issue
@@ -378,7 +378,7 @@ class SyncIssuesForInstallationTest(TestCase):
             repo=self.repo
         )
         # Add funding to the issue
-        SponsorAmount.objects.create(
+        IssueSponsorship.objects.create(
             cents_usd=1000,
             sponsor_user=self.user,
             target_github_issue=funded_issue
@@ -450,7 +450,7 @@ class SyncAppInstallationTest(TestCase):
             repo=repo1
         )
         # Add funding to the issue
-        SponsorAmount.objects.create(
+        IssueSponsorship.objects.create(
             cents_usd=1000,
             sponsor_user=self.user,
             target_github_issue=funded_issue
@@ -656,7 +656,7 @@ class SyncIssueTest(TestCase):
             data=issue_json,
             repo=self.repo
         )
-        SponsorAmount.objects.create(
+        IssueSponsorship.objects.create(
             cents_usd=1000,
             sponsor_user=self.user,
             target_github_issue=funded_issue
@@ -684,7 +684,7 @@ class SyncIssueTest(TestCase):
             data=issue_json,
             repo=self.repo
         )
-        SponsorAmount.objects.create(
+        IssueSponsorship.objects.create(
             cents_usd=1000,
             sponsor_user=self.user,
             target_github_issue=funded_issue
@@ -711,7 +711,7 @@ class SyncIssueTest(TestCase):
             data=issue_json,
             repo=self.repo
         )
-        SponsorAmount.objects.create(
+        IssueSponsorship.objects.create(
             cents_usd=1000,
             sponsor_user=self.user,
             target_github_issue=funded_issue
@@ -802,7 +802,7 @@ class SyncIssueTest(TestCase):
             data=issue_json,
             repo=None  # Repo was previously disabled
         )
-        SponsorAmount.objects.create(
+        IssueSponsorship.objects.create(
             cents_usd=1000,
             sponsor_user=self.user,
             target_github_issue=funded_issue

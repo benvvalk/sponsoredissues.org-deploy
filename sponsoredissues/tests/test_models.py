@@ -1,7 +1,7 @@
 from django.test import TestCase
 from django.contrib.auth.models import User
 
-from sponsoredissues.models import GitHubAppInstallation, GitHubRepo, GitHubIssue, SponsorAmount
+from sponsoredissues.models import GitHubAppInstallation, GitHubRepo, GitHubIssue, IssueSponsorship
 
 
 class GitHubAppInstallationDeleteTest(TestCase):
@@ -57,7 +57,7 @@ class GitHubAppInstallationDeleteTest(TestCase):
             data=funded_issue_data,
             repo=self.repo1
         )
-        SponsorAmount.objects.create(
+        IssueSponsorship.objects.create(
             cents_usd=1000,
             sponsor_user=self.user,
             target_github_issue=funded_issue
@@ -129,7 +129,7 @@ class GitHubAppInstallationDeleteTest(TestCase):
             data=funded_issue1_data,
             repo=self.repo1
         )
-        SponsorAmount.objects.create(
+        IssueSponsorship.objects.create(
             cents_usd=1000,
             sponsor_user=self.user,
             target_github_issue=funded_issue1
@@ -146,7 +146,7 @@ class GitHubAppInstallationDeleteTest(TestCase):
             data=funded_issue2_data,
             repo=repo3
         )
-        SponsorAmount.objects.create(
+        IssueSponsorship.objects.create(
             cents_usd=2000,
             sponsor_user=self.user,
             target_github_issue=funded_issue2
@@ -199,7 +199,7 @@ class GitHubAppInstallationDeleteTest(TestCase):
             data=funded_issue_data,
             repo=self.repo1
         )
-        SponsorAmount.objects.create(
+        IssueSponsorship.objects.create(
             cents_usd=5000,
             sponsor_user=self.user,
             target_github_issue=funded_issue
@@ -242,7 +242,7 @@ class GitHubAppInstallationDeleteTest(TestCase):
                 data=issue_data,
                 repo=self.repo1
             )
-            SponsorAmount.objects.create(
+            IssueSponsorship.objects.create(
                 cents_usd=1000 * (i + 1),
                 sponsor_user=self.user,
                 target_github_issue=issue
@@ -353,7 +353,7 @@ class GitHubAppInstallationDeleteTest(TestCase):
             data=funded_issue_data,
             repo=self.repo1
         )
-        SponsorAmount.objects.create(
+        IssueSponsorship.objects.create(
             cents_usd=1000,
             sponsor_user=self.user,
             target_github_issue=funded_issue
@@ -409,7 +409,7 @@ class GitHubAppInstallationDeleteTest(TestCase):
             data=funded_issue_data,
             repo=self.repo1
         )
-        SponsorAmount.objects.create(
+        IssueSponsorship.objects.create(
             cents_usd=5000,
             sponsor_user=self.user,
             target_github_issue=funded_issue
@@ -479,7 +479,7 @@ class GitHubAppInstallationDeleteTest(TestCase):
             data=funded_issue_data,
             repo=self.repo1
         )
-        SponsorAmount.objects.create(
+        IssueSponsorship.objects.create(
             cents_usd=1000,
             sponsor_user=self.user,
             target_github_issue=funded_issue
@@ -543,7 +543,7 @@ class GitHubAppInstallationDeleteTest(TestCase):
             data=funded_issue_data,
             repo=self.repo1
         )
-        SponsorAmount.objects.create(
+        IssueSponsorship.objects.create(
             cents_usd=3000,
             sponsor_user=self.user,
             target_github_issue=funded_issue
@@ -594,7 +594,7 @@ class GithubIssueTest(TestCase):
             data=funded_issue_data,
             repo=self.repo
         )
-        SponsorAmount.objects.create(
+        IssueSponsorship.objects.create(
             cents_usd=1000,
             sponsor_user=self.user,
             target_github_issue=funded_issue

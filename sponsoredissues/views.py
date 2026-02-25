@@ -11,7 +11,7 @@ from django.http import HttpResponse, HttpResponseBadRequest, HttpResponseForbid
 from django.utils import timezone
 from datetime import timedelta
 from pprint import pformat
-from .models import GitHubAppInstallation, GitHubIssue, GitHubRepo, SponsorAmount
+from .models import GitHubAppInstallation, GitHubIssue, GitHubRepo, IssueSponsorship
 from .github_api import github_issue_has_sponsoredissues_label
 from .github_sync import github_sync_issue
 from .github_sponsors import GitHubSponsorService
@@ -112,11 +112,11 @@ def calculate_trending_issues(limit=10):
 
 def index(request):
     # Calculate total funded amount across all issues
-    total_funded_cents = SponsorAmount.objects.aggregate(
+    total_funded_cents = IssueSponsorship.objects.aggregate(
         total=Sum('cents_usd')
     )['total'] or 0
 
-    # Get all issues that have been funded (have at least one SponsorAmount)
+    # Get all issues that have been funded (have at least one IssueSponsorship)
     funded_issues = GitHubIssue.objects.filter(
         sponsor_amounts__isnull=False
     ).distinct()
@@ -253,7 +253,7 @@ def owner_issues(request, owner, repo=None, issue_number=None):
             has_sponsoredissues_label = github_issue_has_sponsoredissues_label(issue_data)
 
             # Note: `or 0` is needed below because `Sum('cents_usd')`
-            # returns `None` when there are no `SponsorAmount` records for
+            # returns `None` when there are no `IssueSponsorship` records for
             # the GitHub issue.
             parsed_issue = {
                 'is_selected': is_selected,
@@ -342,7 +342,7 @@ def donate_to_issue(request, owner, repo, issue_number):
 
     # Get the previous amount that the user (sponsor) has allocated to
     # the target GitHub issue, if any.
-    existing_donation = SponsorAmount.objects.filter(
+    existing_donation = IssueSponsorship.objects.filter(
         sponsor_user=request.user,
         target_github_issue=github_issue,
     ).first()
@@ -376,7 +376,7 @@ def donate_to_issue(request, owner, repo, issue_number):
             messages.success(request, f"Updated your amount for {owner}/{repo}#{issue_number} to {donation_dollars} USD.")
     elif donation_cents > 0:
         # Create new donation in database if amount > 0
-        SponsorAmount.objects.create(
+        IssueSponsorship.objects.create(
             cents_usd=donation_cents,
             sponsor_user=request.user,
             target_github_issue=github_issue,
