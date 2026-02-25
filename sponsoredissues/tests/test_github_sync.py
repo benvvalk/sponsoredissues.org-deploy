@@ -339,7 +339,7 @@ class SyncIssuesForInstallationTest(TestCase):
         IssueSponsorship.objects.create(
             cents_usd=1000,
             sponsor=self.user,
-            target_github_issue=funded_issue
+            issue=funded_issue
         )
 
         # Mock API response with the same issue but now closed
@@ -381,7 +381,7 @@ class SyncIssuesForInstallationTest(TestCase):
         IssueSponsorship.objects.create(
             cents_usd=1000,
             sponsor=self.user,
-            target_github_issue=funded_issue
+            issue=funded_issue
         )
 
         # Mock the API response.
@@ -453,7 +453,7 @@ class SyncAppInstallationTest(TestCase):
         IssueSponsorship.objects.create(
             cents_usd=1000,
             sponsor=self.user,
-            target_github_issue=funded_issue
+            issue=funded_issue
         )
 
         # Call the method
@@ -659,7 +659,7 @@ class SyncIssueTest(TestCase):
         IssueSponsorship.objects.create(
             cents_usd=1000,
             sponsor=self.user,
-            target_github_issue=funded_issue
+            issue=funded_issue
         )
 
         # Mock API response with the same issue but now closed
@@ -687,7 +687,7 @@ class SyncIssueTest(TestCase):
         IssueSponsorship.objects.create(
             cents_usd=1000,
             sponsor=self.user,
-            target_github_issue=funded_issue
+            issue=funded_issue
         )
 
         unlabeled_issue_json = issue_json.copy()
@@ -714,7 +714,7 @@ class SyncIssueTest(TestCase):
         IssueSponsorship.objects.create(
             cents_usd=1000,
             sponsor=self.user,
-            target_github_issue=funded_issue
+            issue=funded_issue
         )
 
         self.repo.delete()
@@ -805,7 +805,7 @@ class SyncIssueTest(TestCase):
         IssueSponsorship.objects.create(
             cents_usd=1000,
             sponsor=self.user,
-            target_github_issue=funded_issue
+            issue=funded_issue
         )
 
         # Verify repo is None initially

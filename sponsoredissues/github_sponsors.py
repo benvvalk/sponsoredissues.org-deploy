@@ -64,7 +64,7 @@ class GitHubSponsorService:
         # issues owned by `recipient_github_username`.
         allocated_amounts = IssueSponsorship.objects.filter(
             sponsor_id=sponsor,
-            target_github_issue__url__contains=f"github.com/{recipient_github_username}/"
+            issue__url__contains=f"github.com/{recipient_github_username}/"
         ).aggregate(total=Sum('cents_usd'))
         allocated_sponsor_cents = allocated_amounts['total'] or Decimal('0')
 

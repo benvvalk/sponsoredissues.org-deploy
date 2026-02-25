@@ -60,7 +60,7 @@ class GitHubAppInstallationDeleteTest(TestCase):
         IssueSponsorship.objects.create(
             cents_usd=1000,
             sponsor=self.user,
-            target_github_issue=funded_issue
+            issue=funded_issue
         )
 
         # Verify initial state
@@ -132,7 +132,7 @@ class GitHubAppInstallationDeleteTest(TestCase):
         IssueSponsorship.objects.create(
             cents_usd=1000,
             sponsor=self.user,
-            target_github_issue=funded_issue1
+            issue=funded_issue1
         )
 
         funded_issue2_data = {
@@ -149,7 +149,7 @@ class GitHubAppInstallationDeleteTest(TestCase):
         IssueSponsorship.objects.create(
             cents_usd=2000,
             sponsor=self.user,
-            target_github_issue=funded_issue2
+            issue=funded_issue2
         )
 
         # Verify initial state
@@ -202,7 +202,7 @@ class GitHubAppInstallationDeleteTest(TestCase):
         IssueSponsorship.objects.create(
             cents_usd=5000,
             sponsor=self.user,
-            target_github_issue=funded_issue
+            issue=funded_issue
         )
 
         # Verify initial state
@@ -245,7 +245,7 @@ class GitHubAppInstallationDeleteTest(TestCase):
             IssueSponsorship.objects.create(
                 cents_usd=1000 * (i + 1),
                 sponsor=self.user,
-                target_github_issue=issue
+                issue=issue
             )
 
         # Verify initial state
@@ -356,7 +356,7 @@ class GitHubAppInstallationDeleteTest(TestCase):
         IssueSponsorship.objects.create(
             cents_usd=1000,
             sponsor=self.user,
-            target_github_issue=funded_issue
+            issue=funded_issue
         )
 
         # Verify initial state
@@ -412,7 +412,7 @@ class GitHubAppInstallationDeleteTest(TestCase):
         IssueSponsorship.objects.create(
             cents_usd=5000,
             sponsor=self.user,
-            target_github_issue=funded_issue
+            issue=funded_issue
         )
 
         # Call delete() - it now includes unfunded issues in the return value
@@ -482,7 +482,7 @@ class GitHubAppInstallationDeleteTest(TestCase):
         IssueSponsorship.objects.create(
             cents_usd=1000,
             sponsor=self.user,
-            target_github_issue=funded_issue
+            issue=funded_issue
         )
 
         # Verify initial state
@@ -546,7 +546,7 @@ class GitHubAppInstallationDeleteTest(TestCase):
         IssueSponsorship.objects.create(
             cents_usd=3000,
             sponsor=self.user,
-            target_github_issue=funded_issue
+            issue=funded_issue
         )
 
         # Verify initial state
@@ -597,7 +597,7 @@ class GithubIssueTest(TestCase):
         IssueSponsorship.objects.create(
             cents_usd=1000,
             sponsor=self.user,
-            target_github_issue=funded_issue
+            issue=funded_issue
         )
 
         # call the method

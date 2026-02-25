@@ -344,7 +344,7 @@ def donate_to_issue(request, owner, repo, issue_number):
     # the target GitHub issue, if any.
     existing_donation = IssueSponsorship.objects.filter(
         sponsor=request.user,
-        target_github_issue=github_issue,
+        issue=github_issue,
     ).first()
 
     donation_cents_old = existing_donation.cents_usd if existing_donation else 0
@@ -379,7 +379,7 @@ def donate_to_issue(request, owner, repo, issue_number):
         IssueSponsorship.objects.create(
             cents_usd=donation_cents,
             sponsor=request.user,
-            target_github_issue=github_issue,
+            issue=github_issue,
         )
         messages.success(request, f"Updated your amount for {owner}/{repo}#{issue_number} to {donation_dollars} USD.")
 

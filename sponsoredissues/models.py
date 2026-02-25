@@ -225,13 +225,13 @@ class GitHubIssue(models.Model):
 
         Normally, attempting to delete an issue with funding data will
         throw an error due to the `on_delete=models.PROTECT`
-        constraint on `IssueSponsorship.target_github_issue`. However,
+        constraint on `IssueSponsorship.issue`. However,
         there are rare circumstances where we actually do want to
         delete an issue and all of its associated funding data (if
         any), e.g.  when the maintainer clicks the red `Delete issue`
         link in the bottom right corner of the GitHub issue page.
         """
-        IssueSponsorship.objects.filter(target_github_issue=self).delete()
+        IssueSponsorship.objects.filter(issue=self).delete()
         self.delete()
 
     def is_funded(self):
@@ -245,7 +245,7 @@ class IssueSponsorship(models.Model):
     cents_usd = models.IntegerField()
     currency = models.CharField(max_length=3, default='USD')
     sponsor = models.ForeignKey(User, on_delete=models.CASCADE, related_name='sponsor_amounts')
-    target_github_issue = models.ForeignKey(GitHubIssue, on_delete=models.PROTECT, related_name='sponsor_amounts')
+    issue = models.ForeignKey(GitHubIssue, on_delete=models.PROTECT, related_name='sponsor_amounts')
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
@@ -264,4 +264,4 @@ class IssueSponsorship(models.Model):
         ]
 
     def __str__(self):
-        return f"{self.cents_usd} from {self.sponsor.username} for {self.target_github_issue.url}"
+        return f"{self.cents_usd} from {self.sponsor.username} for {self.issue.url}"
