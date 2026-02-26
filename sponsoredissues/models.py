@@ -3,6 +3,30 @@ from django.contrib.auth.models import User
 from django.db.models.signals import pre_delete
 from django.dispatch import receiver
 
+class Maintainer(models.Model):
+    """
+    The set of GitHub users that either:
+
+    (1) Have an active installation of the
+    "sponsoredissues-maintainer" GitHub App, *OR*
+    (2) Have one or more GitHub issues with non-zero funding
+
+    It's possible for (1) to be false and (2) to be true, because we
+    preserve funded issues in a special "frozen" state if the
+    maintainer uninstalls/suspends the GitHub App. (This ensures that
+    we don't undo the work of users who contributed to the issues.)
+
+    This model does not have a foreign key to a `User` (i.e. a local
+    Django user account), because such a user account may never
+    exist. Unlike users who sponsor issues, maintainers are not
+    required to "Sign in with GitHub" in order to use the site. All
+    they need to do is install the "sponsoredissues-maintainer" GitHub
+    App and add the `sponsoredissues.org` label to their issues.
+    """
+    github_account_id = models.IntegerField(unique=True)
+    github_user_json = models.JSONField()
+    github_sponsors_profile_url = models.URLField(null=True, max_length=500)
+
 class GitHubAppInstallationQuerySet(models.QuerySet):
     def delete(self):
         """
