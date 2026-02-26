@@ -9,21 +9,31 @@ from django.contrib.auth.models import User
 
 class MockData:
     APP_INSTALLATION_TOKEN : Final = 'dummy-token'
+    DEFAULT_USER_ID : Final[int] = 1234
     DEFAULT_USER_NAME : Final = 'test-user'
     DEFAULT_REPO_NAME : Final = 'test-repo'
 
     @staticmethod
+    def user_json(
+            user_id:int = DEFAULT_USER_ID,
+            user_name = DEFAULT_USER_NAME
+    ):
+        return {
+            'login': user_name,
+            'id': user_id,
+            'html_url': f'https://github.com/{user_name}'
+        }
+
+    @staticmethod
     def installation_json(
         installation_id=1111,
+        user_id=DEFAULT_USER_ID,
         user_name=DEFAULT_USER_NAME,
         suspended_at=None,
     ):
         json = {
             'id': installation_id,
-            'account': {
-                'login': f'{user_name}',
-                'html_url': f'https://github.com/{user_name}'
-            },
+            'account': MockData.user_json(user_id, user_name),
             'html_url': f'https://github.com/settings/installations/{installation_id}'
         }
 
@@ -46,10 +56,11 @@ class MockData:
 
     @staticmethod
     def issue_json(
-        user_name=DEFAULT_USER_NAME,
         repo_name=DEFAULT_REPO_NAME,
         issue_number=1,
-        issue_state='open'
+        issue_state='open',
+        user_id=DEFAULT_USER_ID,
+        user_name=DEFAULT_USER_NAME
     ):
         return {
             'number': issue_number,
@@ -62,7 +73,7 @@ class MockData:
             'labels': [
                 {'name': 'sponsoredissues.org', 'color': '000000'}
             ],
-            'user': {'login': f'{user_name}'},
+            'user': MockData.user_json(user_id, user_name),
             'repository' : {
                 'html_url': f'https://github.com/{user_name}/{repo_name}'
             }
@@ -481,9 +492,10 @@ class SyncAppInstallationTest(TestCase):
         mock_sync_repos.assert_not_called()
         mock_sync_issues.assert_not_called()
 
+    @patch('sponsoredissues.github_sync.github_sync_maintainer')
     @patch('sponsoredissues.github_sync.github_sync_app_installation_repos')
     @patch('sponsoredissues.github_sync.github_sync_app_installation_issues')
-    def test_mix_of_suspended_and_active_installations(self, mock_sync_issues, mock_sync_repos):
+    def test_mix_of_suspended_and_active_installations(self, mock_sync_issues, mock_sync_repos, mock_sync_maintainer):
         """Test that mix of suspended and active installations are handled correctly."""
         # Mock suspended installation
         suspended_user_name = 'suspended-user'
@@ -555,6 +567,7 @@ class SyncAppInstallationTest(TestCase):
         # Verify github_sync_*_for_app_installation methods were called only on active installation
         self.assertEqual(mock_sync_repos.call_count, 1)
         self.assertEqual(mock_sync_issues.call_count, 1)
+        self.assertEqual(mock_sync_maintainer.call_count, 1)
 
 class SyncIssueTest(TestCase):
 

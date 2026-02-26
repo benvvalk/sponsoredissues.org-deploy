@@ -3,10 +3,11 @@ import logging
 from django.utils import timezone
 from enum import Enum
 from requests.exceptions import HTTPError
-from sponsoredissues.github_api import github_app_installation_is_suspended, github_issue_has_sponsoredissues_label
+from sponsoredissues.github_api import github_api, github_app_installation_is_suspended, github_issue_has_sponsoredissues_label
 from sponsoredissues.github_app import github_app_installation_query_json, github_app_installation_query_issues_with_sponsoredissues_label, github_app_installation_query_issue_urls, github_app_installation_query_repos, github_app_installation_query_token
+from sponsoredissues.github_sponsors import GitHubSponsorService
 from sponsoredissues.logging import PrefixLoggerAdapter
-from sponsoredissues.models import GitHubAppInstallation, GitHubIssue, GitHubRepo
+from sponsoredissues.models import GitHubAppInstallation, GitHubIssue, GitHubRepo, Maintainer
 
 default_logger = logging.getLogger(__name__)
 
@@ -19,6 +20,33 @@ class SyncResult(Enum):
     UPDATED = 1
     REMOVED = 2
     IGNORED = 3
+
+def github_sync_maintainer(github_account_id: int, access_token=None, logger=default_logger):
+    # get JSON data for GitHub user
+    github_user_json = github_api(f'/user/{github_account_id}', access_token=access_token)
+    github_account_name = github_user_json['login']
+
+    # check if maintainer has created a GitHub Sponsors profile
+    github_sponsors = GitHubSponsorService()
+    if github_sponsors.has_sponsors_profile(github_account_name):
+        github_sponsors_profile_url = f'https://github.com/sponsors/{github_account_name}'
+    else:
+        github_sponsors_profile_url = None
+
+    # update or create `Maintainer` in database
+    maintainer, created = Maintainer.objects.update_or_create(
+        github_account_id = github_account_id,
+        defaults = {
+            'github_user_json': github_user_json,
+            'github_sponsors_profile_url': github_sponsors_profile_url
+        }
+    )
+    if created:
+        logger.info(f'created Maintainer: "{github_account_name}"')
+    else:
+        logger.info(f'update Maintainer: "{github_account_name}"')
+
+    return maintainer
 
 def github_sync_app_installation_remove(installation, logger=default_logger):
     installation_url = installation.url
@@ -77,6 +105,7 @@ def github_sync_app_installation(installation_id, base_logger=default_logger):
     if created:
         logger.info(f'added (empty) installation to DB')
 
+    github_sync_maintainer(installation_json['account']['id'], access_token=installation_token, logger=logger)
     github_sync_app_installation_repos(installation_token, installation, logger)
     github_sync_app_installation_issues(installation_token, installation, logger)
 
