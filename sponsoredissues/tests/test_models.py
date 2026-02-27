@@ -2,6 +2,7 @@ from django.test import TestCase
 from django.contrib.auth.models import User
 
 from sponsoredissues.models import GitHubAppInstallation, GitHubRepo, GitHubIssue, IssueSponsorship, Maintainer
+from sponsoredissues.tests.mock_data import MockData
 
 
 class GitHubAppInstallationDeleteTest(TestCase):
@@ -39,29 +40,25 @@ class GitHubAppInstallationDeleteTest(TestCase):
     def test_delete_removes_unfunded_issues_on_instance_delete(self):
         """Test that unfunded issues are deleted when calling delete() on an installation instance."""
         # Create an unfunded issue
-        unfunded_issue_data = {
-            'number': 1,
-            'title': 'Unfunded Issue',
-            'state': 'open',
-            'url': 'https://github.com/testuser/repo1/issues/1',
-            'labels': [{'name': 'sponsoredissues.org', 'color': '000000'}],
-        }
+        unfunded_issue_data = MockData.issue_json(
+            user_name='testuser',
+            repo_name='repo1',
+            issue_number=1
+        )
         unfunded_issue = GitHubIssue.objects.create(
-            url='https://github.com/testuser/repo1/issues/1',
+            url=unfunded_issue_data['html_url'],
             data=unfunded_issue_data,
             repo=self.repo1
         )
 
         # Create a funded issue
-        funded_issue_data = {
-            'number': 2,
-            'title': 'Funded Issue',
-            'state': 'open',
-            'url': 'https://github.com/testuser/repo1/issues/2',
-            'labels': [{'name': 'sponsoredissues.org', 'color': '000000'}],
-        }
+        funded_issue_data = MockData.issue_json(
+            user_name='testuser',
+            repo_name='repo1',
+            issue_number=2
+        )
         funded_issue = GitHubIssue.objects.create(
-            url='https://github.com/testuser/repo1/issues/2',
+            url=funded_issue_data['html_url'],
             data=funded_issue_data,
             repo=self.repo1
         )
@@ -107,39 +104,36 @@ class GitHubAppInstallationDeleteTest(TestCase):
         )
 
         # Create unfunded issues for both installations
-        unfunded_issue1_data = {
-            'number': 1,
-            'title': 'Unfunded Issue 1',
-            'state': 'open',
-            'url': 'https://github.com/testuser/repo1/issues/1',
-        }
+        unfunded_issue1_data = MockData.issue_json(
+            user_name='testuser',
+            repo_name='repo1',
+            issue_number=1
+        )
         unfunded_issue1 = GitHubIssue.objects.create(
-            url='https://github.com/testuser/repo1/issues/1',
+            url=unfunded_issue1_data['html_url'],
             data=unfunded_issue1_data,
             repo=self.repo1
         )
 
-        unfunded_issue2_data = {
-            'number': 2,
-            'title': 'Unfunded Issue 2',
-            'state': 'open',
-            'url': 'https://github.com/testuser/repo3/issues/2',
-        }
+        unfunded_issue2_data = MockData.issue_json(
+            user_name='testuser',
+            repo_name='repo3',
+            issue_number=2
+        )
         unfunded_issue2 = GitHubIssue.objects.create(
-            url='https://github.com/testuser/repo3/issues/2',
+            url=unfunded_issue2_data['html_url'],
             data=unfunded_issue2_data,
             repo=repo3
         )
 
         # Create funded issues for both installations
-        funded_issue1_data = {
-            'number': 3,
-            'title': 'Funded Issue 1',
-            'state': 'open',
-            'url': 'https://github.com/testuser/repo1/issues/3',
-        }
+        funded_issue1_data = MockData.issue_json(
+            user_name='testuser',
+            repo_name='repo1',
+            issue_number=3
+        )
         funded_issue1 = GitHubIssue.objects.create(
-            url='https://github.com/testuser/repo1/issues/3',
+            url=funded_issue1_data['html_url'],
             data=funded_issue1_data,
             repo=self.repo1
         )
@@ -149,14 +143,13 @@ class GitHubAppInstallationDeleteTest(TestCase):
             issue=funded_issue1
         )
 
-        funded_issue2_data = {
-            'number': 4,
-            'title': 'Funded Issue 2',
-            'state': 'open',
-            'url': 'https://github.com/testuser/repo3/issues/4',
-        }
+        funded_issue2_data = MockData.issue_json(
+            user_name='testuser',
+            repo_name='repo3',
+            issue_number=4
+        )
         funded_issue2 = GitHubIssue.objects.create(
-            url='https://github.com/testuser/repo3/issues/4',
+            url=funded_issue2_data['html_url'],
             data=funded_issue2_data,
             repo=repo3
         )
@@ -189,27 +182,25 @@ class GitHubAppInstallationDeleteTest(TestCase):
         """Test that all unfunded issues are deleted when there are multiple per repo."""
         # Create multiple unfunded issues in the same repo
         for i in range(5):
-            issue_data = {
-                'number': i + 1,
-                'title': f'Unfunded Issue {i + 1}',
-                'state': 'open',
-                'url': f'https://github.com/testuser/repo1/issues/{i + 1}',
-            }
+            issue_data = MockData.issue_json(
+                user_name='testuser',
+                repo_name='repo1',
+                issue_number=i + 1
+            )
             GitHubIssue.objects.create(
-                url=f'https://github.com/testuser/repo1/issues/{i + 1}',
+                url=issue_data['html_url'],
                 data=issue_data,
                 repo=self.repo1
             )
 
         # Create one funded issue
-        funded_issue_data = {
-            'number': 99,
-            'title': 'Funded Issue',
-            'state': 'open',
-            'url': 'https://github.com/testuser/repo1/issues/99',
-        }
+        funded_issue_data = MockData.issue_json(
+            user_name='testuser',
+            repo_name='repo1',
+            issue_number=99
+        )
         funded_issue = GitHubIssue.objects.create(
-            url='https://github.com/testuser/repo1/issues/99',
+            url=funded_issue_data['html_url'],
             data=funded_issue_data,
             repo=self.repo1
         )
@@ -245,14 +236,13 @@ class GitHubAppInstallationDeleteTest(TestCase):
         """Test that deleting an installation with only funded issues preserves them."""
         # Create only funded issues
         for i in range(3):
-            issue_data = {
-                'number': i + 1,
-                'title': f'Funded Issue {i + 1}',
-                'state': 'open',
-                'url': f'https://github.com/testuser/repo1/issues/{i + 1}',
-            }
+            issue_data = MockData.issue_json(
+                user_name='testuser',
+                repo_name='repo1',
+                issue_number=i + 1
+            )
             issue = GitHubIssue.objects.create(
-                url=f'https://github.com/testuser/repo1/issues/{i + 1}',
+                url=issue_data['html_url'],
                 data=issue_data,
                 repo=self.repo1
             )
@@ -296,26 +286,24 @@ class GitHubAppInstallationDeleteTest(TestCase):
         )
 
         # Create unfunded issues for both installations
-        unfunded_issue1_data = {
-            'number': 1,
-            'title': 'Unfunded Issue in Installation 1',
-            'state': 'open',
-            'url': 'https://github.com/testuser/repo1/issues/1',
-        }
+        unfunded_issue1_data = MockData.issue_json(
+            user_name='testuser',
+            repo_name='repo1',
+            issue_number=1
+        )
         unfunded_issue1 = GitHubIssue.objects.create(
-            url='https://github.com/testuser/repo1/issues/1',
+            url=unfunded_issue1_data['html_url'],
             data=unfunded_issue1_data,
             repo=self.repo1
         )
 
-        unfunded_issue2_data = {
-            'number': 2,
-            'title': 'Unfunded Issue in Installation 2',
-            'state': 'open',
-            'url': 'https://github.com/testuser/repo3/issues/2',
-        }
+        unfunded_issue2_data = MockData.issue_json(
+            user_name='testuser',
+            repo_name='repo3',
+            issue_number=2
+        )
         unfunded_issue2 = GitHubIssue.objects.create(
-            url='https://github.com/testuser/repo3/issues/2',
+            url=unfunded_issue2_data['html_url'],
             data=unfunded_issue2_data,
             repo=repo3
         )
@@ -337,39 +325,36 @@ class GitHubAppInstallationDeleteTest(TestCase):
     def test_delete_includes_handler_deletes_in_counts(self):
         """Test that the overridden delete() includes issues deleted by the delete handler."""
         # Create unfunded issues
-        unfunded_issue1_data = {
-            'number': 1,
-            'title': 'Unfunded Issue 1',
-            'state': 'open',
-            'url': 'https://github.com/testuser/repo1/issues/1',
-        }
+        unfunded_issue1_data = MockData.issue_json(
+            user_name='testuser',
+            repo_name='repo1',
+            issue_number=1
+        )
         GitHubIssue.objects.create(
-            url='https://github.com/testuser/repo1/issues/1',
+            url=unfunded_issue1_data['html_url'],
             data=unfunded_issue1_data,
             repo=self.repo1
         )
 
-        unfunded_issue2_data = {
-            'number': 2,
-            'title': 'Unfunded Issue 2',
-            'state': 'open',
-            'url': 'https://github.com/testuser/repo2/issues/2',
-        }
+        unfunded_issue2_data = MockData.issue_json(
+            user_name='testuser',
+            repo_name='repo2',
+            issue_number=2
+        )
         GitHubIssue.objects.create(
-            url='https://github.com/testuser/repo2/issues/2',
+            url=unfunded_issue2_data['html_url'],
             data=unfunded_issue2_data,
             repo=self.repo2
         )
 
         # Create a funded issue
-        funded_issue_data = {
-            'number': 3,
-            'title': 'Funded Issue',
-            'state': 'open',
-            'url': 'https://github.com/testuser/repo1/issues/3',
-        }
+        funded_issue_data = MockData.issue_json(
+            user_name='testuser',
+            repo_name='repo1',
+            issue_number=3
+        )
         funded_issue = GitHubIssue.objects.create(
-            url='https://github.com/testuser/repo1/issues/3',
+            url=funded_issue_data['html_url'],
             data=funded_issue_data,
             repo=self.repo1
         )
@@ -405,27 +390,25 @@ class GitHubAppInstallationDeleteTest(TestCase):
         """Test that delete() on an instance includes unfunded issues in deleted_by_model dict."""
         # Create unfunded issues
         for i in range(3):
-            issue_data = {
-                'number': i + 1,
-                'title': f'Unfunded Issue {i + 1}',
-                'state': 'open',
-                'url': f'https://github.com/testuser/repo1/issues/{i + 1}',
-            }
+            issue_data = MockData.issue_json(
+                user_name='testuser',
+                repo_name='repo1',
+                issue_number=i + 1
+            )
             GitHubIssue.objects.create(
-                url=f'https://github.com/testuser/repo1/issues/{i + 1}',
+                url=issue_data['html_url'],
                 data=issue_data,
                 repo=self.repo1
             )
 
         # Create a funded issue
-        funded_issue_data = {
-            'number': 99,
-            'title': 'Funded Issue',
-            'state': 'open',
-            'url': 'https://github.com/testuser/repo1/issues/99',
-        }
+        funded_issue_data = MockData.issue_json(
+            user_name='testuser',
+            repo_name='repo1',
+            issue_number=99
+        )
         funded_issue = GitHubIssue.objects.create(
-            url='https://github.com/testuser/repo1/issues/99',
+            url=funded_issue_data['html_url'],
             data=funded_issue_data,
             repo=self.repo1
         )
@@ -469,39 +452,36 @@ class GitHubAppInstallationDeleteTest(TestCase):
         )
 
         # Create unfunded issues for both installations
-        unfunded_issue1_data = {
-            'number': 1,
-            'title': 'Unfunded Issue 1',
-            'state': 'open',
-            'url': 'https://github.com/testuser/repo1/issues/1',
-        }
+        unfunded_issue1_data = MockData.issue_json(
+            user_name='testuser',
+            repo_name='repo1',
+            issue_number=1
+        )
         GitHubIssue.objects.create(
-            url='https://github.com/testuser/repo1/issues/1',
+            url=unfunded_issue1_data['html_url'],
             data=unfunded_issue1_data,
             repo=self.repo1
         )
 
-        unfunded_issue2_data = {
-            'number': 2,
-            'title': 'Unfunded Issue 2',
-            'state': 'open',
-            'url': 'https://github.com/testuser/repo3/issues/2',
-        }
+        unfunded_issue2_data = MockData.issue_json(
+            user_name='testuser',
+            repo_name='repo3',
+            issue_number=2
+        )
         GitHubIssue.objects.create(
-            url='https://github.com/testuser/repo3/issues/2',
+            url=unfunded_issue2_data['html_url'],
             data=unfunded_issue2_data,
             repo=repo3
         )
 
         # Create a funded issue
-        funded_issue_data = {
-            'number': 3,
-            'title': 'Funded Issue',
-            'state': 'open',
-            'url': 'https://github.com/testuser/repo1/issues/3',
-        }
+        funded_issue_data = MockData.issue_json(
+            user_name='testuser',
+            repo_name='repo1',
+            issue_number=3
+        )
         funded_issue = GitHubIssue.objects.create(
-            url='https://github.com/testuser/repo1/issues/3',
+            url=funded_issue_data['html_url'],
             data=funded_issue_data,
             repo=self.repo1
         )
@@ -533,39 +513,36 @@ class GitHubAppInstallationDeleteTest(TestCase):
     def test_delete_with_issues_across_multiple_repos(self):
         """Test that unfunded issues are deleted across all repos in an installation."""
         # Create unfunded issues in both repos
-        unfunded_issue1_data = {
-            'number': 1,
-            'title': 'Unfunded Issue in Repo 1',
-            'state': 'open',
-            'url': 'https://github.com/testuser/repo1/issues/1',
-        }
+        unfunded_issue1_data = MockData.issue_json(
+            user_name='testuser',
+            repo_name='repo1',
+            issue_number=1
+        )
         unfunded_issue1 = GitHubIssue.objects.create(
-            url='https://github.com/testuser/repo1/issues/1',
+            url=unfunded_issue1_data['html_url'],
             data=unfunded_issue1_data,
             repo=self.repo1
         )
 
-        unfunded_issue2_data = {
-            'number': 2,
-            'title': 'Unfunded Issue in Repo 2',
-            'state': 'open',
-            'url': 'https://github.com/testuser/repo2/issues/2',
-        }
+        unfunded_issue2_data = MockData.issue_json(
+            user_name='testuser',
+            repo_name='repo2',
+            issue_number=2
+        )
         unfunded_issue2 = GitHubIssue.objects.create(
-            url='https://github.com/testuser/repo2/issues/2',
+            url=unfunded_issue2_data['html_url'],
             data=unfunded_issue2_data,
             repo=self.repo2
         )
 
         # Create a funded issue in one of the repos
-        funded_issue_data = {
-            'number': 3,
-            'title': 'Funded Issue in Repo 1',
-            'state': 'open',
-            'url': 'https://github.com/testuser/repo1/issues/3',
-        }
+        funded_issue_data = MockData.issue_json(
+            user_name='testuser',
+            repo_name='repo1',
+            issue_number=3
+        )
         funded_issue = GitHubIssue.objects.create(
-            url='https://github.com/testuser/repo1/issues/3',
+            url=funded_issue_data['html_url'],
             data=funded_issue_data,
             repo=self.repo1
         )
@@ -617,14 +594,13 @@ class GithubIssueTest(TestCase):
 
     def test_delete_force_with_funded_issue(self):
         # create funded issue
-        funded_issue_data = {
-            'number': 3,
-            'title': 'Funded Issue 1',
-            'state': 'open',
-            'url': 'https://github.com/testuser/repo1/issues/3',
-        }
+        funded_issue_data = MockData.issue_json(
+            user_name='testuser',
+            repo_name='repo1',
+            issue_number=3
+        )
         funded_issue = GitHubIssue.objects.create(
-            url='https://github.com/testuser/repo1/issues/3',
+            url=funded_issue_data['html_url'],
             data=funded_issue_data,
             repo=self.repo
         )
@@ -642,14 +618,13 @@ class GithubIssueTest(TestCase):
 
     def test_delete_force_with_unfunded_issue(self):
         # create funded issue
-        issue_data = {
-            'number': 3,
-            'title': 'Funded Issue 1',
-            'state': 'open',
-            'url': 'https://github.com/testuser/repo1/issues/3',
-        }
+        issue_data = MockData.issue_json(
+            user_name='testuser',
+            repo_name='repo1',
+            issue_number=3
+        )
         issue = GitHubIssue.objects.create(
-            url='https://github.com/testuser/repo1/issues/3',
+            url=issue_data['html_url'],
             data=issue_data,
             repo=self.repo
         )
