@@ -11,7 +11,7 @@ from django.http import HttpResponse, HttpResponseBadRequest, HttpResponseForbid
 from django.utils import timezone
 from datetime import timedelta
 from pprint import pformat
-from .models import GitHubAppInstallation, GitHubIssue, GitHubRepo, IssueSponsorship
+from .models import GitHubAppInstallation, GitHubIssue, GitHubRepo, IssueSponsorship, Maintainer
 from .github_api import github_issue_has_sponsoredissues_label
 from .github_sync import github_sync_issue
 from .github_sponsors import GitHubSponsorService
@@ -167,6 +167,21 @@ def faq(request):
     return render(request, 'faq.html')
 
 def owner_issues(request, owner, repo=None, issue_number=None):
+    # Existence check for maintainer: Return HTTP 404 unless
+    # `owner` (GitHub username) exists in our database as a
+    # `Maintainer`.
+    #
+    # A `Maintainer` is created in our database the first time the
+    # maintainer installs the "sponsoredissues-maintainer" GitHub App,
+    # and continues to exist as long as one or both of the
+    # following are true:
+    #
+    # (1) the GitHub App is still installed/enabled, *OR*
+    # (2) the maintainer has issues with non-zero funding.
+    maintainer = Maintainer.objects.filter(github_user_json__login=owner).first()
+    if not maintainer:
+        raise Http404(f'GitHub account "{owner}" has not installed the "sponsoredissues-maintainer" GitHub App')
+
     # Existence check for app installation: Return HTTP 404 unless our
     # database shows that `owner` has installed the
     # "sponsoredissues-maintainer" GitHub App.
@@ -190,12 +205,6 @@ def owner_issues(request, owner, repo=None, issue_number=None):
         issue_url=f"https://github.com/{owner}/{repo}/issues/{issue_number}"
         if not GitHubIssue.objects.filter(url=issue_url, data__state="open").exists():
             raise Http404(f'GitHub account "{owner}" has not added "sponsoredissues.org" label to issue, or issue is closed.')
-
-    # Check if the owner has a GitHub Sponsors profile (otherwise
-    # we disable the "Sponsor @{owner}" button in the header
-    # of the web page).
-    github_sponsors = GitHubSponsorService()
-    has_sponsors_profile = github_sponsors.has_sponsors_profile(owner)
 
     # Filter issues for this owner (across all repos)
     owner_url_pattern = f"https://github.com/{owner}/"
@@ -299,6 +308,7 @@ def owner_issues(request, owner, repo=None, issue_number=None):
     allocated_sponsor_cents = 0
     unallocated_sponsor_cents = 0
     if request.user.is_authenticated:
+        github_sponsors = GitHubSponsorService()
         try:
             (allocated_sponsor_cents, total_sponsor_cents) = github_sponsors.calculate_allocated_sponsor_cents(request.user, owner)
             unallocated_sponsor_cents = total_sponsor_cents - allocated_sponsor_cents
@@ -313,7 +323,7 @@ def owner_issues(request, owner, repo=None, issue_number=None):
         'total_sponsor_cents': total_sponsor_cents,
         'allocated_sponsor_cents': allocated_sponsor_cents,
         'unallocated_sponsor_cents': unallocated_sponsor_cents,
-        'has_sponsors_profile': has_sponsors_profile,
+        'github_sponsors_profile_url': maintainer.github_sponsors_profile_url,
     }
 
     return render(request, 'owner_issues.html', context)
