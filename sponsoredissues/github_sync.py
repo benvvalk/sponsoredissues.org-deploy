@@ -86,26 +86,40 @@ def github_sync_app_installation(installation_id, base_logger=default_logger):
 
     assert installation_json
 
+    # Sync `Maintainer` data.
+    #
+    # This ensures that activated/deactivated state of "Sponsor
+    # @username" button on the maintainer's issue page stays in sync
+    # with current existence/non-existence of their GitHub Sponsors
+    # profile.
+
     account_login = installation_json['account']['login']
+    logger.info(f'GitHub account is "{account_login}"')
+    account_id = installation_json['account']['id']
     installation_url = installation_json['html_url']
 
-    logger.info(f'GitHub account is "{account_login}"')
+    maintainer = github_sync_maintainer(account_id, access_token=installation_token, logger=logger)
 
     # check if maintainer has suspended the app installation
+
     if github_app_installation_is_suspended(installation_json):
         logger.info('installation is suspended')
         if installation:
             github_sync_app_installation_remove(installation, logger)
         return
 
+    # update or update `GitHubAppInstallation`
+
     installation, created = GitHubAppInstallation.objects.update_or_create(
         url=installation_url,
-        defaults={'data': installation_json}
+        defaults={
+            'data': installation_json,
+            'maintainer': maintainer,
+        }
     )
     if created:
         logger.info(f'added (empty) installation to DB')
 
-    github_sync_maintainer(installation_json['account']['id'], access_token=installation_token, logger=logger)
     github_sync_app_installation_repos(installation_token, installation, logger)
     github_sync_app_installation_issues(installation_token, installation, logger)
 

@@ -1,7 +1,7 @@
 from django.test import TestCase
 from django.contrib.auth.models import User
 
-from sponsoredissues.models import GitHubAppInstallation, GitHubRepo, GitHubIssue, IssueSponsorship
+from sponsoredissues.models import GitHubAppInstallation, GitHubRepo, GitHubIssue, IssueSponsorship, Maintainer
 
 
 class GitHubAppInstallationDeleteTest(TestCase):
@@ -12,10 +12,18 @@ class GitHubAppInstallationDeleteTest(TestCase):
         # Create test user for funded issues
         self.user = User.objects.create_user(username='testuser', email='test@example.com')
 
+        # Create test maintainers
+        self.maintainer = Maintainer.objects.create(
+            github_account_id = 1,
+            github_user_json = '{}',
+            github_sponsors_profile_url = f'https://github.com/sponsors/maintainer'
+        )
+
         # Create test installation
         self.installation = GitHubAppInstallation.objects.create(
             url='https://github.com/installation/12345',
-            data='{}'
+            data='{}',
+            maintainer=self.maintainer
         )
 
         # Create test repos
@@ -83,9 +91,15 @@ class GitHubAppInstallationDeleteTest(TestCase):
     def test_delete_removes_unfunded_issues_on_queryset_delete(self):
         """Test that unfunded issues are deleted when calling delete() on a QuerySet."""
         # Create a second installation
+        maintainer2 = Maintainer.objects.create(
+            github_account_id = 2,
+            github_user_json = '{}',
+            github_sponsors_profile_url = f'https://github.com/sponsors/maintainer2'
+        )
         installation2 = GitHubAppInstallation.objects.create(
             url='https://github.com/installation/67890',
-            data='{}'
+            data='{}',
+            maintainer=maintainer2
         )
         repo3 = GitHubRepo.objects.create(
             url='https://github.com/testuser/repo3',
@@ -266,9 +280,15 @@ class GitHubAppInstallationDeleteTest(TestCase):
     def test_delete_filters_by_correct_installation(self):
         """Test that the delete handler only deletes issues for the correct installation."""
         # Create a second installation with its own repos and issues
+        maintainer2 = Maintainer.objects.create(
+            github_account_id = 2,
+            github_user_json = '{}',
+            github_sponsors_profile_url = f'https://github.com/sponsors/maintainer2'
+        )
         installation2 = GitHubAppInstallation.objects.create(
             url='https://github.com/installation/67890',
-            data='{}'
+            data='{}',
+            maintainer=maintainer2
         )
         repo3 = GitHubRepo.objects.create(
             url='https://github.com/testuser/repo3',
@@ -433,9 +453,15 @@ class GitHubAppInstallationDeleteTest(TestCase):
     def test_delete_returns_unfunded_issue_count_queryset_method(self):
         """Test that delete() on a queryset includes unfunded issues in deleted_by_model dict."""
         # Create a second installation
+        maintainer2 = Maintainer.objects.create(
+            github_account_id = 2,
+            github_user_json = '{}',
+            github_sponsors_profile_url = f'https://github.com/sponsors/maintainer2'
+        )
         installation2 = GitHubAppInstallation.objects.create(
             url='https://github.com/installation/67890',
-            data='{}'
+            data='{}',
+            maintainer=maintainer2
         )
         repo3 = GitHubRepo.objects.create(
             url='https://github.com/testuser/repo3',
@@ -569,10 +595,18 @@ class GithubIssueTest(TestCase):
         # Create test user for funded issues
         self.user = User.objects.create_user(username='testuser', email='test@example.com')
 
+        # Create test maintainer
+        self.maintainer = Maintainer.objects.create(
+            github_account_id = 1,
+            github_user_json = '{}',
+            github_sponsors_profile_url = f'https://github.com/sponsors/maintainer'
+        )
+
         # Create test installation
         self.installation = GitHubAppInstallation.objects.create(
             url='https://github.com/installation/12345',
-            data='{}'
+            data='{}',
+            maintainer=self.maintainer
         )
 
         # Create test repos

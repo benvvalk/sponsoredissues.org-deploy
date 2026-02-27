@@ -4,7 +4,7 @@ from unittest.mock import patch
 import time
 
 from sponsoredissues.github_sync import github_sync_app_installation, github_sync_app_installation_issues, github_sync_app_installation_repos, github_sync_issue
-from sponsoredissues.models import GitHubAppInstallation, GitHubRepo, GitHubIssue, IssueSponsorship
+from sponsoredissues.models import GitHubAppInstallation, GitHubRepo, GitHubIssue, IssueSponsorship, Maintainer
 from django.contrib.auth.models import User
 
 class MockData:
@@ -84,12 +84,22 @@ class SyncReposForInstallationTest(TestCase):
 
     def setUp(self):
         """Set up test fixtures."""
+        # Mock maintainer
+        maintainer_user_id = 1
+        maintainer_user_name = 'maintainer'
+        self.maintainer = Maintainer.objects.create(
+            github_account_id = maintainer_user_id,
+            github_user_json = MockData.user_json(maintainer_user_id, maintainer_user_name),
+            github_sponsors_profile_url = f'https://github.com/sponsors/{maintainer_user_name}'
+        )
+
         # Mock installation data
         installation_json = MockData.installation_json()
         installation_url = installation_json['html_url']
         self.installation = GitHubAppInstallation.objects.create(
             url=installation_url,
-            data=installation_json
+            data=installation_json,
+            maintainer=self.maintainer
         )
 
     @patch('sponsoredissues.github_sync.github_app_installation_query_repos')
@@ -172,12 +182,22 @@ class SyncIssuesForInstallationTest(TestCase):
             email='test@example.com'
         )
 
+        # Mock maintainer
+        maintainer_user_id = 1
+        maintainer_user_name = 'maintainer'
+        self.maintainer = Maintainer.objects.create(
+            github_account_id = maintainer_user_id,
+            github_user_json = MockData.user_json(maintainer_user_id, maintainer_user_name),
+            github_sponsors_profile_url = f'https://github.com/sponsors/{maintainer_user_name}'
+        )
+
         # Mock installation
         installation_json = MockData.installation_json()
         installation_url = installation_json['html_url']
         self.installation = GitHubAppInstallation.objects.create(
             url=installation_url,
-            data=installation_json
+            data=installation_json,
+            maintainer=self.maintainer
         )
 
         # Mock repo
@@ -419,10 +439,29 @@ class SyncAppInstallationTest(TestCase):
         # Create test user for funded issues
         self.user = User.objects.create_user(username='testuser', email='test@example.com')
 
+        maintainer1_user_id = 1
+        maintainer1_user_name = 'maintainer1'
+        self.maintainer1 = Maintainer.objects.create(
+            github_account_id = maintainer1_user_id,
+            github_user_json = MockData.user_json(maintainer1_user_id, maintainer1_user_name),
+            github_sponsors_profile_url = f'https://github.com/sponsors/{maintainer1_user_name}'
+        )
+
+        maintainer2_user_id = 2
+        maintainer2_user_name = 'maintainer2'
+        self.maintainer2 = Maintainer.objects.create(
+            github_account_id = maintainer2_user_id,
+            github_user_json = MockData.user_json(maintainer2_user_id, maintainer2_user_name),
+            github_sponsors_profile_url = f'https://github.com/sponsors/{maintainer2_user_name}'
+        )
+
+    @patch('sponsoredissues.github_sync.github_sync_maintainer')
     @patch('sponsoredissues.github_sync.github_sync_app_installation_repos')
     @patch('sponsoredissues.github_sync.github_sync_app_installation_issues')
-    def test_suspended_installation_removes_unfunded_issues(self, mock_sync_issues, mock_sync_repos):
+    def test_suspended_installation_removes_unfunded_issues(self, mock_sync_issues, mock_sync_repos, mock_sync_maintainer):
         """Test that suspended installations remove repos and unfunded issues."""
+        mock_sync_maintainer.return_value = self.maintainer1
+
         # Mock installation with suspended_at field
         suspended_installation_json = MockData.installation_json(
             installation_id = 99999,
@@ -430,7 +469,8 @@ class SyncAppInstallationTest(TestCase):
         )
         suspended_installation = GitHubAppInstallation.objects.create(
             url=suspended_installation_json['html_url'],
-            data=suspended_installation_json
+            data=suspended_installation_json,
+            maintainer=self.maintainer1
         )
 
         # Create repos and issues for the suspended account
@@ -488,6 +528,13 @@ class SyncAppInstallationTest(TestCase):
         remaining_issue = GitHubIssue.objects.get(url=funded_issue_json['html_url'])
         self.assertIsNone(remaining_issue.repo)  # Repo should be null due to `on_delete=models.SET_NULL`
 
+        # Verify Maintainer was synced despite suspended app installation.
+        # We need to do this to ensure activated/deactivated state of
+        # "Sponsor @user" button on sponsored issues page stays in
+        # sync with existence/non-existence of GitHub Sponsors
+        # profile.
+        self.assertEqual(mock_sync_maintainer.call_count, 1)
+
         # Verify _sync_installation_repos and _sync_installation_issues were NOT called for suspended installation
         mock_sync_repos.assert_not_called()
         mock_sync_issues.assert_not_called()
@@ -506,7 +553,8 @@ class SyncAppInstallationTest(TestCase):
         )
         suspended_installation = GitHubAppInstallation.objects.create(
             url=suspended_installation_json['html_url'],
-            data=suspended_installation_json
+            data=suspended_installation_json,
+            maintainer=self.maintainer1
         )
 
         suspended_repo_name = 'repo1'
@@ -532,7 +580,8 @@ class SyncAppInstallationTest(TestCase):
         )
         active_installation = GitHubAppInstallation.objects.create(
             url=active_installation_json['html_url'],
-            data=active_installation_json
+            data=active_installation_json,
+            maintainer=self.maintainer2
         )
 
         active_repo_name = 'repo1'
@@ -545,10 +594,12 @@ class SyncAppInstallationTest(TestCase):
         with patch('sponsoredissues.github_sync.github_app_installation_query_token', return_value=MockData.APP_INSTALLATION_TOKEN):
             with patch('sponsoredissues.github_sync.github_app_installation_query_json') as mock_query_json:
                 mock_query_json.return_value = suspended_installation_json
+                mock_sync_maintainer.return_value = self.maintainer1
                 github_sync_app_installation(suspended_installation_json['id'])
 
             with patch('sponsoredissues.github_sync.github_app_installation_query_json') as mock_query_json:
                 mock_query_json.return_value = active_installation_json
+                mock_sync_maintainer.return_value = self.maintainer2
                 github_sync_app_installation(active_installation_json['id'])
 
         # Verify suspended installation was removed
@@ -564,10 +615,16 @@ class SyncAppInstallationTest(TestCase):
         # Verify repo from active installation was not removed
         self.assertTrue(GitHubRepo.objects.filter(url__startswith=f'https://github.com/{active_user_name}/').exists())
 
+        # Verify Maintainer was synced despite suspended app installation.
+        # We need to do this to ensure activated/deactivated state of
+        # "Sponsor @user" button on sponsored issues page stays in
+        # sync with existence/non-existence of GitHub Sponsors
+        # profile.
+        self.assertEqual(mock_sync_maintainer.call_count, 2)
+
         # Verify github_sync_*_for_app_installation methods were called only on active installation
         self.assertEqual(mock_sync_repos.call_count, 1)
         self.assertEqual(mock_sync_issues.call_count, 1)
-        self.assertEqual(mock_sync_maintainer.call_count, 1)
 
 class SyncIssueTest(TestCase):
 
@@ -579,12 +636,22 @@ class SyncIssueTest(TestCase):
             email='test@example.com'
         )
 
+        # Mock maintainer
+        maintainer_user_id = 1
+        maintainer_user_name = 'maintainer'
+        self.maintainer = Maintainer.objects.create(
+            github_account_id = maintainer_user_id,
+            github_user_json = MockData.user_json(maintainer_user_id, maintainer_user_name),
+            github_sponsors_profile_url = f'https://github.com/sponsors/{maintainer_user_name}'
+        )
+
         # Mock installation
         installation_json = MockData.installation_json()
         installation_url = installation_json['html_url']
         self.installation = GitHubAppInstallation.objects.create(
             url=installation_url,
-            data=installation_json
+            data=installation_json,
+            maintainer=self.maintainer
         )
 
         # Mock repo
