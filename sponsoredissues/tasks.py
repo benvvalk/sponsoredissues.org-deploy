@@ -2,6 +2,7 @@ import logging
 import redis
 import time
 
+from contextlib import contextmanager
 from celery.utils.log import get_task_logger
 from django.conf import settings
 from sponsoredissues.celery import app
@@ -13,6 +14,32 @@ from sponsoredissues.models import GitHubAppInstallation
 redis_client = redis.Redis.from_url(url=settings.REDIS_URL, decode_responses=True)
 
 logger = get_task_logger(__name__)
+
+@contextmanager
+def task_app_installation_lock_acquire_non_blocking(installation_url: str):
+    lock = redis_client.lock(
+        name=f'lock:{installation_url}',
+        blocking=False,  # return immediately if lock not available
+        timeout=300      # lock will be released after timeout
+    )
+
+    acquired = lock.acquire()
+    if not acquired:
+        yield False
+        return
+
+    # Lock successfully acquired
+    try:
+        # Note: The body of the `with` block is executed here,
+        # and any exceptions that occur will be raised here.
+        # See excellent explanation of control flow at:
+        # https://docs.python.org/3/library/contextlib.html#contextlib.contextmanager
+        yield True
+    except:
+        logging.exception('unexpected exception during lock-protected operation')
+        task_sleep_after_unexpected_exception()
+    finally:
+        lock.release()
 
 @app.task(ignore_result=True)
 def task_sync_github_app_installation(installation_id: int):
@@ -40,19 +67,11 @@ def task_sync_github_app_installation_least_recently_updated(self):
     logger.info(f'database contains {installations.count()} app installations')
 
     for installation in installations:
-        lock = redis_client.lock(
-            name=f'lock:{installation.url}',
-            blocking=False,  # return immediately if lock not available
-            timeout=300      # lock will be released after timeout
-        )
-        if lock.acquire():
-            try:
+        with task_app_installation_lock_acquire_non_blocking(installation.url) as acquired:
+            if acquired:
                 github_sync_app_installation(installation.installation_id())
-            except Exception:
-                logging.exception('unexpected exception during `github_sync_app_installation`')
-                task_sleep_after_unexpected_exception()
-            finally:
-                lock.release()
+            else:
+                logger.info(f'skipped sync of app installation {installation.url}: failed to acquire lock')
 
     logger.info('starting next task iteration')
     self.apply_async()
@@ -85,42 +104,25 @@ def task_sync_github_app_installations_new_and_removed(self):
     logger.info(f'found {len(installation_urls_to_add)} new installations')
 
     for installation_url, installation_json in installations_from_github.items():
-        lock = redis_client.lock(
-            name=f'lock:{installation_url}',
-            blocking=False,  # return immediately if lock not available
-            timeout=300      # lock will be released after timeout
-        )
-        if lock.acquire():
-            try:
+        with task_app_installation_lock_acquire_non_blocking(installation_url) as acquired:
+            if acquired:
                 GitHubAppInstallation.objects.create(url=installation_url)
                 logger.info(f'created GitHubAppInstallation: {installation_url}')
                 installation_id = int(installation_json['id'])
                 github_sync_app_installation(installation_id)
-            except Exception:
-                logging.exception('unexpected exception during `github_sync_app_installation`')
-                task_sleep_after_unexpected_exception()
-            finally:
-                lock.release()
-        else:
-            logger.info(f'skipped adding installation {installation_url}: failed to acquire lock')
+            else:
+                logger.info(f'skipped adding installation {installation_url}: failed to acquire lock')
 
     installation_urls_to_remove = installation_urls_in_db - installations_from_github.keys()
     logger.info(f'found {len(installation_urls_to_remove)} installations to remove')
 
     for installation_url in installation_urls_to_remove:
-        lock = redis_client.lock(
-            name=f'lock:{installation_url}',
-            blocking=False,  # return immediately if lock not available
-            timeout=300      # lock will be released after timeout
-        )
-        if lock.acquire():
-            try:
+        with task_app_installation_lock_acquire_non_blocking(installation_url) as acquired:
+            if acquired:
                 installation = GitHubAppInstallation.objects.get(url=installation_url)
                 github_sync_app_installation_remove(installation)
-            finally:
-                lock.release()
-        else:
-            logger.info(f'skipped removing installation {installation_url}: failed to acquire lock')
+            else:
+                logger.info(f'skipped removing installation {installation_url}: failed to acquire lock')
 
     logger.info('starting next task iteration')
     self.apply_async()
