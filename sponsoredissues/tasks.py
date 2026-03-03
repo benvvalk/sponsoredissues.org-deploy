@@ -16,12 +16,8 @@ redis_client = redis.Redis.from_url(url=settings.REDIS_URL, decode_responses=Tru
 logger = get_task_logger(__name__)
 
 @contextmanager
-def task_app_installation_lock_acquire_non_blocking(installation_url: str):
-    lock = redis_client.lock(
-        name=f'lock:{installation_url}',
-        blocking=False,  # return immediately if lock not available
-        timeout=300      # lock will be released after timeout
-    )
+def task_app_installation_lock_acquire(installation_url: str, **kwargs):
+    lock = redis_client.lock(name=f'lock:{installation_url}', **kwargs)
 
     acquired = lock.acquire()
     if not acquired:
@@ -49,12 +45,7 @@ def task_app_installation_lock_acquire_non_blocking(installation_url: str):
 @app.task(ignore_result=True)
 def task_sync_github_app_installation(installation_id: int):
     installation_url = f'https://github.com/settings/installations/{installation_id}'
-    lock = redis_client.lock(
-        name=f'lock:{installation_url}',
-        blocking=True,
-        timeout=300, # lock will be released after timeout
-    )
-    with lock:
+    with task_app_installation_lock_acquire(installation_url, timeout=300):
         github_sync_app_installation(installation_id)
 
 @app.task(bind=True, ignore_result=True)
@@ -72,7 +63,7 @@ def task_sync_github_app_installation_least_recently_updated(self):
     logger.info(f'database contains {installations.count()} app installations')
 
     for installation in installations:
-        with task_app_installation_lock_acquire_non_blocking(installation.url) as acquired:
+        with task_app_installation_lock_acquire(installation.url, blocking=False, timeout=300) as acquired:
             if acquired:
                 github_sync_app_installation(installation.installation_id())
             else:
@@ -109,7 +100,7 @@ def task_sync_github_app_installations_new_and_removed(self):
     logger.info(f'found {len(installation_urls_to_add)} new installations')
 
     for installation_url, installation_json in installations_from_github.items():
-        with task_app_installation_lock_acquire_non_blocking(installation_url) as acquired:
+        with task_app_installation_lock_acquire(installation_url, blocking=False, timeout=300) as acquired:
             if acquired:
                 GitHubAppInstallation.objects.create(url=installation_url)
                 logger.info(f'created GitHubAppInstallation: {installation_url}')
@@ -122,7 +113,7 @@ def task_sync_github_app_installations_new_and_removed(self):
     logger.info(f'found {len(installation_urls_to_remove)} installations to remove')
 
     for installation_url in installation_urls_to_remove:
-        with task_app_installation_lock_acquire_non_blocking(installation_url) as acquired:
+        with task_app_installation_lock_acquire(installation_url, blocking=False, timeout=300) as acquired:
             if acquired:
                 installation = GitHubAppInstallation.objects.get(url=installation_url)
                 github_sync_app_installation_remove(installation)
