@@ -29,6 +29,8 @@ def task_app_installation_lock_acquire_non_blocking(installation_url: str):
         return
 
     # Lock successfully acquired
+
+    exception = False
     try:
         # Note: The body of the `with` block is executed here,
         # and any exceptions that occur will be raised here.
@@ -37,9 +39,12 @@ def task_app_installation_lock_acquire_non_blocking(installation_url: str):
         yield True
     except:
         logging.exception('unexpected exception during lock-protected operation')
-        task_sleep_after_unexpected_exception()
+        exception = True
     finally:
         lock.release()
+
+    if exception:
+        task_sleep_after_unexpected_exception()
 
 @app.task(ignore_result=True)
 def task_sync_github_app_installation(installation_id: int):
