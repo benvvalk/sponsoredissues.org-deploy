@@ -11,6 +11,25 @@ from sponsoredissues.github_app import github_app_token
 from sponsoredissues.github_sync import github_sync_app_installation, github_sync_app_installation_remove
 from sponsoredissues.models import GitHubAppInstallation
 
+# Default task timeout in seconds.
+#
+# The soft timeouts handle the case where a task is stalled because
+# the GitHub API is failing to respond (e.g. GitHub outage, network
+# outage).
+#
+# In Celery terminology, a "soft" timeout triggers an exception,
+# whereas a "hard" timeout will kill the worker process with a
+# SIGTERM. Using a soft timeout allows us to catch the exception and
+# release the Redis lock we are holding (if any).
+TASK_SOFT_TIME_LIMIT = 60 * 5
+
+# Default time to wait before retrying a task, in seconds.
+#
+# We might need retry a task if another worker task is currently
+# modifying the same app installation (i.e. the other worker task is
+# holding the Redis lock for the target app installation).
+TASK_WAIT_RETRY_TIME = 60 * 5
+
 redis_client = redis.Redis.from_url(url=settings.REDIS_URL, decode_responses=True)
 
 logger = get_task_logger(__name__)
@@ -42,11 +61,15 @@ def task_app_installation_lock_acquire(installation_url: str, **kwargs):
     if exception:
         task_sleep_after_unexpected_exception()
 
-@app.task(ignore_result=True)
-def task_sync_github_app_installation(installation_id: int):
+@app.task(bind=True, ignore_result=True, soft_time_limit=TASK_SOFT_TIME_LIMIT)
+def task_sync_github_app_installation(self, installation_id: int):
     installation_url = f'https://github.com/settings/installations/{installation_id}'
-    with task_app_installation_lock_acquire(installation_url, timeout=300):
-        github_sync_app_installation(installation_id)
+    with task_app_installation_lock_acquire(installation_url, blocking=False, timeout=300) as acquired:
+        if acquired:
+            github_sync_app_installation(installation_id)
+        else:
+            logger.info(f'postponing sync of installation {installation_url}: failed to acquire lock (will retry in {TASK_WAIT_RETRY_TIME} seconds)')
+            self.apply_async(countdown=TASK_WAIT_RETRY_TIME)
 
 @app.task(bind=True, ignore_result=True)
 def debug_task(self):
@@ -57,7 +80,7 @@ def task_sleep_after_unexpected_exception():
     logger.info(f'sleeping for {seconds} seconds before continuing')
     time.sleep(seconds)
 
-@app.task(bind=True, ignore_result=True)
+@app.task(bind=True, ignore_result=True, soft_time_limit=TASK_SOFT_TIME_LIMIT)
 def task_sync_github_app_installation_least_recently_updated(self):
     installations = GitHubAppInstallation.objects.all().order_by("updated_at")
     logger.info(f'database contains {installations.count()} app installations')
@@ -72,7 +95,7 @@ def task_sync_github_app_installation_least_recently_updated(self):
     logger.info('starting next task iteration')
     self.apply_async()
 
-@app.task(bind=True, ignore_result=True)
+@app.task(bind=True, ignore_result=True, soft_time_limit=TASK_SOFT_TIME_LIMIT)
 def task_sync_github_app_installations_new_and_removed(self):
     """
     Query the latest set of app installations from the GitHub API,
@@ -100,12 +123,10 @@ def task_sync_github_app_installations_new_and_removed(self):
     logger.info(f'found {len(installation_urls_to_add)} new installations')
 
     for installation_url, installation_json in installations_from_github.items():
-        with task_app_installation_lock_acquire(installation_url, blocking=False, timeout=300) as acquired:
-            if acquired:
-                installation_id = int(installation_json['id'])
-                github_sync_app_installation(installation_id)
-            else:
-                logger.info(f'skipped adding installation {installation_url}: failed to acquire lock')
+        installation_id = installation_json['id']
+        # Start an async subtask that creates and syncs a new
+        # `GitHubAppInstallation` in the database
+        task_sync_github_app_installation.apply_async(args=[installation_id])
 
     installation_urls_to_remove = installation_urls_in_db - installations_from_github.keys()
     logger.info(f'found {len(installation_urls_to_remove)} installations to remove')
