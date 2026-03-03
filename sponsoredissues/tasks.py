@@ -102,8 +102,6 @@ def task_sync_github_app_installations_new_and_removed(self):
     for installation_url, installation_json in installations_from_github.items():
         with task_app_installation_lock_acquire(installation_url, blocking=False, timeout=300) as acquired:
             if acquired:
-                GitHubAppInstallation.objects.create(url=installation_url)
-                logger.info(f'created GitHubAppInstallation: {installation_url}')
                 installation_id = int(installation_json['id'])
                 github_sync_app_installation(installation_id)
             else:
