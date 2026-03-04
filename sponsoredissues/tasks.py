@@ -10,6 +10,7 @@ from sponsoredissues.github_api import github_api
 from sponsoredissues.github_app import github_app_token
 from sponsoredissues.github_sync import github_sync_app_installation, github_sync_app_installation_remove
 from sponsoredissues.models import GitHubAppInstallation
+from typing import Any
 
 # Default task timeout in seconds.
 #
@@ -30,13 +31,25 @@ TASK_SOFT_TIME_LIMIT = 60 * 5
 # holding the Redis lock for the target app installation).
 TASK_WAIT_RETRY_TIME = 60 * 5
 
+# Default timeout for app installation locks (Redis-based distributed
+# locks).
+#
+# The lock timeout handles the case where the Celery worker processes
+# crash while still holding on to their locks, which should
+# (hopefully) be a rare occurrence.
+TASK_LOCK_TIMEOUT = 60 * 60
+
 redis_client = redis.Redis.from_url(url=settings.REDIS_URL, decode_responses=True)
 
 logger = get_task_logger(__name__)
 
 @contextmanager
 def task_app_installation_lock_acquire(installation_url: str, **kwargs):
-    lock = redis_client.lock(name=f'lock:{installation_url}', **kwargs)
+    lock_params: dict[str, Any] = {
+        'timeout': TASK_LOCK_TIMEOUT
+    }
+    lock_params.update(kwargs)
+    lock = redis_client.lock(name=f'lock:{installation_url}', **lock_params)
 
     acquired = lock.acquire()
     if not acquired:
@@ -64,7 +77,7 @@ def task_app_installation_lock_acquire(installation_url: str, **kwargs):
 @app.task(bind=True, ignore_result=True, soft_time_limit=TASK_SOFT_TIME_LIMIT)
 def task_sync_github_app_installation(self, installation_id: int):
     installation_url = f'https://github.com/settings/installations/{installation_id}'
-    with task_app_installation_lock_acquire(installation_url, blocking=False, timeout=300) as acquired:
+    with task_app_installation_lock_acquire(installation_url, blocking=False) as acquired:
         if acquired:
             github_sync_app_installation(installation_id)
         else:
@@ -86,7 +99,7 @@ def task_sync_github_app_installation_least_recently_updated(self):
     logger.info(f'database contains {installations.count()} app installations')
 
     for installation in installations:
-        with task_app_installation_lock_acquire(installation.url, blocking=False, timeout=300) as acquired:
+        with task_app_installation_lock_acquire(installation.url, blocking=False) as acquired:
             if acquired:
                 github_sync_app_installation(installation.installation_id())
             else:
@@ -132,7 +145,7 @@ def task_sync_github_app_installations_new_and_removed(self):
     logger.info(f'found {len(installation_urls_to_remove)} installations to remove')
 
     for installation_url in installation_urls_to_remove:
-        with task_app_installation_lock_acquire(installation_url, blocking=False, timeout=300) as acquired:
+        with task_app_installation_lock_acquire(installation_url, blocking=False) as acquired:
             if acquired:
                 installation = GitHubAppInstallation.objects.get(url=installation_url)
                 github_sync_app_installation_remove(installation)
