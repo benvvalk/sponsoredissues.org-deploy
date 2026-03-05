@@ -3,6 +3,7 @@ import redis
 import time
 
 from contextlib import contextmanager
+from celery import chord
 from celery.utils.log import get_task_logger
 from django.conf import settings
 from sponsoredissues.celery import app
@@ -108,6 +109,16 @@ def task_sync_github_app_installation_least_recently_updated(self):
     logger.info('starting next task iteration')
     self.apply_async()
 
+@app.task(ignore_result=True)
+def task_sync_github_app_installations_new_and_removed_callback():
+    """
+    Callback task that runs after all subtasks complete.  Schedules
+    the next iteration of the
+    `task_sync_github_app_installations_new_and_removed` task.
+    """
+    logger.info('all subtasks completed, starting next task iteration')
+    task_sync_github_app_installations_new_and_removed.apply_async()
+
 @app.task(bind=True, ignore_result=True, soft_time_limit=TASK_SOFT_TIME_LIMIT)
 def task_sync_github_app_installations_new_and_removed(self):
     """
@@ -135,11 +146,12 @@ def task_sync_github_app_installations_new_and_removed(self):
     installation_urls_to_add = installations_from_github.keys() - installation_urls_in_db
     logger.info(f'found {len(installation_urls_to_add)} new installations')
 
+    # Collect all subtasks to wait for
+    subtasks = []
     for installation_url, installation_json in installations_from_github.items():
         installation_id = installation_json['id']
-        # Start an async subtask that creates and syncs a new
-        # `GitHubAppInstallation` in the database
-        task_sync_github_app_installation.apply_async(args=[installation_id])
+        # Create a signature for each subtask
+        subtasks.append(task_sync_github_app_installation.s(installation_id))
 
     installation_urls_to_remove = installation_urls_in_db - installations_from_github.keys()
     logger.info(f'found {len(installation_urls_to_remove)} installations to remove')
@@ -152,5 +164,10 @@ def task_sync_github_app_installations_new_and_removed(self):
             else:
                 logger.info(f'skipped removing installation {installation_url}: failed to acquire lock')
 
-    logger.info('starting next task iteration')
-    self.apply_async()
+    # Use chord to wait for all subtasks to complete before scheduling next iteration
+    if subtasks:
+        logger.info(f'scheduling {len(subtasks)} subtasks with callback')
+        chord(subtasks)(task_sync_github_app_installations_new_and_removed_callback.s())
+    else:
+        logger.info(f'no work to do, scheduling next task iteration with a delay of {TASK_WAIT_RETRY_TIME} seconds')
+        self.apply_async(countdown=TASK_WAIT_RETRY_TIME)
