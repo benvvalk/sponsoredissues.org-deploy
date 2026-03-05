@@ -57,7 +57,7 @@ def task_app_installation_lock_acquire(installation_url: str, **kwargs):
 
     acquired = lock.acquire()
     if not acquired:
-        yield False
+        yield lock
         return
 
     # Lock successfully acquired
@@ -68,7 +68,7 @@ def task_app_installation_lock_acquire(installation_url: str, **kwargs):
         # and any exceptions that occur will be raised here.
         # See excellent explanation of control flow at:
         # https://docs.python.org/3/library/contextlib.html#contextlib.contextmanager
-        yield True
+        yield lock
     except:
         logging.exception('unexpected exception during lock-protected operation')
         exception = True
@@ -81,8 +81,8 @@ def task_app_installation_lock_acquire(installation_url: str, **kwargs):
 @app.task(bind=True, ignore_result=True, soft_time_limit=TASK_SOFT_TIME_LIMIT)
 def task_sync_github_app_installation(self, installation_id: int):
     installation_url = f'https://github.com/settings/installations/{installation_id}'
-    with task_app_installation_lock_acquire(installation_url, blocking=False) as acquired:
-        if acquired:
+    with task_app_installation_lock_acquire(installation_url, blocking=False) as lock:
+        if lock.owned():
             github_sync_app_installation(installation_id)
         else:
             logger.info(f'postponing sync of installation {installation_url}: failed to acquire lock (will retry in {TASK_WAIT_RETRY_TIME} seconds)')
@@ -99,8 +99,8 @@ def task_sync_github_app_installation_least_recently_updated(self):
     logger.info(f'database contains {installations.count()} app installations')
 
     for installation in installations:
-        with task_app_installation_lock_acquire(installation.url, blocking=False) as acquired:
-            if acquired:
+        with task_app_installation_lock_acquire(installation.url, blocking=False) as lock:
+            if lock.owned():
                 github_sync_app_installation(installation.installation_id())
             else:
                 logger.info(f'skipped sync of app installation {installation.url}: failed to acquire lock')
@@ -145,8 +145,8 @@ def task_sync_github_app_installations_new_and_removed(self):
     logger.info(f'found {len(installation_urls_to_remove)} installations to remove')
 
     for installation_url in installation_urls_to_remove:
-        with task_app_installation_lock_acquire(installation_url, blocking=False) as acquired:
-            if acquired:
+        with task_app_installation_lock_acquire(installation_url, blocking=False) as lock:
+            if lock.owned():
                 installation = GitHubAppInstallation.objects.get(url=installation_url)
                 github_sync_app_installation_remove(installation)
             else:

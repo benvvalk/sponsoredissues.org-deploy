@@ -69,15 +69,14 @@ class TaskLockAcquireContextManagerTest(TestCase):
     @patch('sponsoredissues.tasks.task_sleep_after_unexpected_exception')
     def test_context_manager_acquires_and_releases_lock(self, mock_sleep):
         """Test normal lock acquire and release flow."""
-        mock_lock = self.mock_redis_client.lock(f'lock:{self.lock_url}')
-
         with patch('sponsoredissues.tasks.redis_client', self.mock_redis_client):
-            with task_app_installation_lock_acquire(f'{self.lock_url}') as acquired:
-                self.assertTrue(acquired)
-                self.assertTrue(mock_lock.locked())
+            with task_app_installation_lock_acquire(f'{self.lock_url}') as lock:
+                self.assertTrue(lock.locked())
+                self.assertTrue(lock.owned())
 
         # Lock should be released after exiting context
-        self.assertFalse(mock_lock.locked())
+        self.assertFalse(lock.locked())
+        self.assertFalse(lock.owned())
 
     def test_context_manager_handles_failed_acquisition(self):
         """Test behavior when lock cannot be acquired."""
@@ -85,17 +84,17 @@ class TaskLockAcquireContextManagerTest(TestCase):
         mock_lock.acquire()
 
         with patch('sponsoredissues.tasks.redis_client', self.mock_redis_client):
-            with task_app_installation_lock_acquire(f'{self.lock_url}', blocking=False) as acquired:
-                self.assertFalse(acquired)
+            with task_app_installation_lock_acquire(f'{self.lock_url}', blocking=False) as lock:
+                self.assertTrue(lock.locked())
+                self.assertFalse(lock.owned())
 
     @patch('sponsoredissues.tasks.task_sleep_after_unexpected_exception')
     def test_context_manager_releases_lock_on_exception(self, mock_sleep):
         """Test that lock is released even when exception occurs."""
-        mock_lock = self.mock_redis_client.lock(f'lock:{self.lock_url}')
-
         with patch('sponsoredissues.tasks.redis_client', self.mock_redis_client):
-            with task_app_installation_lock_acquire(f'{self.lock_url}') as acquired:
-                self.assertTrue(acquired)
+            with task_app_installation_lock_acquire(f'{self.lock_url}') as lock:
+                self.assertTrue(lock.locked())
+                self.assertTrue(lock.owned())
                 # Simulate error during protected operation.
                 # This exception should be caught and logged by
                 # `task_app_installation_lock_acquire`, after which
@@ -103,7 +102,7 @@ class TaskLockAcquireContextManagerTest(TestCase):
                 raise RuntimeError("Simulated error")
 
         # Lock should be released despite exception
-        self.assertFalse(mock_lock.locked())
+        self.assertFalse(lock.locked())
 
         # Sleep should be called after exception
         mock_sleep.assert_called_once()
