@@ -43,6 +43,10 @@ redis_client = redis.Redis.from_url(url=settings.REDIS_URL, decode_responses=Tru
 
 logger = get_task_logger(__name__)
 
+@app.task(bind=True, ignore_result=True)
+def task_debug(self):
+    logger.info(f'Request: {self.request!r}')
+
 @contextmanager
 def task_app_installation_lock_acquire(installation_url: str, **kwargs):
     lock_params: dict[str, Any] = {
@@ -83,10 +87,6 @@ def task_sync_github_app_installation(self, installation_id: int):
         else:
             logger.info(f'postponing sync of installation {installation_url}: failed to acquire lock (will retry in {TASK_WAIT_RETRY_TIME} seconds)')
             self.apply_async(countdown=TASK_WAIT_RETRY_TIME)
-
-@app.task(bind=True, ignore_result=True)
-def debug_task(self):
-    logger.info(f'Request: {self.request!r}')
 
 def task_sleep_after_unexpected_exception():
     seconds = 600
