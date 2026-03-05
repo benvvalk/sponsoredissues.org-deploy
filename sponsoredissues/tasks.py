@@ -27,9 +27,11 @@ TASK_SOFT_TIME_LIMIT = 60 * 5
 
 # Default time to wait before retrying a task, in seconds.
 #
-# We might need retry a task if another worker task is currently
-# modifying the same app installation (i.e. the other worker task is
-# holding the Redis lock for the target app installation).
+# We want to retry a task after a delay, if:
+# (1) There is no available work to do (e.g. no GitHub App
+# installations in database)
+# (2) Another task is holding the lock that we need
+# (3) An unexpected error occurred (e.g. GitHub API outage)
 TASK_WAIT_RETRY_TIME = 60 * 5
 
 # Default timeout for app installation locks (Redis-based distributed
@@ -99,15 +101,24 @@ def task_sync_github_app_installation_least_recently_updated(self):
     installations = GitHubAppInstallation.objects.all().order_by("updated_at")
     logger.info(f'database contains {installations.count()} app installations')
 
+    did_work = False
     for installation in installations:
         with task_app_installation_lock_acquire(installation.url, blocking=False) as lock:
             if lock.owned():
+                did_work = True
                 github_sync_app_installation(installation.installation_id())
             else:
                 logger.info(f'skipped sync of app installation {installation.url}: failed to acquire lock')
 
-    logger.info('starting next task iteration')
-    self.apply_async()
+    # If there's no work to do (e.g. no app installations in the
+    # database), prevent spinning by introducing a delay before the
+    # next task iteration.
+    if not did_work:
+        logger.info(f'no work to do, delaying next task iteration by {TASK_WAIT_RETRY_TIME} seconds')
+        self.apply_async(countdown=TASK_WAIT_RETRY_TIME)
+    else:
+        logger.info(f'scheduling next task iteration')
+        self.apply_async()
 
 @app.task(ignore_result=True)
 def task_sync_github_app_installations_new_and_removed_callback():
