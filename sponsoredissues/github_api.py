@@ -36,7 +36,7 @@ def _parse_link_header(link_header):
 
     return links
 
-def github_api(endpoint, access_token=None, auto_paginate=True, max_pages=10, per_page=100):
+def github_api(endpoint, access_token=None, auto_paginate=True, max_pages=10, per_page=100, rate_limit=True):
     """
     Make REST API call to GitHub with automatic pagination support.
 
@@ -52,7 +52,8 @@ def github_api(endpoint, access_token=None, auto_paginate=True, max_pages=10, pe
         - data: Response JSON data. If auto_paginate=True and response is a list or
                 dict with 'repositories', 'items', etc., all pages are merged.
     """
-    random_sleep_for_rate_limiting()
+    if rate_limit:
+        random_sleep_for_rate_limiting()
 
     headers = {
         'Accept': 'application/vnd.github.v3+json',
@@ -180,7 +181,7 @@ def github_api(endpoint, access_token=None, auto_paginate=True, max_pages=10, pe
     except requests.exceptions.RequestException as e:
         raise RuntimeError(f"GitHub API request failed") from e
 
-def github_graphql(query, access_token, variables=None, timeout=30):
+def github_graphql(query, access_token, variables=None, timeout=30, rate_limit=True):
     """
     Send a query to the GitHub GraphQL API.
 
@@ -193,7 +194,8 @@ def github_graphql(query, access_token, variables=None, timeout=30):
     Returns:
         data: The value of the `data` key in the response JSON
     """
-    random_sleep_for_rate_limiting()
+    if rate_limit:
+        random_sleep_for_rate_limiting()
 
     headers = {
         'Authorization': f'Bearer {access_token}',

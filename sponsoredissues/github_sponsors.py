@@ -42,7 +42,12 @@ class GitHubSponsorService:
         """
 
         variables = {'recipient_github_username': recipient_github_username}
-        data = github_graphql(query, access_token, variables)
+        # TODO: Setting `rate_limit=False` here is a bit hacky. The
+        # reason I added it is because I currently run this query
+        # while loading the sponsored issues page (in the
+        # `owner_issues` view function), and the default rate-limiting
+        # behaviour makes the page load really slowly.
+        data = github_graphql(query, access_token, variables, rate_limit=False)
 
         return data['viewer']['totalSponsorshipAmountAsSponsorInCents']
 
