@@ -159,7 +159,8 @@ def task_sync_github_app_installations_new_and_removed(self):
 
     # Collect all subtasks to wait for
     subtasks = []
-    for installation_url, installation_json in installations_from_github.items():
+    for installation_url in installation_urls_to_add:
+        installation_json = installations_from_github[installation_url]
         installation_id = installation_json['id']
         # Create a signature for each subtask
         subtasks.append(task_sync_github_app_installation.s(installation_id))
