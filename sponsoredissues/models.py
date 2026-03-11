@@ -115,7 +115,7 @@ class GitHubAppInstallation(models.Model):
     (during a sync or webhook) that the owning GitHub account has
     uninstalled or suspended the app.
     """
-    url = models.URLField(primary_key=True, max_length=500)
+    url = models.URLField(unique=True, max_length=500)
     data = models.JSONField()
     maintainer = models.ForeignKey(Maintainer, on_delete=models.CASCADE)
     created_at = models.DateTimeField(auto_now_add=True)
@@ -170,7 +170,7 @@ class GitHubRepo(models.Model):
     suspended, then all associated repos will automatically removed
     from this table via `on_delete=models.CASCADE`.
     """
-    url = models.URLField(primary_key=True, max_length=500)
+    url = models.URLField(unique=True, max_length=500)
     app_installation = models.ForeignKey(GitHubAppInstallation, on_delete=models.CASCADE)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
@@ -225,7 +225,7 @@ class GitHubIssue(models.Model):
     [1]: http://sponsoredissues.org/site/faq#app-uninstalled
     [2]: http://sponsoredissues.org/site/faq#label-removed
     """
-    url = models.URLField(primary_key=True, max_length=500)
+    url = models.URLField(unique=True, max_length=500)
     data = models.JSONField()
     repo = models.ForeignKey(GitHubRepo, null=True, on_delete=models.SET_NULL, related_name="issues")
     created_at = models.DateTimeField(auto_now_add=True)
