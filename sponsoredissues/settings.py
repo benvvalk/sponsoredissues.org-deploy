@@ -303,5 +303,12 @@ LOGGING = {
 REDIS_URL = env_str('REDIS_URL')
 
 # Celery settings
+#
+# Note: The only reason I'm configuring `CELERY_RESULT_BACKEND` here
+# is because a results backend is required in order to use a `chord`
+# (task group) in `task_sync_github_app_installations_new_and_removed`
+# (in `tasks.py`). Otherwise, I'm not using the results backend for
+# anything.
 
 CELERY_BROKER_URL = REDIS_URL
+CELERY_RESULT_BACKEND = REDIS_URL
